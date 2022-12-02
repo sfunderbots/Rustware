@@ -48,7 +48,7 @@ impl Field {
 }
 
 pub struct Robot {
-    id: usize,
-    position: Point,
-    velocity: Vector
+    pub id: usize,
+    pub position: Point,
+    pub velocity: Vector
 }

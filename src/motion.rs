@@ -58,7 +58,7 @@ pub fn bb_time_to_position_1d(xi: f32, vi: f32, xf: f32, vf: f32, a: f32, v_max:
     }
 }
 
-pub fn bb_time_to_position(start: Point, initial_velocity: Vector, end: Point, a: f32, max_speed: f32) -> f32 {
+pub fn bb_time_to_position(start: &Point, initial_velocity: &Vector, end: &Point, a: f32, max_speed: f32) -> f32 {
     let time_for_x = bb_time_to_position_1d(start.x, initial_velocity.x, end.x, 0.0, a, max_speed);
     let time_for_y = bb_time_to_position_1d(start.y, initial_velocity.y, end.y, 0.0, a, max_speed);
     time_for_x.max(time_for_y)
