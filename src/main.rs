@@ -1,6 +1,7 @@
 mod geom;
 mod math;
 mod world;
+mod motion;
 
 // use crate::geom::Point;
 // pub use crate::geom;
