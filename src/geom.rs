@@ -7,4 +7,3 @@ mod vector;
 pub use self::point::Point;
 pub use self::rectangle::Rectangle;
 pub use self::vector::Vector;
-

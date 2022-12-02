@@ -2,14 +2,20 @@ use super::point::Point;
 
 pub struct Rectangle {
     bottom_left: Point,
-    top_right: Point
+    top_right: Point,
 }
 
 impl Rectangle {
     pub fn new(p1: Point, p2: Point) -> Rectangle {
         Rectangle {
-            bottom_left: Point{x: p1.x.min(p2.x), y: p1.y.min(p2.y)},
-            top_right: Point{x: p1.x.max(p2.x), y: p1.y.max(p2.y)},
+            bottom_left: Point {
+                x: p1.x.min(p2.x),
+                y: p1.y.min(p2.y),
+            },
+            top_right: Point {
+                x: p1.x.max(p2.x),
+                y: p1.y.max(p2.y),
+            },
         }
     }
 
@@ -22,9 +28,9 @@ impl Rectangle {
     }
 
     pub fn centre(&self) -> Point {
-        Point{
+        Point {
             x: self.bottom_left.x + self.len_x(),
-            y: self.bottom_left.y + self.len_y()
+            y: self.bottom_left.y + self.len_y(),
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::geom::{Rectangle, Point, Vector};
+use crate::geom::{Point, Rectangle, Vector};
 
 pub struct Field {
     pub x_length: f32,
@@ -13,7 +13,7 @@ pub struct Field {
 
 impl Field {
     pub fn ssl_div_b() -> Field {
-        Field{
+        Field {
             x_length: 9.0,
             y_length: 6.0,
             defense_x_length: 1.0,
@@ -21,28 +21,46 @@ impl Field {
             goal_x_length: 0.18,
             goal_y_length: 1.0,
             boundary_buffer_size: 0.3,
-            center_circle_radius: 0.5
+            center_circle_radius: 0.5,
         }
     }
 
     pub fn touch_lines(&self) -> Rectangle {
         Rectangle::new(
-            Point{x: -self.x_length/2.0, y: -self.y_length / 2.0},
-            Point{x: self.x_length/2.0, y: self.y_length / 2.0},
+            Point {
+                x: -self.x_length / 2.0,
+                y: -self.y_length / 2.0,
+            },
+            Point {
+                x: self.x_length / 2.0,
+                y: self.y_length / 2.0,
+            },
         )
     }
 
     pub fn enemy_defense_area(&self) -> Rectangle {
         Rectangle::new(
-            Point{x: self.x_length/2.0 - self.defense_x_length, y: -self.defense_y_length / 2.0},
-            Point{x: self.x_length/2.0 , y: self.defense_y_length / 2.0},
+            Point {
+                x: self.x_length / 2.0 - self.defense_x_length,
+                y: -self.defense_y_length / 2.0,
+            },
+            Point {
+                x: self.x_length / 2.0,
+                y: self.defense_y_length / 2.0,
+            },
         )
     }
 
     pub fn friendly_defense_area(&self) -> Rectangle {
         Rectangle::new(
-            Point{x: -self.x_length/2.0, y: -self.defense_y_length / 2.0},
-            Point{x: -self.x_length/2.0 + self.defense_x_length , y: self.defense_y_length / 2.0},
+            Point {
+                x: -self.x_length / 2.0,
+                y: -self.defense_y_length / 2.0,
+            },
+            Point {
+                x: -self.x_length / 2.0 + self.defense_x_length,
+                y: self.defense_y_length / 2.0,
+            },
         )
     }
 }
@@ -50,5 +68,5 @@ impl Field {
 pub struct Robot {
     pub id: usize,
     pub position: Point,
-    pub velocity: Vector
+    pub velocity: Vector,
 }
