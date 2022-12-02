@@ -2,6 +2,7 @@ mod point;
 mod rectangle;
 mod vector;
 mod angle;
+mod circle;
 
 // https://docs.rs/geo/latest/geo/index.html
 
