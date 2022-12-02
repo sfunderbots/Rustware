@@ -3,7 +3,7 @@ mod math;
 mod motion;
 mod world;
 
-use crate::geom::{Point, Rectangle, Vector};
+use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::bb_time_to_position;
 use crate::world::{Field, Robot};
@@ -61,10 +61,10 @@ fn time_to_intercept(p: &Pass, r: &Robot) -> f32 {
     let x_incr = (p.end.x - p.start.x) / NUM_STEPS as f32;
     let y_incr = (p.end.y - p.start.y) / NUM_STEPS as f32;
     let mut min_diff = f32::INFINITY;
-    for i in (0..NUM_STEPS) {
+    for i in 0..NUM_STEPS {
         let pos = Point {
-            x: p.start.x + x_incr + ROBOT_RADIUS,
-            y: p.start.x + y_incr + ROBOT_RADIUS,
+            x: p.start.x + i as f32*x_incr + ROBOT_RADIUS,
+            y: p.start.x + i as f32*y_incr + ROBOT_RADIUS,
         };
         let ttp = bb_time_to_position(&r.position, &r.velocity, &pos, 3.0, 3.0);
         let diff = ttp - p.time_to_complete();
@@ -102,7 +102,7 @@ fn score_pass(
 
 fn generate_random_passes(num: usize) -> Vec<Pass> {
     let mut result: Vec<Pass> = Vec::new();
-    for i in (0..num) {
+    for _ in 0..num {
         result.push(Pass {
             start: Point {
                 x: rand::thread_rng().gen(),

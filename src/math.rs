@@ -1,5 +1,4 @@
 use super::geom::{Point, Rectangle};
-use std::{self, cmp::min};
 
 // TODO: Possibly useful later: https://docs.rs/fast-math/latest/fast_math/fn.exp.html
 pub fn sigmoid(x: f32, offset: f32, width: f32) -> f32 {

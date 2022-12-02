@@ -10,7 +10,7 @@ pub struct Angle {
 
 impl Angle {
     pub fn new() -> Angle {
-        Angle::new()
+        Angle::zero()
     }
 
     pub fn zero() -> Angle {
