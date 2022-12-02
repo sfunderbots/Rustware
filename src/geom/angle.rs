@@ -1,11 +1,11 @@
-use std::f32::consts::PI;
-use std::ops::{Sub, Neg};
-use std::cmp::{Eq, PartialOrd};
 use float_cmp;
+use std::cmp::{Eq, PartialOrd};
+use std::f32::consts::PI;
+use std::ops::{Neg, Sub};
 
 #[derive(Debug, PartialOrd)]
 pub struct Angle {
-    radians: f32
+    radians: f32,
 }
 
 impl Angle {
@@ -14,23 +14,25 @@ impl Angle {
     }
 
     pub fn zero() -> Angle {
-        Angle{radians: 0.0}
+        Angle { radians: 0.0 }
     }
 
     pub fn half() -> Angle {
-        Angle{radians: PI}
+        Angle { radians: PI }
     }
 
     pub fn full() -> Angle {
-        Angle{radians: 2.0*PI}
+        Angle { radians: 2.0 * PI }
     }
 
     pub fn from_degrees(degrees: f32) -> Angle {
-        Angle{radians: degrees / 180.0 * PI}
+        Angle {
+            radians: degrees / 180.0 * PI,
+        }
     }
 
     pub fn from_radians(radians: f32) -> Angle {
-        Angle{radians: radians}
+        Angle { radians: radians }
     }
 
     pub fn degrees(&self) -> f32 {
@@ -43,13 +45,13 @@ impl Angle {
     }
 
     pub fn clamp2pi(&self) -> Angle {
-        Angle::from_radians(self.radians.rem_euclid(PI*2.0))
+        Angle::from_radians(self.radians.rem_euclid(PI * 2.0))
     }
     pub fn clamp(&self) -> Angle {
         let twopi = self.clamp2pi();
         if twopi > Angle::half() {
             twopi - Angle::full()
-        }else {
+        } else {
             twopi
         }
     }
@@ -57,7 +59,15 @@ impl Angle {
 
 impl PartialEq for Angle {
     fn eq(&self, other: &Self) -> bool {
-        float_cmp::approx_eq!(f32, self.radians, other.radians, float_cmp::F32Margin{epsilon: 5.0*f32::EPSILON, ulps: 5})
+        float_cmp::approx_eq!(
+            f32,
+            self.radians,
+            other.radians,
+            float_cmp::F32Margin {
+                epsilon: 5.0 * f32::EPSILON,
+                ulps: 5
+            }
+        )
     }
 }
 impl Eq for Angle {}
@@ -75,7 +85,6 @@ impl Sub for Angle {
         Angle::from_radians(self.radians - rhs.radians)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

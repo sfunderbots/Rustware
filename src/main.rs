@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 mod geom;
 mod math;
 mod motion;
@@ -63,8 +66,8 @@ fn time_to_intercept(p: &Pass, r: &Robot) -> f32 {
     let mut min_diff = f32::INFINITY;
     for i in 0..NUM_STEPS {
         let pos = Point {
-            x: p.start.x + i as f32*x_incr + ROBOT_RADIUS,
-            y: p.start.x + i as f32*y_incr + ROBOT_RADIUS,
+            x: p.start.x + i as f32 * x_incr + ROBOT_RADIUS,
+            y: p.start.x + i as f32 * y_incr + ROBOT_RADIUS,
         };
         let ttp = bb_time_to_position(&r.position, &r.velocity, &pos, 3.0, 3.0);
         let diff = ttp - p.time_to_complete();
