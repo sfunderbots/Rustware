@@ -8,7 +8,7 @@ pub fn sigmoid(x: f32, offset: f32, width: f32) -> f32 {
    1.0 / (1.0 + (sig_change_factor*(offset-x)).exp())
 }
 
-pub fn rect_sigmoid(rect: Rectangle, p: Point, width: f32) -> f32 {
+pub fn rect_sigmoid(rect: Rectangle, p: &Point, width: f32) -> f32 {
    let x_offset = rect.centre().x;
    let y_offset = rect.centre().y;
    let x_size = rect.len_x() / 2.0;
