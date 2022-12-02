@@ -3,9 +3,10 @@ mod math;
 mod world;
 mod motion;
 
-use crate::geom::{Rectangle, Point};
+use crate::geom::{Rectangle, Point, Vector};
 use crate::world::{Field, Robot};
 use crate::math::{sigmoid, rect_sigmoid};
+use std::time::Instant;
 
 struct Pass {
     start: Point,
@@ -27,9 +28,37 @@ fn score_pass(p: &Pass, field: &Field) -> f32 {
     static_score
 }
 
+fn generate_random_passes(num: usize) -> Vec<Pass> {
+    let mut result: Vec<Pass> = Vec::new();
+    for i in (0..num-1) {
+        result.push(Pass{
+             start: Point::new(),
+            end: Point::new(),
+            speed: 4.0,
+            time_offset: 0.15
+        })
+    }
+    result
+}
+
+
 
 fn main() {
     let p = geom::Point::new();
+    let passes = generate_random_passes(1000);
+    let field = Field::ssl_div_b();
     // println!("Hello, world! {}", math::sigmoid());
 
+    let start = Instant::now();
+    for p in &passes {
+        let score = score_pass(p, &field);
+        if score == 0.392 {
+            println!("preventing too much compiler optimization :)");
+        }
+    }
+    let end = Instant::now();
+    let total_time_ns = (end-start).as_nanos();
+    let total_time_ms = total_time_ns as f64 / 1_000_000.0;
+    let time_per_call_ms = total_time_ms / passes.len() as f64;
+    println!("Total time: {total_time_ms}ms. Time per call: {time_per_call_ms}ms");
 }
