@@ -1,5 +1,6 @@
 use super::point::Point;
 
+#[derive(Clone, Copy, Debug)]
 pub struct Rectangle {
     bottom_left: Point,
     top_right: Point,

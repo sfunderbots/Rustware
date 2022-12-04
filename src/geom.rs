@@ -10,3 +10,4 @@ pub use self::angle::Angle;
 pub use self::point::Point;
 pub use self::rectangle::Rectangle;
 pub use self::vector::Vector;
+pub use self::circle::Circle;

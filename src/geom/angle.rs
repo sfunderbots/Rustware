@@ -1,9 +1,9 @@
 use float_cmp;
-use std::cmp::{Eq, PartialOrd};
+use std::cmp::{Eq, Ordering, PartialOrd, Ord};
 use std::f32::consts::PI;
-use std::ops::{Neg, Sub};
+use std::ops::{Neg, Sub, Add};
 
-#[derive(Debug, PartialOrd)]
+#[derive(Clone, Copy, PartialOrd, Debug)]
 pub struct Angle {
     radians: f32,
 }
@@ -44,16 +44,30 @@ impl Angle {
         self.radians
     }
 
+    pub fn sin(&self) -> f32 {
+        self.radians.sin()
+    }
+
+    pub fn cos(&self) -> f32 {
+        self.radians.cos()
+    }
+
     pub fn clamp2pi(&self) -> Angle {
         Angle::from_radians(self.radians.rem_euclid(PI * 2.0))
     }
-    pub fn clamp(&self) -> Angle {
+    pub fn clamp_pos_neg_pi(&self) -> Angle {
         let twopi = self.clamp2pi();
         if twopi > Angle::half() {
             twopi - Angle::full()
         } else {
             twopi
         }
+    }
+}
+
+impl Ord for Angle {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.radians.total_cmp(&other.radians)
     }
 }
 
@@ -79,8 +93,29 @@ impl Neg for Angle {
     }
 }
 
+impl Add for Angle {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Angle::from_radians(self.radians + rhs.radians)
+    }
+}
+
+impl Add for &Angle {
+    type Output = Angle;
+    fn add(self, rhs: Self) -> Self::Output {
+        Angle::from_radians(self.radians + rhs.radians)
+    }
+}
+
 impl Sub for Angle {
     type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Angle::from_radians(self.radians - rhs.radians)
+    }
+}
+
+impl Sub for &Angle {
+    type Output = Angle;
     fn sub(self, rhs: Self) -> Self::Output {
         Angle::from_radians(self.radians - rhs.radians)
     }
@@ -128,31 +163,31 @@ mod tests {
 
     #[test]
     fn clamp_large_negative() {
-        let result = Angle::from_degrees(-199.0).clamp();
+        let result = Angle::from_degrees(-199.0).clamp_pos_neg_pi();
         assert_eq!(result, Angle::from_degrees(161.0));
     }
 
     #[test]
     fn clamp_small_negative() {
-        let result = Angle::from_degrees(-5.0).clamp();
+        let result = Angle::from_degrees(-5.0).clamp_pos_neg_pi();
         assert_eq!(result, Angle::from_degrees(-5.0));
     }
 
     #[test]
     fn clamp_zero() {
-        let result = Angle::from_degrees(0.0).clamp();
+        let result = Angle::from_degrees(0.0).clamp_pos_neg_pi();
         assert_eq!(result, Angle::from_degrees(0.0));
     }
 
     #[test]
     fn clamp_small_positive() {
-        let result = Angle::from_degrees(6.0).clamp();
+        let result = Angle::from_degrees(6.0).clamp_pos_neg_pi();
         assert_eq!(result, Angle::from_degrees(6.0));
     }
 
     #[test]
     fn clamp_large_positive() {
-        let result = Angle::from_degrees(370.0).clamp();
+        let result = Angle::from_degrees(370.0).clamp_pos_neg_pi();
         assert_eq!(result, Angle::from_degrees(10.0));
     }
 }

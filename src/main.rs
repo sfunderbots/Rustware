@@ -5,6 +5,7 @@ mod geom;
 mod math;
 mod motion;
 mod world;
+mod evaluation;
 
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
