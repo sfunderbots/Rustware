@@ -6,6 +6,7 @@ mod math;
 mod motion;
 mod world;
 mod evaluation;
+mod experimental;
 
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
@@ -149,64 +150,68 @@ fn pass_gradient(
 }
 
 fn main() {
-    let passes = generate_random_passes(18);
-    let field = Field::ssl_div_b();
-    let friendly_robots: Vec<Robot> = vec![
-        Robot {
-            id: 0,
-            position: Point::new(),
-            velocity: Vector::new(),
-        },
-        Robot {
-            id: 1,
-            position: Point { x: 1.0, y: 2.0 },
-            velocity: Vector::new(),
-        },
-        Robot {
-            id: 2,
-            position: Point { x: 3.0, y: -1.0 },
-            velocity: Vector::new(),
-        },
-        Robot {
-            id: 3,
-            position: Point { x: -1.0, y: -3.0 },
-            velocity: Vector::new(),
-        },
-    ];
-    let enemy_robots: Vec<Robot> = vec![
-        Robot {
-            id: 0,
-            position: Point { x: -1.0, y: 2.0 },
-            velocity: Vector::new(),
-        },
-        Robot {
-            id: 1,
-            position: Point { x: 1.0, y: -2.0 },
-            velocity: Vector::new(),
-        },
-        Robot {
-            id: 2,
-            position: Point { x: -3.0, y: 1.0 },
-            velocity: Vector::new(),
-        },
-        Robot {
-            id: 3,
-            position: Point { x: 1.0, y: 3.0 },
-            velocity: Vector::new(),
-        },
-    ];
-
-    let start = Instant::now();
-    for p in &passes {
-        let grad = pass_gradient(p, &field, &friendly_robots, &enemy_robots);
-        if grad[0] == 0.392 {
-            println!("preventing too much compiler optimization :)");
-        }
-    }
-    let end = Instant::now();
-    let total_time_ns = (end - start).as_nanos();
-    let total_time_ms = total_time_ns as f64 / 1_000_000.0;
-    let time_per_call_ms = total_time_ms / passes.len() as f64;
-    let num_passes = passes.len();
-    println!("Total time for {num_passes}: {total_time_ms}ms. Time per call: {time_per_call_ms}ms");
+    experimental::run();
 }
+
+// fn main() {
+//     let passes = generate_random_passes(18);
+//     let field = Field::ssl_div_b();
+//     let friendly_robots: Vec<Robot> = vec![
+//         Robot {
+//             id: 0,
+//             position: Point::new(),
+//             velocity: Vector::new(),
+//         },
+//         Robot {
+//             id: 1,
+//             position: Point { x: 1.0, y: 2.0 },
+//             velocity: Vector::new(),
+//         },
+//         Robot {
+//             id: 2,
+//             position: Point { x: 3.0, y: -1.0 },
+//             velocity: Vector::new(),
+//         },
+//         Robot {
+//             id: 3,
+//             position: Point { x: -1.0, y: -3.0 },
+//             velocity: Vector::new(),
+//         },
+//     ];
+//     let enemy_robots: Vec<Robot> = vec![
+//         Robot {
+//             id: 0,
+//             position: Point { x: -1.0, y: 2.0 },
+//             velocity: Vector::new(),
+//         },
+//         Robot {
+//             id: 1,
+//             position: Point { x: 1.0, y: -2.0 },
+//             velocity: Vector::new(),
+//         },
+//         Robot {
+//             id: 2,
+//             position: Point { x: -3.0, y: 1.0 },
+//             velocity: Vector::new(),
+//         },
+//         Robot {
+//             id: 3,
+//             position: Point { x: 1.0, y: 3.0 },
+//             velocity: Vector::new(),
+//         },
+//     ];
+//
+//     let start = Instant::now();
+//     for p in &passes {
+//         let grad = pass_gradient(p, &field, &friendly_robots, &enemy_robots);
+//         if grad[0] == 0.392 {
+//             println!("preventing too much compiler optimization :)");
+//         }
+//     }
+//     let end = Instant::now();
+//     let total_time_ns = (end - start).as_nanos();
+//     let total_time_ms = total_time_ns as f64 / 1_000_000.0;
+//     let time_per_call_ms = total_time_ms / passes.len() as f64;
+//     let num_passes = passes.len();
+//     println!("Total time for {num_passes}: {total_time_ms}ms. Time per call: {time_per_call_ms}ms");
+// }
