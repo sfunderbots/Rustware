@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
-use std::thread;
-use crate::communication::{Node, run_forever};
+use crate::communication::{run_forever, Node};
 use multiqueue2;
-use std::thread::{JoinHandle, sleep};
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
+use std::thread;
+use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 
 pub struct Input {
@@ -39,12 +39,17 @@ impl Node for Backend {
 
 impl Backend {
     pub fn new(input: Input, output: Output) -> Self {
-        Self{
-            input: input, output: output
+        Self {
+            input: input,
+            output: output,
         }
     }
 
-    pub fn create_in_thread(input: Input, output: Output, should_stop: &Arc<AtomicBool>) -> JoinHandle<()> {
+    pub fn create_in_thread(
+        input: Input,
+        output: Output,
+        should_stop: &Arc<AtomicBool>,
+    ) -> JoinHandle<()> {
         let should_stop = Arc::clone(should_stop);
         thread::spawn(move || {
             let node = Self::new(input, output);

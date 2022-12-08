@@ -70,7 +70,7 @@ pub struct Robot {
     pub position: Point,
     pub orientation: Angle,
     pub velocity: Vector,
-    pub angular_velocity: Angle
+    pub angular_velocity: Angle,
 }
 
 pub struct Ball {

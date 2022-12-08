@@ -22,7 +22,7 @@ use rand::Rng;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread;
-use std::thread::{JoinHandle, sleep};
+use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 
@@ -46,7 +46,7 @@ fn set_up_node_io() -> AllNodeIo {
     let (world_sender, world_receiver) = multiqueue2::mpmc_queue::<i32>(100);
     let (trajectories_sender, trajectories_receiver) = multiqueue2::mpmc_queue::<i32>(100);
 
-    AllNodeIo{
+    AllNodeIo {
         perception_input: perception::Input {
             ssl_vision_proto: ssl_vision_proto_receiver.clone(),
         },
@@ -70,21 +70,19 @@ fn set_up_node_io() -> AllNodeIo {
 
 fn create_synchronous_nodes(io: AllNodeIo) -> AllNodes {
     AllNodes {
-        perception: perception::Perception::new(
-            io.perception_input, io.perception_output
-        ),
-        gameplay: gameplay::Gameplay::new(
-            io.gameplay_input, io.gameplay_output
-        ),
-        backend: backend::Backend::new(
-            io.backend_input, io.backend_output
-        )
+        perception: perception::Perception::new(io.perception_input, io.perception_output),
+        gameplay: gameplay::Gameplay::new(io.gameplay_input, io.gameplay_output),
+        backend: backend::Backend::new(io.backend_input, io.backend_output),
     }
 }
 
 fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Vec<JoinHandle<()>> {
     vec![
-        perception::Perception::create_in_thread(io.perception_input, io.perception_output, should_stop),
+        perception::Perception::create_in_thread(
+            io.perception_input,
+            io.perception_output,
+            should_stop,
+        ),
         gameplay::Gameplay::create_in_thread(io.gameplay_input, io.gameplay_output, should_stop),
         backend::Backend::create_in_thread(io.backend_input, io.backend_output, should_stop),
     ]

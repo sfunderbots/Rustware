@@ -1,16 +1,16 @@
 mod play;
 mod tactic;
 
-use crate::communication::{Node, run_forever};
-use multiqueue2;
+use crate::communication::{run_forever, Node};
 use crate::motion::Trajectory;
 use crate::world::World;
+use multiqueue2;
+use play::{Halt, Play, RequestedTactics, Stop};
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use play::{Play, RequestedTactics, Halt, Stop};
 use tactic::Tactic;
 
 pub struct Input {
@@ -24,22 +24,24 @@ pub struct Gameplay {
     input: Input,
     output: Output,
     state: State,
-    available_plays: Vec<Box<dyn Play>>
+    available_plays: Vec<Box<dyn Play>>,
 }
-
-
 
 impl Gameplay {
     pub fn new(input: Input, output: Output) -> Self {
-        Self{
+        Self {
             input: input,
             output: output,
             state: State::new(),
-            available_plays: vec![Box::new(Halt{}), Box::new(Stop{})]
+            available_plays: vec![Box::new(Halt {}), Box::new(Stop {})],
         }
     }
 
-    pub fn create_in_thread(input: Input, output: Output, should_stop: &Arc<AtomicBool>) -> JoinHandle<()> {
+    pub fn create_in_thread(
+        input: Input,
+        output: Output,
+        should_stop: &Arc<AtomicBool>,
+    ) -> JoinHandle<()> {
         let should_stop = Arc::clone(should_stop);
         thread::spawn(move || {
             let node = Self::new(input, output);
@@ -87,10 +89,9 @@ struct State {
 }
 
 impl State {
-    pub fn new() -> Self{
-        Self{
-            enemy_max_speed: 1.0 // Assume they can move somewhat
+    pub fn new() -> Self {
+        Self {
+            enemy_max_speed: 1.0, // Assume they can move somewhat
         }
     }
 }
-

@@ -8,7 +8,7 @@ pub trait Play {
 
 pub struct RequestedTactics {
     greedy: Vec<Box<dyn Tactic>>,
-    optimized: Vec<Box<dyn Tactic>>
+    optimized: Vec<Box<dyn Tactic>>,
 }
 
 pub struct Halt {}

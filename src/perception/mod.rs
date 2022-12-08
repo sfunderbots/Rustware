@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use crate::communication::{run_forever, Node};
+use multiqueue2;
 use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use crate::communication::{Node, run_forever};
-use multiqueue2;
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::MPMCReceiver<i32>,
@@ -38,11 +38,16 @@ impl Node for Perception {
 
 impl Perception {
     pub fn new(input: Input, output: Output) -> Self {
-        Self{
-            input: input, output: output
+        Self {
+            input: input,
+            output: output,
         }
     }
-    pub fn create_in_thread(input: Input, output: Output, should_stop: &Arc<AtomicBool>) -> JoinHandle<()> {
+    pub fn create_in_thread(
+        input: Input,
+        output: Output,
+        should_stop: &Arc<AtomicBool>,
+    ) -> JoinHandle<()> {
         let should_stop = Arc::clone(should_stop);
         thread::spawn(move || {
             let node = Self::new(input, output);
