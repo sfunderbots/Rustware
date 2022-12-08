@@ -1,17 +1,17 @@
+use crate::communication::Node;
 use multiqueue2;
 use std::thread::sleep;
 use std::time::Duration;
-use crate::communication::Node;
 
 pub struct Input {
-    pub trajectories: multiqueue2::MPMCReceiver<i32>
+    pub trajectories: multiqueue2::MPMCReceiver<i32>,
 }
 pub struct Output {
-    pub ssl_vision_proto: multiqueue2::MPMCSender<i32>
+    pub ssl_vision_proto: multiqueue2::MPMCSender<i32>,
 }
 pub struct Backend {
     pub input: Input,
-    pub output: Output
+    pub output: Output,
 }
 
 impl Node for Backend {
@@ -22,9 +22,9 @@ impl Node for Backend {
                 std::sync::mpsc::TryRecvError::Empty => None,
                 std::sync::mpsc::TryRecvError::Disconnected => {
                     println!("Breaking backend loop");
-                    return Err(())
+                    return Err(());
                 }
-            }
+            },
         };
         println!("Backend got packet {}", packet.unwrap_or(-1));
 
@@ -36,7 +36,7 @@ impl Node for Backend {
 
 impl Backend {
     pub fn send_dummy_data(&self, data: i32) {
-            self.output.ssl_vision_proto.try_send(data).unwrap();
-            println!("Send ssl vision {}", data);
+        self.output.ssl_vision_proto.try_send(data).unwrap();
+        println!("Send ssl vision {}", data);
     }
 }

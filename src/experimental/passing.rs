@@ -3,15 +3,14 @@ use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::bb_time_to_position;
 use crate::world::{Field, Robot};
+use multiqueue2;
 use rand::Rng;
-use std::time::Instant;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, mpsc};
+use std::sync::{mpsc, Arc};
 use std::thread;
 use std::thread::sleep;
 use std::time::Duration;
-use multiqueue2;
-
+use std::time::Instant;
 
 #[derive(Clone)]
 struct Pass {

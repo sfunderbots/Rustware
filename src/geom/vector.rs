@@ -19,17 +19,17 @@ impl Vector {
         Angle::from_radians(self.y.atan2(self.x))
     }
 
-    pub fn rotate(&self, angle: Angle) -> Vector{
-        Vector{
+    pub fn rotate(&self, angle: Angle) -> Vector {
+        Vector {
             x: self.x * angle.cos() - self.y * angle.sin(),
-            y: self.x * angle.sin() + self.y * angle.cos()
+            y: self.x * angle.sin() + self.y * angle.cos(),
         }
     }
 
-    pub fn norm(&self, dist: f32) -> Vector{
-        Vector{
+    pub fn norm(&self, dist: f32) -> Vector {
+        Vector {
             x: self.x / self.length() * dist,
-            y: self.y / self.length() * dist
+            y: self.y / self.length() * dist,
         }
     }
 }

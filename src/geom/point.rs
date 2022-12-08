@@ -16,9 +16,9 @@ impl Point {
 impl Add<Vector> for Point {
     type Output = Point;
     fn add(self, rhs: Vector) -> Self::Output {
-        Point{
+        Point {
             x: self.x + rhs.x,
-            y: self.y + rhs.y
+            y: self.y + rhs.y,
         }
     }
 }
@@ -26,9 +26,9 @@ impl Add<Vector> for Point {
 impl Sub for Point {
     type Output = Vector;
     fn sub(self, rhs: Self) -> Self::Output {
-        Vector{
-            x: rhs.x-self.x,
-            y: rhs.y-self.y
+        Vector {
+            x: rhs.x - self.x,
+            y: rhs.y - self.y,
         }
     }
 }

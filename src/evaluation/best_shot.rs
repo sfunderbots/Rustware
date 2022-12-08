@@ -1,6 +1,11 @@
-use crate::geom::{Circle, Point, Angle};
+use crate::geom::{Angle, Circle, Point};
 
-fn angle_sweep_circles(circles: Vec<Circle>, origin: Point, start: Point, end: Point) -> Vec<(Angle, Angle)> {
+fn angle_sweep_circles(
+    circles: Vec<Circle>,
+    origin: Point,
+    start: Point,
+    end: Point,
+) -> Vec<(Angle, Angle)> {
     /*
     How this algorithm works:
     Sweep over all obstacles in counterclockwise order, from start to end.
@@ -17,18 +22,20 @@ fn angle_sweep_circles(circles: Vec<Circle>, origin: Point, start: Point, end: P
 
     let mut all_angles: Vec<(Angle, i32)> = Vec::new();
     let mut current_num_blockers: i32 = 0;
-    let shifted_angle_end = (angle_end-angle_start).clamp2pi();
+    let shifted_angle_end = (angle_end - angle_start).clamp2pi();
     for circle in &circles {
         let (tangent_point_1, tangent_point_2) = match circle.tangent_points(origin) {
             Option::Some((t1, t2)) => (t1, t2),
-            Option::None => return Vec::new()
+            Option::None => return Vec::new(),
         };
-        let tangent_angle_1 = ((tangent_point_1 - origin).orientation() - angle_start).clamp_pos_neg_pi();
-        let tangent_angle_2 = ((tangent_point_2 - origin).orientation() - angle_start).clamp_pos_neg_pi();
+        let tangent_angle_1 =
+            ((tangent_point_1 - origin).orientation() - angle_start).clamp_pos_neg_pi();
+        let tangent_angle_2 =
+            ((tangent_point_2 - origin).orientation() - angle_start).clamp_pos_neg_pi();
         // Only add the angles that are inside the sweep range
         if tangent_angle_1 <= Angle::zero() && tangent_angle_2 > Angle::zero() {
             // In this case, a circle is overlapping the start angle, meaning we start the sweep with +1 obstacles
-            current_num_blockers+=1;
+            current_num_blockers += 1;
             // It's possible for the first tangent to still fall within the range,
             // so check if that's the case and add it here. Clamp to [0, 2pi] since in this case
             // the angle should be treated as if it's counterclockwise of the start
@@ -38,7 +45,9 @@ fn angle_sweep_circles(circles: Vec<Circle>, origin: Point, start: Point, end: P
             if tangent_angle_2.clamp2pi() < shifted_angle_end {
                 all_angles.push((tangent_angle_2.clamp2pi(), -1))
             }
-        }else if Angle::zero() <= tangent_angle_1.clamp2pi() && tangent_angle_1.clamp2pi() < shifted_angle_end {
+        } else if Angle::zero() <= tangent_angle_1.clamp2pi()
+            && tangent_angle_1.clamp2pi() < shifted_angle_end
+        {
             // In this case the circle starts within the range
             all_angles.push((tangent_angle_1.clamp2pi(), 1));
             if tangent_angle_2.clamp2pi() < shifted_angle_end {
@@ -51,7 +60,10 @@ fn angle_sweep_circles(circles: Vec<Circle>, origin: Point, start: Point, end: P
     // all_angles.sort_by(|x, y| x.0.partial_cmp(y.0));
     all_angles.sort_unstable_by_key(|x| x.0);
 
-    assert!(all_angles[0].0 == Angle::zero(), "First angle in sweep should always be zero");
+    assert!(
+        all_angles[0].0 == Angle::zero(),
+        "First angle in sweep should always be zero"
+    );
 
     let mut current_open_angle = None;
     let mut open_angles: Vec<(Angle, Angle)> = Vec::new();
@@ -60,7 +72,7 @@ fn angle_sweep_circles(circles: Vec<Circle>, origin: Point, start: Point, end: P
         if current_num_blockers <= 0 {
             current_num_blockers = 0;
             current_open_angle = Some(angle);
-        }else if current_num_blockers > 0 && current_open_angle.is_some(){
+        } else if current_num_blockers > 0 && current_open_angle.is_some() {
             open_angles.push((current_open_angle.unwrap(), angle));
             current_open_angle = None;
         }
@@ -69,9 +81,15 @@ fn angle_sweep_circles(circles: Vec<Circle>, origin: Point, start: Point, end: P
         open_angles.push((current_open_angle.unwrap(), shifted_angle_end));
     }
 
-    let unshifted_open_angles = open_angles.into_iter()
-        .filter(|(a, b)| (b-a).degrees().abs() > 1.0e-3)
-        .map(|(a, b)| ((angle_start + a).clamp_pos_neg_pi(), (angle_start+b).clamp_pos_neg_pi()))
+    let unshifted_open_angles = open_angles
+        .into_iter()
+        .filter(|(a, b)| (b - a).degrees().abs() > 1.0e-3)
+        .map(|(a, b)| {
+            (
+                (angle_start + a).clamp_pos_neg_pi(),
+                (angle_start + b).clamp_pos_neg_pi(),
+            )
+        })
         .collect();
     unshifted_open_angles
 }

@@ -1,7 +1,7 @@
 use float_cmp;
-use std::cmp::{Eq, Ordering, PartialOrd, Ord};
+use std::cmp::{Eq, Ord, Ordering, PartialOrd};
 use std::f32::consts::PI;
-use std::ops::{Neg, Sub, Add};
+use std::ops::{Add, Neg, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Debug)]
 pub struct Angle {
