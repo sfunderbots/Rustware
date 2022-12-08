@@ -1,12 +1,15 @@
-mod state;
 mod play;
 mod tactic;
 
-use crate::communication::Node;
+use crate::communication::{Node, run_forever};
 use multiqueue2;
 use crate::motion::Trajectory;
 use crate::world::World;
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
+use std::thread::JoinHandle;
 use play::{Play, RequestedTactics, Halt, Stop};
 use tactic::Tactic;
 
@@ -21,8 +24,10 @@ pub struct Gameplay {
     input: Input,
     output: Output,
     state: State,
-    available_plays: Vec<Box<dyn Play + Send>>
+    available_plays: Vec<Box<dyn Play>>
 }
+
+
 
 impl Gameplay {
     pub fn new(input: Input, output: Output) -> Self {
@@ -32,6 +37,14 @@ impl Gameplay {
             state: State::new(),
             available_plays: vec![Box::new(Halt{}), Box::new(Stop{})]
         }
+    }
+
+    pub fn create_in_thread(input: Input, output: Output, should_stop: &Arc<AtomicBool>) -> JoinHandle<()> {
+        let should_stop = Arc::clone(should_stop);
+        thread::spawn(move || {
+            let node = Self::new(input, output);
+            run_forever(Box::new(node), should_stop, "Gameplay");
+        })
     }
 
     pub fn tick(world: World) -> HashMap<i32, Trajectory> {

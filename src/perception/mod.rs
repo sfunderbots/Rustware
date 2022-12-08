@@ -1,4 +1,8 @@
-use crate::communication::Node;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::thread;
+use std::thread::JoinHandle;
+use crate::communication::{Node, run_forever};
 use multiqueue2;
 
 pub struct Input {
@@ -29,5 +33,20 @@ impl Node for Perception {
         println!("Perception got packet {}", packet);
         self.output.world.try_send(packet);
         Ok(())
+    }
+}
+
+impl Perception {
+    pub fn new(input: Input, output: Output) -> Self {
+        Self{
+            input: input, output: output
+        }
+    }
+    pub fn create_in_thread(input: Input, output: Output, should_stop: &Arc<AtomicBool>) -> JoinHandle<()> {
+        let should_stop = Arc::clone(should_stop);
+        thread::spawn(move || {
+            let node = Self::new(input, output);
+            run_forever(Box::new(node), should_stop, "Perception");
+        })
     }
 }

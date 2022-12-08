@@ -1,6 +1,9 @@
-use crate::communication::Node;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::thread;
+use crate::communication::{Node, run_forever};
 use multiqueue2;
-use std::thread::sleep;
+use std::thread::{JoinHandle, sleep};
 use std::time::Duration;
 
 pub struct Input {
@@ -35,6 +38,19 @@ impl Node for Backend {
 }
 
 impl Backend {
+    pub fn new(input: Input, output: Output) -> Self {
+        Self{
+            input: input, output: output
+        }
+    }
+
+    pub fn create_in_thread(input: Input, output: Output, should_stop: &Arc<AtomicBool>) -> JoinHandle<()> {
+        let should_stop = Arc::clone(should_stop);
+        thread::spawn(move || {
+            let node = Self::new(input, output);
+            run_forever(Box::new(node), should_stop, "Backend");
+        })
+    }
     pub fn send_dummy_data(&self, data: i32) {
         self.output.ssl_vision_proto.try_send(data).unwrap();
         println!("Send ssl vision {}", data);
