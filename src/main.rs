@@ -46,14 +46,14 @@ fn set_up_nodes() -> AllNodes {
                 world: world_sender.clone(),
             },
         },
-        gameplay: gameplay::Gameplay {
-            input: gameplay::Input {
+        gameplay: gameplay::Gameplay::new(
+            gameplay::Input {
                 world: world_receiver.clone(),
             },
-            output: gameplay::Output {
+            gameplay::Output {
                 trajectories: trajectories_sender.clone(),
             },
-        },
+        ),
         backend: backend::Backend {
             input: backend::Input {
                 trajectories: trajectories_receiver.clone(),
@@ -69,7 +69,7 @@ fn set_up_nodes() -> AllNodes {
 fn run_nodes_synchronously() {
     let mut nodes = set_up_nodes();
 
-    for i in 0..100 {
+    for i in 0..10 {
         nodes.backend.send_dummy_data(i);
         nodes.perception.run_once();
         nodes.gameplay.run_once();

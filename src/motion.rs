@@ -71,3 +71,5 @@ pub fn bb_time_to_position(
     let time_for_y = bb_time_to_position_1d(start.y, initial_velocity.y, end.y, 0.0, a, max_speed);
     time_for_x.max(time_for_y)
 }
+
+pub struct Trajectory {}

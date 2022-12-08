@@ -1,4 +1,4 @@
-use crate::geom::{Point, Rectangle, Vector};
+use crate::geom::{Angle, Point, Rectangle, Vector};
 
 pub struct Field {
     pub x_length: f32,
@@ -68,5 +68,14 @@ impl Field {
 pub struct Robot {
     pub id: usize,
     pub position: Point,
+    pub orientation: Angle,
+    pub velocity: Vector,
+    pub angular_velocity: Angle
+}
+
+pub struct Ball {
+    pub position: Point,
     pub velocity: Vector,
 }
+
+pub struct World {}
