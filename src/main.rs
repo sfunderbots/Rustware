@@ -10,6 +10,7 @@ mod experimental;
 mod perception;
 mod communication;
 mod gameplay;
+mod backend;
 
 use crate::communication::Node;
 use crate::geom::{Point, Vector};
@@ -25,105 +26,103 @@ use std::thread::sleep;
 use std::time::Duration;
 use multiqueue2;
 
+struct AllNodes {
+    perception: perception::Perception,
+    gameplay: gameplay::Gameplay,
+    backend: backend::Backend
+}
 
-fn run_sync() {
-    let (ssl_w, ssl_r) = multiqueue2::mpmc_queue::<i32>(100);
-    let (world_w, world_r) = multiqueue2::mpmc_queue::<i32>(100);
-    let (traj_w, traj_r) = multiqueue2::mpmc_queue::<i32>(100);
-    let mut p = perception::Perception{
-        input: perception::Input{
-            ssl_vision_proto: ssl_r.clone(),
+fn set_up_nodes() -> AllNodes {
+    let (ssl_vision_proto_sender, ssl_vision_proto_receiver) = multiqueue2::mpmc_queue::<i32>(100);
+    let (world_sender, world_receiver) = multiqueue2::mpmc_queue::<i32>(100);
+    let (trajectories_sender, trajectories_receiver) = multiqueue2::mpmc_queue::<i32>(100);
+
+    let nodes = AllNodes{
+        perception: perception::Perception{
+            input: perception::Input{
+                ssl_vision_proto: ssl_vision_proto_receiver.clone(),
+            },
+            output: perception::Output{
+                world: world_sender.clone()
+            }
         },
-        output: perception::Output{
-            world: world_w.clone()
+        gameplay: gameplay::Gameplay{
+            input: gameplay::Input{
+                world: world_receiver.clone()
+            },
+            output: gameplay::Output{
+                trajectories: trajectories_sender.clone()
+            }
+        },
+        backend: backend::Backend{
+            input: backend::Input{
+                trajectories: trajectories_receiver.clone()
+            },
+            output: backend::Output{
+                ssl_vision_proto: ssl_vision_proto_sender.clone()
+            }
         }
     };
-    let mut g = gameplay::Gameplay{
-        input: gameplay::Input{
-            world: world_r.clone()
-        },
-        output: gameplay::Output{
-            trajectories: traj_w.clone()
-        }
-    };
+    nodes
+}
+
+fn run_nodes_synchronously() {
+    let mut nodes = set_up_nodes();
 
     for i in 0..100 {
-        ssl_w.try_send(i).unwrap();
-        println!("Send ssl vision {}", i);
-        p.run_once();
-        g.run_once();
-        sleep(Duration::from_millis(100));
+        nodes.backend.send_dummy_data(i);
+        nodes.perception.run_once();
+        nodes.gameplay.run_once();
+        nodes.backend.run_once();
+
     }
 }
 
-fn run_forever(mut n: Box<dyn Node>, stop: Arc<AtomicBool>, name: &str) {
-    loop {
-        match n.run_once() {
-            Err(_) => {
+fn create_node_thread(mut n: Box<dyn Node + Send>, should_stop: &Arc<AtomicBool>, name: String) -> thread::JoinHandle<()> {
+    let should_stop = Arc::clone(should_stop);
+    let handles = thread::spawn(move || {
+        loop {
+            match n.run_once() {
+                Err(_) => {
+                    println!("Terminating node {}", name);
+                    break;
+                }
+                _ => ()
+            }
+            if should_stop.load(Ordering::SeqCst) {
                 println!("Terminating node {}", name);
                 break;
             }
-            _ => ()
         }
-        if stop.load(Ordering::SeqCst) {
-            println!("Terminating node {}", name);
-            break;
-        }
-    }
+    });
+    handles
 }
 
-
-fn run_in_threads() {
-    println!("Hello");
-
-    let (ssl_w, ssl_r) = multiqueue2::mpmc_queue::<i32>(100);
-    let (world_w, world_r) = multiqueue2::mpmc_queue::<i32>(100);
-    let (traj_w, traj_r) = multiqueue2::mpmc_queue::<i32>(100);
-    let mut p = perception::Perception{
-        input: perception::Input{
-            ssl_vision_proto: ssl_r.clone(),
-        },
-        output: perception::Output{
-            world: world_w.clone()
-        }
-    };
-    let mut g = gameplay::Gameplay{
-        input: gameplay::Input{
-            world: world_r.clone()
-        },
-        output: gameplay::Output{
-            trajectories: traj_w.clone()
-        }
-    };
-
+fn run_nodes_in_parallel_threads() {
+    let mut nodes = set_up_nodes();
 
     let mut should_stop = Arc::new(AtomicBool::new(false));
 
-    let p_stop = Arc::clone(&should_stop);
-    let p_handle = thread::spawn(move || {
-        run_forever(Box::new(p), p_stop, "Perception");
-    });
-    let g_stop = Arc::clone(&should_stop);
-    let g_handle = thread::spawn(move || {
-        run_forever(Box::new(g), g_stop, "Gameplay");
-    });
-
-    for i in 0..10 {
-        ssl_w.try_send(i).unwrap();
-        println!("Send ssl vision {}", i);
-        sleep(Duration::from_millis(10));
-    }
+    let handles = vec![
+        create_node_thread(Box::new(nodes.perception), &should_stop, "Perception".to_string()),
+        create_node_thread(Box::new(nodes.gameplay), &should_stop, "Gameplay".to_string()),
+        create_node_thread(Box::new(nodes.backend), &should_stop, "Backend".to_string())
+    ];
 
 
+    println!("Sleeping to simulate working time");
+    sleep(Duration::from_secs(2));
+    println!("Done sleeping. Sending stop signal");
     should_stop.store(true, Ordering::SeqCst);
-
-    println!("About to joiun");
-    p_handle.join();
-    g_handle.join();
+    println!("About to join");
+    for handle in handles {
+        handle.join();
+    }
+    println!("Done join");
 }
 
 fn main() {
     // experimental::run();
-    run_sync();
-    // run_in_threads();
+    run_nodes_synchronously();
+    // run_nodes_in_parallel_threads();
 }
