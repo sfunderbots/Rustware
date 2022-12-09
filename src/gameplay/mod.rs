@@ -24,16 +24,19 @@ pub struct Gameplay {
     input: Input,
     output: Output,
     state: State,
-    available_plays: Vec<Box<dyn Play>>,
+    play_builders: Vec<Box<dyn Fn() -> Box<dyn Play>>>,
 }
 
 impl Gameplay {
     pub fn new(input: Input, output: Output) -> Self {
         Self {
-            input: input,
-            output: output,
+            input,
+            output,
             state: State::new(),
-            available_plays: vec![Box::new(Halt {}), Box::new(Stop {})],
+            play_builders: vec![
+                Box::new(|| {Box::new(Halt{})}),
+                Box::new(|| {Box::new(Stop{})}),
+            ]
         }
     }
 
@@ -49,10 +52,11 @@ impl Gameplay {
         })
     }
 
-    pub fn tick(world: World) -> HashMap<i32, Trajectory> {
+    pub fn tick(&mut self, world: World) -> HashMap<i32, Trajectory> {
         // Update possession, ball model, etc.
 
         // Update current play
+        self.update_current_play();
 
         // Get tactics
 
@@ -63,6 +67,25 @@ impl Gameplay {
         // Return trajectories
 
         HashMap::new()
+    }
+
+
+
+    fn update_current_play(&mut self) {
+        if !self.state.current_play.can_continue() {
+            // TODO: inefficient because the play has to be allocated
+            // just to check if it can start
+            for builder in &self.play_builders {
+                let play = builder();
+                if play.can_start() {
+                    self.state.current_play = play;
+                    println!("Starting play: {}", self.state.current_play.name());
+                    return;
+                }
+            }
+            self.state.current_play = Box::new(Halt{});
+            println!("No play can start. Falling back to : {}", self.state.current_play.name());
+        }
     }
 }
 
@@ -86,12 +109,14 @@ impl Node for Gameplay {
 
 struct State {
     enemy_max_speed: f32,
+    current_play: Box<dyn Play>
 }
 
 impl State {
     pub fn new() -> Self {
         Self {
             enemy_max_speed: 1.0, // Assume they can move somewhat
+            current_play: Box::new(Halt{})
         }
     }
 }
