@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::geom::{Angle, Point, Rectangle, Vector};
 use crate::motion::KinematicState;
 
@@ -76,4 +77,39 @@ pub struct Ball {
     pub velocity: Vector,
 }
 
-pub struct World {}
+pub struct Team {
+    goalie_id: Option<usize>,
+    robots: HashMap<usize, Robot>
+}
+
+impl Team {
+    pub fn new() -> Team {
+        Team{
+            goalie_id: None,
+            robots: HashMap::new()
+        }
+    }
+
+    pub fn with_robots(&mut self, robots: Vec<Robot>) -> &mut Self {
+        for r in robots {
+            self.robots.insert(r.id, r);
+        }
+        self
+    }
+
+    pub fn with_goalie(&mut self, goalie_id: usize) -> &mut Self {
+        self.goalie_id = Some(goalie_id);
+        self
+    }
+
+    pub fn build(self) -> Team {
+        self
+    }
+}
+
+pub struct World {
+    ball: Ball,
+    friendly_team: Team,
+    enemy_team: Team,
+    field: Field
+}
