@@ -1,4 +1,7 @@
-use crate::geom::{Point, Vector};
+mod tracker;
+pub mod planner;
+
+use crate::geom::{Point, Vector, Angle};
 
 pub fn bb_time_to_position_1d(xi: f32, vi: f32, xf: f32, vf: f32, a: f32, v_max: f32) -> f32 {
     assert!(vf == 0.0);
@@ -72,4 +75,29 @@ pub fn bb_time_to_position(
     time_for_x.max(time_for_y)
 }
 
-pub struct Trajectory {}
+pub struct KinematicState {
+    pub position: Point,
+    pub orientation: Angle,
+    pub velocity: Vector,
+    pub angular_velocity: Angle
+}
+
+pub struct Trajectory {
+    points: Vec<Point>,
+    final_orientation: Angle,
+    dribble: bool,
+    autokick_speed: Option<f32>,
+    autochip_distance: Option<f32>
+}
+
+impl Trajectory {
+    fn new() -> Self {
+        Trajectory{
+            points: vec![],
+            final_orientation: Angle::zero(),
+            dribble: false,
+            autokick_speed: None,
+            autochip_distance: None
+        }
+    }
+}

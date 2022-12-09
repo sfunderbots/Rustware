@@ -1,4 +1,5 @@
 use crate::geom::{Angle, Point, Rectangle, Vector};
+use crate::motion::KinematicState;
 
 pub struct Field {
     pub x_length: f32,
@@ -67,10 +68,7 @@ impl Field {
 
 pub struct Robot {
     pub id: usize,
-    pub position: Point,
-    pub orientation: Angle,
-    pub velocity: Vector,
-    pub angular_velocity: Angle,
+    pub state: KinematicState
 }
 
 pub struct Ball {
