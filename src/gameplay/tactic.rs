@@ -2,9 +2,9 @@ use crate::geom::{Angle, Point};
 use crate::motion::Trajectory;
 use crate::motion::planner::{stopping_trajectory, straight_line};
 use crate::world::Robot;
+use dyn_clone::DynClone;
 
 pub trait Tactic {
-    fn preprocess_tick(&self) {}
     fn robot_assignment_cost(&self, robot: &Robot) -> f32;
     fn tick(&self, robot: &Robot) -> Trajectory;
 }

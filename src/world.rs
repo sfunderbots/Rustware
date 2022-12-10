@@ -83,6 +83,33 @@ pub struct Team {
 }
 
 impl Team {
+    pub fn players(&self) -> Vec<&Robot> {
+        let mut result = vec![];
+        for (id, robot) in self.robots.iter() {
+            if self.goalie_id.is_some() && self.goalie_id.unwrap() == *id {
+                continue;
+            }
+            result.push(robot);
+        }
+        result
+    }
+
+    pub fn all_robots(&self) -> Vec<&Robot> {
+        let mut result = vec![];
+        for (id, robot) in self.robots.iter() {
+            result.push(robot);
+        }
+        result
+    }
+
+    pub fn goalie(&self) -> Option<&Robot> {
+        match self.goalie_id {
+            Some(id) => self.robots.get(&id),
+            None => None
+        }
+    }
+
+
     pub fn new() -> Team {
         Team{
             goalie_id: None,
@@ -108,8 +135,8 @@ impl Team {
 }
 
 pub struct World {
-    ball: Ball,
-    friendly_team: Team,
-    enemy_team: Team,
-    field: Field
+    pub ball: Ball,
+    pub friendly_team: Team,
+    pub enemy_team: Team,
+    pub field: Field
 }
