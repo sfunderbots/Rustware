@@ -1,4 +1,6 @@
 use crate::communication::{run_forever, Node};
+use crate::proto;
+use crate::world::World;
 use multiqueue2;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
@@ -6,11 +8,11 @@ use std::thread;
 use std::thread::JoinHandle;
 
 pub struct Input {
-    pub ssl_vision_proto: multiqueue2::MPMCReceiver<i32>,
-    // pub ssl_refbox_proto: multiqueue2::MPMCReceiver<i32>,
+    pub ssl_vision_proto: multiqueue2::MPMCReceiver<proto::ssl_vision::SslWrapperPacket>,
+    pub ssl_refbox_proto: multiqueue2::MPMCReceiver<proto::ssl_gamecontroller::Referee>,
 }
 pub struct Output {
-    pub world: multiqueue2::MPMCSender<i32>,
+    pub world: multiqueue2::MPMCSender<World>,
 }
 
 pub struct Perception {
@@ -30,8 +32,8 @@ impl Node for Perception {
                 }
             },
         };
-        println!("Perception got packet {}", packet);
-        self.output.world.try_send(packet);
+        // println!("Perception got packet {}", packet);
+        // self.output.world.try_send();
         Ok(())
     }
 }

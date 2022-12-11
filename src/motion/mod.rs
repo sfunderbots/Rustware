@@ -75,6 +75,7 @@ pub fn bb_time_to_position(
     time_for_x.max(time_for_y)
 }
 
+#[derive(Clone)]
 pub struct KinematicState {
     pub position: Point,
     pub orientation: Angle,
@@ -82,6 +83,7 @@ pub struct KinematicState {
     pub angular_velocity: Angle,
 }
 
+#[derive(Clone)]
 pub struct Trajectory {
     points: Vec<Point>,
     final_orientation: Angle,

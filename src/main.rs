@@ -12,13 +12,14 @@ mod geom;
 mod math;
 mod motion;
 mod perception;
+mod proto;
 mod world;
 
 use crate::communication::Node;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
-use crate::motion::bb_time_to_position;
-use crate::world::{Field, Robot};
+use crate::motion::{bb_time_to_position, Trajectory};
+use crate::world::{Field, Robot, World};
 use multiqueue2;
 use rand::Rng;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -44,13 +45,18 @@ struct AllNodeIo {
 }
 
 fn set_up_node_io() -> AllNodeIo {
-    let (ssl_vision_proto_sender, ssl_vision_proto_receiver) = multiqueue2::mpmc_queue::<i32>(100);
-    let (world_sender, world_receiver) = multiqueue2::mpmc_queue::<i32>(100);
-    let (trajectories_sender, trajectories_receiver) = multiqueue2::mpmc_queue::<i32>(100);
+    let (ssl_vision_proto_sender, ssl_vision_proto_receiver) =
+        multiqueue2::mpmc_queue::<proto::ssl_vision::SslWrapperPacket>(10);
+    let (ssl_gc_referee_sender, ssl_gc_referee_receiver) =
+        multiqueue2::mpmc_queue::<proto::ssl_gamecontroller::Referee>(10);
+    let (world_sender, world_receiver) = multiqueue2::mpmc_queue::<World>(10);
+    let (trajectories_sender, trajectories_receiver) =
+        multiqueue2::mpmc_queue::<std::collections::HashMap<usize, Trajectory>>(10);
 
     AllNodeIo {
         perception_input: perception::Input {
             ssl_vision_proto: ssl_vision_proto_receiver.clone(),
+            ssl_refbox_proto: ssl_gc_referee_receiver.clone(),
         },
         perception_output: perception::Output {
             world: world_sender.clone(),
@@ -66,6 +72,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         backend_output: backend::Output {
             ssl_vision_proto: ssl_vision_proto_sender.clone(),
+            ssl_referee_proto: ssl_gc_referee_sender.clone(),
         },
     }
 }
@@ -94,7 +101,7 @@ fn run_nodes_synchronously() {
     let mut nodes = create_synchronous_nodes(set_up_node_io());
 
     for i in 0..10 {
-        nodes.backend.send_dummy_data(i);
+        // nodes.backend.send_dummy_data(i);
         nodes.perception.run_once();
         nodes.gameplay.run_once();
         nodes.backend.run_once();
@@ -116,17 +123,13 @@ fn run_nodes_in_parallel_threads() {
     println!("Done join");
 }
 
-pub mod ssl_vision {
-    include!(concat!(env!("OUT_DIR"), "/ssl_vision.rs"));
-}
-
 fn main() {
     experimental::run();
     // run_nodes_synchronously();
     // run_nodes_in_parallel_threads();
 
-    // println!("Hello proto");
-    // let mut geom = ssl_vision::Vector2f::default();
-    // geom.x = 0.1;
-    // geom.y = 0.5
+    println!("Hello proto");
+    let mut geom = proto::ssl_vision::Vector2f::default();
+    geom.x = 0.1;
+    geom.y = 0.5
 }

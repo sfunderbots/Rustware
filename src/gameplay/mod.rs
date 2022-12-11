@@ -7,6 +7,7 @@ use crate::world::World;
 use multiqueue2;
 use play::{Play, RequestedTactics};
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -15,10 +16,10 @@ use strum::IntoEnumIterator;
 use tactic::Tactic;
 
 pub struct Input {
-    pub world: multiqueue2::MPMCReceiver<i32>,
+    pub world: multiqueue2::MPMCReceiver<World>,
 }
 pub struct Output {
-    pub trajectories: multiqueue2::MPMCSender<i32>,
+    pub trajectories: multiqueue2::MPMCSender<HashMap<usize, Trajectory>>,
 }
 
 pub struct Gameplay {
@@ -95,8 +96,8 @@ impl Node for Gameplay {
                 }
             },
         };
-        println!("Gameplay got packet {}", packet);
-        self.output.trajectories.try_send(packet);
+        // println!("Gameplay got packet {}", packet);
+        // self.output.trajectories.try_send(packet);
         Ok(())
     }
 }

@@ -1,5 +1,8 @@
 use crate::communication::{run_forever, Node};
+use crate::motion::Trajectory;
+use crate::proto;
 use multiqueue2;
+use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::thread;
@@ -7,10 +10,11 @@ use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 
 pub struct Input {
-    pub trajectories: multiqueue2::MPMCReceiver<i32>,
+    pub trajectories: multiqueue2::MPMCReceiver<HashMap<usize, Trajectory>>,
 }
 pub struct Output {
-    pub ssl_vision_proto: multiqueue2::MPMCSender<i32>,
+    pub ssl_vision_proto: multiqueue2::MPMCSender<proto::ssl_vision::SslWrapperPacket>,
+    pub ssl_referee_proto: multiqueue2::MPMCSender<proto::ssl_gamecontroller::Referee>,
 }
 pub struct Backend {
     pub input: Input,
@@ -29,10 +33,10 @@ impl Node for Backend {
                 }
             },
         };
-        println!("Backend got packet {}", packet.unwrap_or(-1));
-
-        self.output.ssl_vision_proto.try_send(8);
-        sleep(Duration::from_millis(100));
+        // println!("Backend got packet {}", packet.unwrap_or(-1));
+        //
+        // self.output.ssl_vision_proto.try_send(8);
+        // sleep(Duration::from_millis(100));
         Ok(())
     }
 }
@@ -55,9 +59,5 @@ impl Backend {
             let node = Self::new(input, output);
             run_forever(Box::new(node), should_stop, "Backend");
         })
-    }
-    pub fn send_dummy_data(&self, data: i32) {
-        self.output.ssl_vision_proto.try_send(data).unwrap();
-        println!("Send ssl vision {}", data);
     }
 }

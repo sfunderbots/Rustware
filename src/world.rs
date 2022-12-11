@@ -2,6 +2,7 @@ use crate::geom::{Angle, Point, Rectangle, Vector};
 use crate::motion::KinematicState;
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct Field {
     pub x_length: f32,
     pub y_length: f32,
@@ -67,16 +68,19 @@ impl Field {
     }
 }
 
+#[derive(Clone)]
 pub struct Robot {
     pub id: usize,
     pub state: KinematicState,
 }
 
+#[derive(Clone)]
 pub struct Ball {
     pub position: Point,
     pub velocity: Vector,
 }
 
+#[derive(Clone)]
 pub struct Team {
     goalie_id: Option<usize>,
     robots: HashMap<usize, Robot>,
@@ -133,6 +137,7 @@ impl Team {
     }
 }
 
+#[derive(Clone)]
 pub struct World {
     pub ball: Ball,
     pub friendly_team: Team,
