@@ -114,7 +114,7 @@ fn run_nodes_in_parallel_threads() {
     let handles = create_nodes_in_threads(set_up_node_io(), &should_stop);
 
     println!("Sleeping to simulate working time");
-    sleep(Duration::from_secs(2));
+    sleep(Duration::from_secs(5));
     println!("Done sleeping. Sending stop signal");
     should_stop.store(true, Ordering::SeqCst);
     println!("About to join");
@@ -125,12 +125,12 @@ fn run_nodes_in_parallel_threads() {
 }
 
 fn main() {
-    // experimental::run();
+    experimental::run();
     // run_nodes_synchronously();
-    run_nodes_in_parallel_threads();
-
-    println!("Hello proto");
-    let mut geom = proto::ssl_vision::Vector2f::default();
-    geom.x = 0.1;
-    geom.y = 0.5
+    // run_nodes_in_parallel_threads();
+    //
+    // println!("Hello proto");
+    // let mut geom = proto::ssl_vision::Vector2f::default();
+    // geom.x = 0.1;
+    // geom.y = 0.5
 }
