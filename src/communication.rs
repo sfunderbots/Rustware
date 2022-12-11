@@ -38,7 +38,7 @@ fn create_multicast_socket(ip: &str, port: u16) -> UdpSocket {
     socket
 }
 
-struct UdpMulticastClient {
+pub struct UdpMulticastClient {
     socket: UdpSocket,
     buffer: [u8; 65536],
 }
