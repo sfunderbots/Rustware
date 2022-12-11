@@ -9,6 +9,8 @@ mod evaluation;
 mod experimental;
 mod gameplay;
 mod geom;
+mod gui;
+mod gui_bridge;
 mod math;
 mod motion;
 mod perception;
@@ -28,11 +30,13 @@ use std::thread;
 use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
+use zmq;
 
 struct SynchronousNodes {
     perception: perception::Perception,
     gameplay: gameplay::Gameplay,
     backend: backend::SslSynchronousSimulator,
+    gui_bridge: gui_bridge::GuiBridge,
 }
 
 struct AllNodeIo {
@@ -42,6 +46,8 @@ struct AllNodeIo {
     gameplay_output: gameplay::Output,
     backend_input: backend::Input,
     backend_output: backend::Output,
+    gui_bridge_input: gui_bridge::Input,
+    gui_bridge_output: gui_bridge::Output,
 }
 
 fn set_up_node_io() -> AllNodeIo {
@@ -74,6 +80,10 @@ fn set_up_node_io() -> AllNodeIo {
             ssl_vision_proto: ssl_vision_proto_sender.clone(),
             ssl_referee_proto: ssl_gc_referee_sender.clone(),
         },
+        gui_bridge_input: gui_bridge::Input {
+            ssl_vision_proto: ssl_vision_proto_receiver.clone(),
+        },
+        gui_bridge_output: gui_bridge::Output {},
     }
 }
 
@@ -82,6 +92,7 @@ fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
         perception: perception::Perception::new(io.perception_input, io.perception_output),
         gameplay: gameplay::Gameplay::new(io.gameplay_input, io.gameplay_output),
         backend: backend::SslSynchronousSimulator::new(io.backend_input, io.backend_output),
+        gui_bridge: gui_bridge::GuiBridge::new(io.gui_bridge_input, io.gui_bridge_output),
     }
 }
 
@@ -95,6 +106,11 @@ fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Vec<
         gameplay::Gameplay::create_in_thread(io.gameplay_input, io.gameplay_output, should_stop),
         backend::SslNetworkListener::create_in_thread(io.backend_output, should_stop),
         backend::SslNetworkSimulator::create_in_thread(io.backend_input, should_stop),
+        gui_bridge::GuiBridge::create_in_thread(
+            io.gui_bridge_input,
+            io.gui_bridge_output,
+            should_stop,
+        ),
     ]
 }
 
@@ -114,7 +130,7 @@ fn run_nodes_in_parallel_threads() {
     let handles = create_nodes_in_threads(set_up_node_io(), &should_stop);
 
     println!("Sleeping to simulate working time");
-    sleep(Duration::from_secs(5));
+    sleep(Duration::from_secs(500));
     println!("Done sleeping. Sending stop signal");
     should_stop.store(true, Ordering::SeqCst);
     println!("About to join");
@@ -125,9 +141,12 @@ fn run_nodes_in_parallel_threads() {
 }
 
 fn main() {
+    // gui_bridge::GuiBridge::new()
+
     // experimental::run();
     // run_nodes_synchronously();
     run_nodes_in_parallel_threads();
+    // gui::run_gui();
     //
     // println!("Hello proto");
     // let mut geom = proto::ssl_vision::Vector2f::default();
