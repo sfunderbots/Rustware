@@ -125,9 +125,9 @@ fn run_nodes_in_parallel_threads() {
 }
 
 fn main() {
-    experimental::run();
+    // experimental::run();
     // run_nodes_synchronously();
-    // run_nodes_in_parallel_threads();
+    run_nodes_in_parallel_threads();
     //
     // println!("Hello proto");
     // let mut geom = proto::ssl_vision::Vector2f::default();
