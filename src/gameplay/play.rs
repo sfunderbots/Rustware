@@ -1,8 +1,7 @@
-use crate::world::World;
 use super::tactic::Tactic;
-use strum_macros::EnumIter;
+use crate::world::World;
 use strum_macros::Display;
-
+use strum_macros::EnumIter;
 
 pub struct RequestedTactics {
     greedy: Vec<Tactic>,
@@ -11,9 +10,9 @@ pub struct RequestedTactics {
 
 impl RequestedTactics {
     pub fn new() -> RequestedTactics {
-        RequestedTactics{
+        RequestedTactics {
             greedy: vec![],
-            optimized: vec![]
+            optimized: vec![],
         }
     }
 }
@@ -22,7 +21,7 @@ impl RequestedTactics {
 pub enum Play {
     Halt,
     Stop,
-    Defense
+    Defense,
 }
 
 impl Play {
@@ -42,17 +41,11 @@ impl Play {
         }
     }
 
-    pub fn run(&self) -> RequestedTactics{
+    pub fn run(&self) -> RequestedTactics {
         match self {
-            Self::Halt => {
-                RequestedTactics::new()
-            },
-            Self::Stop => {
-                RequestedTactics::new()
-            },
-            Self::Defense => {
-                RequestedTactics::new()
-            },
+            Self::Halt => RequestedTactics::new(),
+            Self::Stop => RequestedTactics::new(),
+            Self::Defense => RequestedTactics::new(),
         }
     }
 }

@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use crate::geom::{Angle, Point, Rectangle, Vector};
 use crate::motion::KinematicState;
+use std::collections::HashMap;
 
 pub struct Field {
     pub x_length: f32,
@@ -69,7 +69,7 @@ impl Field {
 
 pub struct Robot {
     pub id: usize,
-    pub state: KinematicState
+    pub state: KinematicState,
 }
 
 pub struct Ball {
@@ -79,7 +79,7 @@ pub struct Ball {
 
 pub struct Team {
     goalie_id: Option<usize>,
-    robots: HashMap<usize, Robot>
+    robots: HashMap<usize, Robot>,
 }
 
 impl Team {
@@ -105,15 +105,14 @@ impl Team {
     pub fn goalie(&self) -> Option<&Robot> {
         match self.goalie_id {
             Some(id) => self.robots.get(&id),
-            None => None
+            None => None,
         }
     }
 
-
     pub fn new() -> Team {
-        Team{
+        Team {
             goalie_id: None,
-            robots: HashMap::new()
+            robots: HashMap::new(),
         }
     }
 
@@ -138,5 +137,5 @@ pub struct World {
     pub ball: Ball,
     pub friendly_team: Team,
     pub enemy_team: Team,
-    pub field: Field
+    pub field: Field,
 }

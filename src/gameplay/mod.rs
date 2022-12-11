@@ -11,8 +11,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use tactic::Tactic;
 use strum::IntoEnumIterator;
+use tactic::Tactic;
 
 pub struct Input {
     pub world: multiqueue2::MPMCReceiver<i32>,
@@ -65,8 +65,6 @@ impl Gameplay {
         HashMap::new()
     }
 
-
-
     fn update_current_play(&mut self) {
         if !self.state.current_play.can_continue() {
             for p in Play::iter() {
@@ -77,7 +75,10 @@ impl Gameplay {
                 }
             }
             self.state.current_play = Play::Halt;
-            println!("No play can start. Falling back to : {}", self.state.current_play.to_string());
+            println!(
+                "No play can start. Falling back to : {}",
+                self.state.current_play.to_string()
+            );
         }
     }
 }
@@ -102,14 +103,14 @@ impl Node for Gameplay {
 
 struct State {
     enemy_max_speed: f32,
-    current_play: Play
+    current_play: Play,
 }
 
 impl State {
     pub fn new() -> Self {
         Self {
             enemy_max_speed: 1.0, // Assume they can move somewhat
-            current_play: Play::Halt
+            current_play: Play::Halt,
         }
     }
 }
