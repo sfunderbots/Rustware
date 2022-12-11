@@ -119,12 +119,12 @@ pub mod ssl_vision {
 }
 
 fn main() {
-    // experimental::run();
+    experimental::run();
     // run_nodes_synchronously();
     // run_nodes_in_parallel_threads();
 
-    println!("Hello proto");
-    let mut geom = ssl_vision::Vector2f::default();
-    geom.x = 0.1;
-    geom.y = 0.5
+    // println!("Hello proto");
+    // let mut geom = ssl_vision::Vector2f::default();
+    // geom.x = 0.1;
+    // geom.y = 0.5
 }
