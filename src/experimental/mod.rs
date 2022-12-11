@@ -1,4 +1,6 @@
+use prost::Message;
 use std::error::Error;
+use std::io::Cursor;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, UdpSocket};
 use std::thread;
 use std::thread::JoinHandle;
@@ -27,35 +29,33 @@ impl UdpMulticastListener {
         }
     }
 
-    pub fn get(&mut self) -> Result<Vec<u8>, Box<dyn Error>> {
+    pub fn get_raw_bytes(&mut self) -> Result<&[u8], Box<dyn Error>> {
         let bytes_received = self.socket.recv(&mut self.buffer)?;
         let bytes = &mut self.buffer[..bytes_received];
-        Ok(bytes.to_vec())
+        Ok(bytes)
+    }
+
+    pub fn read_proto<T>(&mut self) -> Result<T, Box<dyn Error>>
+    where
+        T: Message,
+        T: Default,
+    {
+        let bytes = self.get_raw_bytes()?;
+        let msg = T::decode(bytes)?;
+        Ok(msg)
     }
 }
 
+pub mod ssl_vision {
+    include!(concat!(env!("OUT_DIR"), "/ssl_vision.rs"));
+}
 pub fn run() {
     let mut listener = UdpMulticastListener::new("224.5.23.2", 10020);
     loop {
-        // let result = listener.get().unwrap_or(vec![]);
-        if let Ok(result) = listener.get() {
+        if let Ok(msg) = listener.read_proto::<ssl_vision::SslWrapperPacket>() {
             println!("Got data");
         } else {
             println!("no data");
         }
     }
-
-    // let socket = create_multicast_socket("224.5.23.2", 10020);
-    // let mut buf = vec![0; 65536];
-    // loop {
-    //     match socket.recv(&mut buf) {
-    //         Ok(received_size) => {
-    //             let buf = &mut buf[..received_size];
-    //         }
-    //         Err(_) => break,
-    //     }
-    //     let read_bytes = socket.recv(&mut buf).unwrap();
-    //     let buf = &mut buf[..read_bytes];
-    //     println!("Got packet");
-    // }
 }
