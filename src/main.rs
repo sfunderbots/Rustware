@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+extern crate core;
+
 mod backend;
 mod communication;
 mod evaluation;
