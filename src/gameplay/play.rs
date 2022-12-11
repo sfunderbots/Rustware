@@ -1,58 +1,58 @@
 use crate::world::World;
 use super::tactic::Tactic;
+use strum_macros::EnumIter;
+use strum_macros::Display;
 
-pub trait Play {
-    fn name(&self) -> &str;
-    fn can_start(&self) -> bool;
-    fn can_continue(&self) -> bool;
-    fn tick(&self, world: &World) -> RequestedTactics;
-}
 
 pub struct RequestedTactics {
-    greedy: Vec<Box<dyn Tactic>>,
-    optimized: Vec<Box<dyn Tactic>>,
+    greedy: Vec<Tactic>,
+    optimized: Vec<Tactic>,
 }
 
-pub struct Halt {}
-impl Play for Halt {
-    fn name(&self) -> &str {
-        "Halt"
-    }
-
-    fn can_start(&self) -> bool {
-        todo!()
-    }
-
-    fn can_continue(&self) -> bool {
-        todo!()
-    }
-
-    fn tick(&self, world: &World) -> RequestedTactics {
-        // todo!()
+impl RequestedTactics {
+    pub fn new() -> RequestedTactics {
         RequestedTactics{
-            // greedy: vec![Box::new(super::tactic::Stop{}); world.friendly_team.all_robots().len()],
-            // greedy: vec![Box::new(super::tactic::Stop{}); 5],
-            greedy: (0..world.friendly_team.all_robots().len()).map(|_| {Box::new(super::tactic::Stop{})}).collect(),
+            greedy: vec![],
             optimized: vec![]
         }
     }
 }
 
-pub struct Stop {}
-impl Play for Stop {
-    fn name(&self) -> &str {
-        "Stop"
+#[derive(Debug, Copy, Clone, EnumIter, Display)]
+pub enum Play {
+    Halt,
+    Stop,
+    Defense
+}
+
+impl Play {
+    pub fn can_start(&self) -> bool {
+        match self {
+            Self::Halt => true,
+            Self::Stop => true,
+            Self::Defense => true,
+        }
     }
 
-    fn can_start(&self) -> bool {
-        todo!()
+    pub fn can_continue(&self) -> bool {
+        match self {
+            Self::Halt => true,
+            Self::Stop => true,
+            Self::Defense => true,
+        }
     }
 
-    fn can_continue(&self) -> bool {
-        todo!()
-    }
-
-    fn tick(&self, world: &World) -> RequestedTactics {
-        todo!()
+    pub fn run(&self) -> RequestedTactics{
+        match self {
+            Self::Halt => {
+                RequestedTactics::new()
+            },
+            Self::Stop => {
+                RequestedTactics::new()
+            },
+            Self::Defense => {
+                RequestedTactics::new()
+            },
+        }
     }
 }
