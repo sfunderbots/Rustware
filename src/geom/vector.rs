@@ -1,4 +1,6 @@
 use super::Angle;
+use std::ops::Div;
+use egui::Shape::Vec;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector {
@@ -31,5 +33,13 @@ impl Vector {
             x: self.x / self.length() * dist,
             y: self.y / self.length() * dist,
         }
+    }
+}
+
+
+impl Div<f32> for Vector {
+    type Output = Vector;
+    fn div(self, rhs: f32) -> Self::Output {
+        self.norm(self.length() / rhs)
     }
 }

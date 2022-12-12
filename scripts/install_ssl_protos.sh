@@ -8,6 +8,18 @@ PROJECT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 
 PROTO_BASE_DIR="$PROJECT_ROOT_DIR/third_party"
 
+brew install gnu-sed
+
+# The unix sed that comes with MacOS behaves slightly differently than
+# gnu sed. Use gnu sed for consistency.
+sed () {
+  if [[ "$OSTYPE" == 'darwin'* ]]; then
+    gsed "$@"
+  else
+    command sed "$@"
+  fi
+}
+
 # Add a package definition to the start of the given .proto files
 prepend_proto_package() {
   package_name="$1"
