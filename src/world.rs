@@ -154,8 +154,8 @@ impl Team {
 
 #[derive(Clone)]
 pub struct World {
-    pub ball: Ball,
+    pub ball: Option<Ball>,
     pub friendly_team: Team,
     pub enemy_team: Team,
-    pub field: Field,
+    pub field: Option<Field>,
 }

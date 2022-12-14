@@ -16,6 +16,7 @@ mod motion;
 mod perception;
 mod proto;
 mod world;
+mod constants;
 
 use crate::communication::Node;
 use crate::geom::{Point, Vector};
