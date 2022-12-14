@@ -1,4 +1,5 @@
 mod ball_filter;
+mod robot_filter;
 
 use crate::communication::{run_forever, Node};
 use crate::proto;
@@ -10,7 +11,8 @@ use std::thread;
 use std::thread::JoinHandle;
 use egui::style::default_text_styles;
 use ball_filter::{BallFilter, BallDetection};
-use crate::geom::Point;
+use robot_filter::{TeamFilter, RobotDetection};
+use crate::geom::{Angle, Point};
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::MPMCReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -23,7 +25,9 @@ pub struct Output {
 pub struct Perception {
     pub input: Input,
     pub output: Output,
-    ball_filter: BallFilter
+    ball_filter: BallFilter,
+    friendly_team_filter: TeamFilter,
+    enemy_team_filter: TeamFilter,
 }
 
 impl Node for Perception {
@@ -46,19 +50,48 @@ impl Node for Perception {
             for packet in ssl_wrapper_packets {
                 if let Some(detection) = packet.detection {
                     for b in detection.balls {
-                        let d = BallDetection{
+                        let ball_detection = BallDetection{
                             position: Point{
                                 x: b.x,
                                 y: b.y
                             },
                             timestamp: detection.t_capture as f32
                         };
-                        self.ball_filter.add_detection(d);
+                        self.ball_filter.add_detection(ball_detection);
+
+                        // TODO: Use actual friendly/enemy team colors here
+                        for r in &detection.robots_yellow {
+                            let detection = RobotDetection{
+                                id: r.robot_id.expect("Should always have robot id in proto") as usize,
+                                position: Point{
+                                    x: r.x,
+                                    y: r.y,
+                                },
+                                orientation: Angle::from_radians(r.orientation.expect("Should always have robot orientation in proto")),
+                                timestamp: detection.t_capture as f32
+                            };
+                            self.friendly_team_filter.add_detection(detection);
+                        }
+
+                        for r in &detection.robots_blue {
+                            let detection = RobotDetection{
+                                id: r.robot_id.expect("Should always have robot id in proto") as usize,
+                                position: Point{
+                                    x: r.x,
+                                    y: r.y,
+                                },
+                                orientation: Angle::from_radians(r.orientation.expect("Should always have robot orientation in proto")),
+                                timestamp: detection.t_capture as f32
+                            };
+                            self.enemy_team_filter.add_detection(detection);
+                        }
                     }
                 }
             }
 
             let filtered_ball = self.ball_filter.get_ball();
+            let filtered_friendly_team = self.friendly_team_filter.get_team();
+            let filtered_enemy_team = self.enemy_team_filter.get_team();
         }
         // println!("Perception got packet {}", packet);
         // self.output.world.try_send();
@@ -73,7 +106,9 @@ impl Perception {
         Self {
             input: input,
             output: output,
-            ball_filter: BallFilter::new()
+            ball_filter: BallFilter::new(),
+            friendly_team_filter: TeamFilter::new(),
+            enemy_team_filter: TeamFilter::new(),
         }
     }
     pub fn create_in_thread(

@@ -1,7 +1,7 @@
 use float_cmp;
 use std::cmp::{Eq, Ord, Ordering, PartialOrd};
 use std::f32::consts::PI;
-use std::ops::{Add, Neg, Sub};
+use std::ops::{Add, Div, Neg, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Debug)]
 pub struct Angle {
@@ -118,6 +118,13 @@ impl Sub for &Angle {
     type Output = Angle;
     fn sub(self, rhs: Self) -> Self::Output {
         Angle::from_radians(self.radians - rhs.radians)
+    }
+}
+
+impl Div<f32> for Angle {
+    type Output = Angle;
+    fn div(self, rhs: f32) -> Self::Output {
+        Angle::from_radians(self.radians / rhs)
     }
 }
 

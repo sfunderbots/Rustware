@@ -113,10 +113,25 @@ impl Team {
         }
     }
 
+    pub fn set_goalie(&mut self, id: Option<usize>) {
+        self.goalie_id = id;
+    }
+
     pub fn new() -> Team {
         Team {
             goalie_id: None,
             robots: HashMap::new(),
+        }
+    }
+
+    pub fn newr(robots: Vec<Robot>) -> Team {
+        let mut foo: HashMap<usize, Robot> = HashMap::new();
+        for r in robots {
+            foo.insert(r.id, r);
+        }
+        Team {
+            goalie_id: None,
+            robots: foo,
         }
     }
 
@@ -132,8 +147,8 @@ impl Team {
         self
     }
 
-    pub fn build(self) -> Team {
-        self
+    pub fn build(&self) -> Team {
+        self.clone()
     }
 }
 
