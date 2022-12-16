@@ -6,7 +6,7 @@ fn main() -> Result<()> {
             "third_party/ssl_vision/messages_robocup_ssl_detection.proto",
             "third_party/ssl_vision/messages_robocup_ssl_wrapper.proto",
         ],
-        &["third_party/ssl_vision/"],
+        &["third_party/"],
     )
     .unwrap();
     prost_build::compile_protos(
@@ -21,7 +21,7 @@ fn main() -> Result<()> {
             "third_party/ssl_simulation_protocol/ssl_vision_geometry.proto",
             "third_party/ssl_simulation_protocol/ssl_vision_detection.proto",
         ],
-        &["third_party/ssl_simulation_protocol/"],
+        &["third_party/"],
     )
     .unwrap();
     prost_build::compile_protos(
@@ -47,7 +47,7 @@ fn main() -> Result<()> {
             "third_party/ssl_game_controller/ssl_vision_wrapper.proto",
             "third_party/ssl_game_controller/ssl_vision_wrapper_tracked.proto",
         ],
-        &["third_party/ssl_game_controller/"],
+        &["third_party/"],
     )
     .unwrap();
     Ok(())

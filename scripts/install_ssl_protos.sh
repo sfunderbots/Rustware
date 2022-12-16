@@ -8,7 +8,9 @@ PROJECT_ROOT_DIR="$(git rev-parse --show-toplevel)"
 
 PROTO_BASE_DIR="$PROJECT_ROOT_DIR/third_party"
 
-brew install gnu-sed
+if [[ "$OSTYPE" == 'darwin'* ]]; then
+    brew install gnu-sed
+fi
 
 # The unix sed that comes with MacOS behaves slightly differently than
 # gnu sed. Use gnu sed for consistency.
@@ -71,6 +73,22 @@ install_protos() {
 
   # We need to add packages to each repo because some messages have the same name
   prepend_proto_package "$name_snake_case" "$install_dir/"*.proto
+  # Python proto does not play nicely when .proto files have the same name. In order for the compiler
+  # to treat two files with the same name (but different paths/modules) as different files when
+  # generating proto, they must have separate paths and the protoc proto_path must be set to the
+  # shared root directory of these files. This will result in the generated proto message descriptors
+  # including the relative paths in their names, and prevent any conflicts when both messages
+  # are imported in python. Otherwise you will end up with errors such as:
+  # "messages.proto: A file with this name is already in the pool."
+  # See: https://github.com/protocolbuffers/protobuf/issues/3002
+  make_proto_imports_relative_to_root "$name_snake_case" "$install_dir"/*.proto
+  protoc --python_out="$PROTO_BASE_DIR/" --proto_path="$PROTO_BASE_DIR/" "$install_dir"/*.proto
+  # The python imports in the generated proto files are assumed to be relative to the protoc proto_path,
+  # which in our case is not the project root module/directory. We have to manually adjust the import
+  # paths to be relative to the project root.
+  # Eg. "from ssl_vision import *" becomes "from third_party.ssl_vision import *"
+  # See: https://github.com/protocolbuffers/protobuf/issues/881
+  make_proto_python_imports_relative_to_root "$name_snake_case" "third_party.$name_snake_case" "$install_dir"/*_pb2.py
 }
 
 echo "Installing SSL protobufs..."
