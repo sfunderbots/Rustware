@@ -16,10 +16,10 @@ use strum::IntoEnumIterator;
 use tactic::Tactic;
 
 pub struct Input {
-    pub world: multiqueue2::MPMCReceiver<World>,
+    pub world: multiqueue2::BroadcastReceiver<World>,
 }
 pub struct Output {
-    pub trajectories: multiqueue2::MPMCSender<HashMap<usize, Trajectory>>,
+    pub trajectories: multiqueue2::BroadcastSender<HashMap<usize, Trajectory>>,
 }
 
 pub struct Gameplay {

@@ -10,7 +10,7 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 pub struct Input {
-    pub ssl_vision_proto: multiqueue2::MPMCReceiver<proto::ssl_vision::SslWrapperPacket>,
+    pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
 }
 pub struct Output {}
 
@@ -54,7 +54,7 @@ impl Node for GuiBridge {
                 .send(proto::encode(ssl_wrapper_packet), 0)
                 .unwrap();
         }
-        thread::sleep(Duration::from_millis(10));
+        // thread::sleep(Duration::from_millis(10));
         Ok(())
     }
 }

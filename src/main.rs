@@ -5,6 +5,7 @@ extern crate core;
 
 mod backend;
 mod communication;
+mod constants;
 mod evaluation;
 mod experimental;
 mod gameplay;
@@ -16,7 +17,6 @@ mod motion;
 mod perception;
 mod proto;
 mod world;
-mod constants;
 
 use crate::communication::Node;
 use crate::geom::{Point, Vector};
@@ -53,39 +53,50 @@ struct AllNodeIo {
 
 fn set_up_node_io() -> AllNodeIo {
     let (ssl_vision_proto_sender, ssl_vision_proto_receiver) =
-        multiqueue2::mpmc_queue::<proto::ssl_vision::SslWrapperPacket>(10);
+        multiqueue2::broadcast_queue::<proto::ssl_vision::SslWrapperPacket>(10);
     let (ssl_gc_referee_sender, ssl_gc_referee_receiver) =
-        multiqueue2::mpmc_queue::<proto::ssl_gamecontroller::Referee>(10);
-    let (world_sender, world_receiver) = multiqueue2::mpmc_queue::<World>(10);
+        multiqueue2::broadcast_queue::<proto::ssl_gamecontroller::Referee>(10);
+    let (world_sender, world_receiver) = multiqueue2::broadcast_queue::<World>(10);
     let (trajectories_sender, trajectories_receiver) =
-        multiqueue2::mpmc_queue::<std::collections::HashMap<usize, Trajectory>>(10);
+        multiqueue2::broadcast_queue::<std::collections::HashMap<usize, Trajectory>>(10);
 
-    AllNodeIo {
+    // All Inputs must call add_stream() before clone() so the data is copied to each receiver.
+    // All Outputs should not call clone, since we only expect a single producer per queue
+    let result = AllNodeIo {
         perception_input: perception::Input {
-            ssl_vision_proto: ssl_vision_proto_receiver.clone(),
-            ssl_refbox_proto: ssl_gc_referee_receiver.clone(),
+            ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
+            ssl_refbox_proto: ssl_gc_referee_receiver.add_stream().clone(),
         },
         perception_output: perception::Output {
-            world: world_sender.clone(),
+            world: world_sender,
         },
         gameplay_input: gameplay::Input {
-            world: world_receiver.clone(),
+            world: world_receiver.add_stream().clone(),
         },
         gameplay_output: gameplay::Output {
-            trajectories: trajectories_sender.clone(),
+            trajectories: trajectories_sender,
         },
         backend_input: backend::Input {
-            trajectories: trajectories_receiver.clone(),
+            trajectories: trajectories_receiver.add_stream().clone(),
         },
         backend_output: backend::Output {
-            ssl_vision_proto: ssl_vision_proto_sender.clone(),
-            ssl_referee_proto: ssl_gc_referee_sender.clone(),
+            ssl_vision_proto: ssl_vision_proto_sender,
+            ssl_referee_proto: ssl_gc_referee_sender,
         },
         gui_bridge_input: gui_bridge::Input {
-            ssl_vision_proto: ssl_vision_proto_receiver.clone(),
+            ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
         },
         gui_bridge_output: gui_bridge::Output {},
-    }
+    };
+
+    // Drop the original readers - this removes them from the queues, meaning that the readers
+    // in the new threads won't get starved by the lack of progress from recv
+    ssl_vision_proto_receiver.unsubscribe();
+    ssl_gc_referee_receiver.unsubscribe();
+    trajectories_receiver.unsubscribe();
+    world_receiver.unsubscribe();
+
+    result
 }
 
 fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {

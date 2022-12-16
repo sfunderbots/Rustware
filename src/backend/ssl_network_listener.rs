@@ -25,8 +25,15 @@ impl Node for SslNetworkListener {
                 .read_proto::<proto::ssl_vision::SslWrapperPacket>()
             {
                 Ok(msg) => {
-                    self.output.ssl_vision_proto.try_send(msg).unwrap();
-                    println!("Send data");
+                    match self.output.ssl_vision_proto.try_send(msg) {
+                        Ok(_) => {
+                            // println!("Sent data from backend");
+                        }
+                        Err(e) => {
+                            println!("Failed to push to buffer with error {}", e);
+                        }
+                    };
+                    // println!("Send data");
                 }
                 Err(_) => break,
             }

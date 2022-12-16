@@ -2,25 +2,25 @@ mod ball_filter;
 mod robot_filter;
 
 use crate::communication::{run_forever, Node};
+use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
+use crate::geom::{Angle, Point};
 use crate::proto;
 use crate::world::{Ball, Field, Team, World};
+use ball_filter::{BallDetection, BallFilter};
+use egui::style::default_text_styles;
 use multiqueue2;
+use robot_filter::{RobotDetection, TeamFilter};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use egui::style::default_text_styles;
-use ball_filter::{BallFilter, BallDetection};
-use robot_filter::{TeamFilter, RobotDetection};
-use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
-use crate::geom::{Angle, Point};
 
 pub struct Input {
-    pub ssl_vision_proto: multiqueue2::MPMCReceiver<proto::ssl_vision::SslWrapperPacket>,
-    pub ssl_refbox_proto: multiqueue2::MPMCReceiver<proto::ssl_gamecontroller::Referee>,
+    pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
+    pub ssl_refbox_proto: multiqueue2::BroadcastReceiver<proto::ssl_gamecontroller::Referee>,
 }
 pub struct Output {
-    pub world: multiqueue2::MPMCSender<World>,
+    pub world: multiqueue2::BroadcastSender<World>,
 }
 
 pub struct Perception {
@@ -52,38 +52,37 @@ impl Node for Perception {
             for packet in ssl_wrapper_packets {
                 if let Some(detection) = packet.detection {
                     for b in detection.balls {
-                        let ball_detection = BallDetection{
-                            position: Point{
-                                x: b.x,
-                                y: b.y
-                            },
-                            timestamp: detection.t_capture as f32
+                        let ball_detection = BallDetection {
+                            position: Point { x: b.x, y: b.y },
+                            timestamp: detection.t_capture as f32,
                         };
                         self.ball_filter.add_detection(ball_detection);
 
                         // TODO: Use actual friendly/enemy team colors here
                         for r in &detection.robots_yellow {
-                            let detection = RobotDetection{
-                                id: r.robot_id.expect("Should always have robot id in proto") as usize,
-                                position: Point{
-                                    x: r.x,
-                                    y: r.y,
-                                },
-                                orientation: Angle::from_radians(r.orientation.expect("Should always have robot orientation in proto")),
-                                timestamp: detection.t_capture as f32
+                            let detection = RobotDetection {
+                                id: r.robot_id.expect("Should always have robot id in proto")
+                                    as usize,
+                                position: Point { x: r.x, y: r.y },
+                                orientation: Angle::from_radians(
+                                    r.orientation
+                                        .expect("Should always have robot orientation in proto"),
+                                ),
+                                timestamp: detection.t_capture as f32,
                             };
                             self.friendly_team_filter.add_detection(detection);
                         }
 
                         for r in &detection.robots_blue {
-                            let detection = RobotDetection{
-                                id: r.robot_id.expect("Should always have robot id in proto") as usize,
-                                position: Point{
-                                    x: r.x,
-                                    y: r.y,
-                                },
-                                orientation: Angle::from_radians(r.orientation.expect("Should always have robot orientation in proto")),
-                                timestamp: detection.t_capture as f32
+                            let detection = RobotDetection {
+                                id: r.robot_id.expect("Should always have robot id in proto")
+                                    as usize,
+                                position: Point { x: r.x, y: r.y },
+                                orientation: Angle::from_radians(
+                                    r.orientation
+                                        .expect("Should always have robot orientation in proto"),
+                                ),
+                                timestamp: detection.t_capture as f32,
                             };
                             self.enemy_team_filter.add_detection(detection);
                         }
@@ -106,7 +105,6 @@ impl Node for Perception {
         // println!("Perception got packet {}", packet);
         // self.output.world.try_send();
 
-
         Ok(())
     }
 }
@@ -119,12 +117,12 @@ impl Perception {
             ball_filter: BallFilter::new(),
             friendly_team_filter: TeamFilter::new(),
             enemy_team_filter: TeamFilter::new(),
-            most_recent_world: World{
+            most_recent_world: World {
                 ball: None,
                 friendly_team: Team::new(),
                 enemy_team: Team::new(),
-                field: None
-            }
+                field: None,
+            },
         }
     }
     pub fn create_in_thread(
@@ -144,10 +142,12 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
     let line_length_from_name = |name: &str| -> Option<f32> {
         for line in &field_pb.field_lines {
             if line.name == name {
-                return Some((line.p1.x - line.p2.x).hypot(line.p1.y - line.p2.y) * METERS_PER_MILLIMETER);
+                return Some(
+                    (line.p1.x - line.p2.x).hypot(line.p1.y - line.p2.y) * METERS_PER_MILLIMETER,
+                );
             }
         }
-        return None
+        return None;
     };
     let arc_radius_from_name = |name: &str| -> Option<f32> {
         for arc in &field_pb.field_arcs {
@@ -155,7 +155,7 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
                 return Some(arc.radius * METERS_PER_MILLIMETER);
             }
         }
-        return None
+        return None;
     };
     // For some reason the simulators don't publish penalty area width/depth
     // so we have to find the lines using their names. We assume the lines
@@ -181,16 +181,15 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
     };
     let center_circle_radius = if let Some(radius) = field_pb.center_circle_radius {
         radius as f32 * METERS_PER_MILLIMETER
-    }else {
-        arc_radius_from_name("CenterCircle").unwrap_or_else( || {
+    } else {
+        arc_radius_from_name("CenterCircle").unwrap_or_else(|| {
             println!("Unable to find value for center circle radius in proto");
             // TODO: fallback to reasonable value based on division
             0.5
-        }
-        )
+        })
     };
 
-    Field{
+    Field {
         x_length: field_pb.field_length as f32 * METERS_PER_MILLIMETER,
         y_length: field_pb.field_width as f32 * METERS_PER_MILLIMETER,
         defense_x_length: penalty_area_depth,
@@ -198,6 +197,6 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
         goal_x_length: field_pb.goal_depth as f32 * METERS_PER_MILLIMETER,
         goal_y_length: field_pb.goal_width as f32 * METERS_PER_MILLIMETER,
         boundary_buffer_size: field_pb.boundary_width as f32 * METERS_PER_MILLIMETER,
-        center_circle_radius: center_circle_radius
+        center_circle_radius: center_circle_radius,
     }
 }
