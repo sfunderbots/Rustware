@@ -1,0 +1,10 @@
+from pyqtgraph.Qt import QtGui
+
+BALL_COLOR = QtGui.QColor(255, 100, 0, 255)
+BLACK = QtGui.QColor(0, 0, 0, 255)
+WHITE = QtGui.QColor(255, 255, 255, 255)
+FIELD_BOUNDARY_LINES = QtGui.QColor(125, 125, 125, 255)
+TRANSPARENT = QtGui.QColor(255, 255, 255, 0)
+YELLOW_ROBOT_COLOR = QtGui.QColor(200, 200, 0, 255)
+BLUE_ROBOT_COLOR = QtGui.QColor(0, 75, 255, 255)
+BACKGROUND_COLOR = QtGui.QColor(50, 50, 50, 255)

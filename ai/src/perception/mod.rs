@@ -7,7 +7,6 @@ use crate::geom::{Angle, Point};
 use crate::proto;
 use crate::world::{Ball, Field, Team, World};
 use ball_filter::{BallDetection, BallFilter};
-use egui::style::default_text_styles;
 use multiqueue2;
 use robot_filter::{RobotDetection, TeamFilter};
 use std::sync::atomic::AtomicBool;

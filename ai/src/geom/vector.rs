@@ -1,6 +1,5 @@
 use super::Angle;
 use std::ops::Div;
-use egui::Shape::Vec;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector {

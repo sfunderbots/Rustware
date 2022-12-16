@@ -142,7 +142,7 @@ fn run_nodes_in_parallel_threads() {
     let handles = create_nodes_in_threads(set_up_node_io(), &should_stop);
 
     println!("Sleeping to simulate working time");
-    sleep(Duration::from_secs(500));
+    sleep(Duration::from_secs(500000));
     println!("Done sleeping. Sending stop signal");
     should_stop.store(true, Ordering::SeqCst);
     println!("About to join");
