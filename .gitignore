@@ -1,4 +1,5 @@
 third_party/
+*_pb2.py
 
 # Clion/Pycharm
 .idea/

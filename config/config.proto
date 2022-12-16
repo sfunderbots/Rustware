@@ -1,0 +1,40 @@
+syntax = "proto2";
+
+enum DefendingSide {
+    AUTOREF_SIDE = 0;
+    NEGATIVE = 1;
+    POSITIVE = 2;
+}
+
+enum FriendlyColor {
+    AUTOREF_COLOR = 0;
+    BLUE = 1;
+    YELLOW = 2;
+}
+
+message Backend {
+    required string ssl_vision_ip = 1;
+    required uint32 ssl_vision_port = 2;
+    required string gamecontroller_ip = 3;
+    required uint32 gamecontroller_port = 4;
+}
+
+message Perception {
+    required DefendingSide defending_side = 1;
+    required FriendlyColor friendly_color = 2;
+}
+
+message Gameplay {
+    required bool div_a = 1;
+}
+
+message GuiBridge {
+    required string unix_socket_prefix = 1;
+}
+
+message Config {
+    required Backend backend = 1;
+    required Perception perception = 2;
+    required Gameplay gameplay = 3;
+    required GuiBridge gui_bridge = 4;
+}
