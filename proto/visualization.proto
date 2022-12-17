@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+message PerceptionWorld {
+    message Ball {
+        float x = 1;
+        float y = 2;
+        float vx = 3;
+        float vy = 4;
+    }
+
+    message Robot {
+        uint32 id = 1;
+        float x = 2;
+        float y = 3;
+        float vx = 4;
+        float vy = 5;
+        float orientation = 6;
+    }
+
+    message Field {
+        float x_length = 1; 
+        float y_length = 2; 
+        float defense_x_length = 3; 
+        float defense_y_length = 4; 
+        float goal_x_length = 5; 
+        float goal_y_length = 6; 
+        float boundary_size = 7; 
+        float center_circle_radius = 8; 
+    }
+
+    Ball ball = 1;
+    Field field = 2;
+    repeated Robot blue_robots = 3;
+    repeated Robot yellow_robots = 4;
+}
+
+message Visualization {
+    PerceptionWorld world = 1;
+}

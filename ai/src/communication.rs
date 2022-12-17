@@ -2,6 +2,7 @@ use net2;
 use net2::unix::UnixUdpBuilderExt;
 use prost::Message;
 use std::error::Error;
+use std::f32::consts::E;
 use std::io::Cursor;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, ToSocketAddrs, UdpSocket};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -28,6 +29,44 @@ pub fn run_forever(mut node: Box<dyn Node>, should_stop: Arc<AtomicBool>, name: 
             break;
         }
     }
+}
+
+pub fn dump_receiver<T>(mut receiver: &multiqueue2::BroadcastReceiver<T>) -> Result<Vec<T>, ()>
+where
+T: Clone
+{
+    let mut data: Vec<T> = vec![];
+    loop {
+        match receiver.try_recv() {
+            Ok(msg) => data.push(msg),
+            Err(e) => match e {
+                std::sync::mpsc::TryRecvError::Empty => break,
+                std::sync::mpsc::TryRecvError::Disconnected => {
+                    return Err(());
+                }
+            },
+        };
+    }
+    Ok(data)
+}
+
+pub fn take_last<T>(mut receiver: &multiqueue2::BroadcastReceiver<T>) -> Result<Option<T>, ()>
+    where
+        T: Clone
+{
+    let mut data: Option<T> = None;
+    loop {
+        match receiver.try_recv() {
+            Ok(msg) => data = Some(msg),
+            Err(e) => match e {
+                std::sync::mpsc::TryRecvError::Empty => break,
+                std::sync::mpsc::TryRecvError::Disconnected => {
+                    return Err(());
+                }
+            },
+        };
+    }
+    Ok(data)
 }
 
 fn create_multicast_socket(ip: &str, port: u16) -> UdpSocket {

@@ -3,7 +3,7 @@ mod tactic;
 
 use crate::communication::{run_forever, Node};
 use crate::motion::Trajectory;
-use crate::world::World;
+use crate::perception::World;
 use multiqueue2;
 use play::{Play, RequestedTactics};
 use std::collections::HashMap;

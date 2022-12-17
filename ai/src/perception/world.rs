@@ -10,7 +10,7 @@ pub struct Field {
     pub defense_y_length: f32,
     pub goal_x_length: f32,
     pub goal_y_length: f32,
-    pub boundary_buffer_size: f32,
+    pub boundary_size: f32,
     pub center_circle_radius: f32,
 }
 
@@ -23,7 +23,7 @@ impl Field {
             defense_y_length: 2.0,
             goal_x_length: 0.18,
             goal_y_length: 1.0,
-            boundary_buffer_size: 0.3,
+            boundary_size: 0.3,
             center_circle_radius: 0.5,
         }
     }
@@ -155,7 +155,7 @@ impl Team {
 #[derive(Clone)]
 pub struct World {
     pub ball: Option<Ball>,
-    pub friendly_team: Team,
-    pub enemy_team: Team,
+    pub blue_team: Vec<Robot>,
+    pub yellow_team: Vec<Robot>,
     pub field: Option<Field>,
 }

@@ -39,6 +39,9 @@ impl Vector {
 impl Div<f32> for Vector {
     type Output = Vector;
     fn div(self, rhs: f32) -> Self::Output {
-        self.norm(self.length() / rhs)
+        Vector{
+            x: self.x / rhs,
+            y: self.y / rhs
+        }
     }
 }

@@ -1,11 +1,11 @@
 mod ball_filter;
 mod robot_filter;
+mod world;
 
-use crate::communication::{run_forever, Node};
+use crate::communication::{Node, run_forever, dump_receiver};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
 use crate::proto;
-use crate::world::{Ball, Field, Team, World};
 use ball_filter::{BallDetection, BallFilter};
 use multiqueue2;
 use robot_filter::{RobotDetection, TeamFilter};
@@ -13,6 +13,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
+pub use world::{World, Team, Robot, Ball, Field};
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -33,26 +34,16 @@ pub struct Perception {
 
 impl Node for Perception {
     fn run_once(&mut self) -> Result<(), ()> {
-        let mut ssl_wrapper_packets: Vec<proto::ssl_vision::SslWrapperPacket> = vec![];
-        loop {
-            match self.input.ssl_vision_proto.try_recv() {
-                Ok(msg) => ssl_wrapper_packets.push(msg),
-                Err(e) => match e {
-                    std::sync::mpsc::TryRecvError::Empty => break,
-                    std::sync::mpsc::TryRecvError::Disconnected => {
-                        println!("Breaking perception loop");
-                        return Err(());
-                    }
-                },
-            };
-        }
-
+        let ssl_wrapper_packets = dump_receiver(&self.input.ssl_vision_proto)?;
         if !ssl_wrapper_packets.is_empty() {
             for packet in ssl_wrapper_packets {
                 if let Some(detection) = packet.detection {
                     for b in detection.balls {
                         let ball_detection = BallDetection {
-                            position: Point { x: b.x, y: b.y },
+                            position: Point {
+                                x: b.x * METERS_PER_MILLIMETER,
+                                y: b.y * METERS_PER_MILLIMETER
+                            },
                             timestamp: detection.t_capture as f32,
                         };
                         self.ball_filter.add_detection(ball_detection);
@@ -62,7 +53,10 @@ impl Node for Perception {
                             let detection = RobotDetection {
                                 id: r.robot_id.expect("Should always have robot id in proto")
                                     as usize,
-                                position: Point { x: r.x, y: r.y },
+                                position: Point {
+                                    x: r.x * METERS_PER_MILLIMETER,
+                                    y: r.y * METERS_PER_MILLIMETER
+                                },
                                 orientation: Angle::from_radians(
                                     r.orientation
                                         .expect("Should always have robot orientation in proto"),
@@ -76,7 +70,10 @@ impl Node for Perception {
                             let detection = RobotDetection {
                                 id: r.robot_id.expect("Should always have robot id in proto")
                                     as usize,
-                                position: Point { x: r.x, y: r.y },
+                                position: Point {
+                                    x: r.x * METERS_PER_MILLIMETER,
+                                    y: r.y * METERS_PER_MILLIMETER
+                                },
                                 orientation: Angle::from_radians(
                                     r.orientation
                                         .expect("Should always have robot orientation in proto"),
@@ -98,8 +95,9 @@ impl Node for Perception {
             let filtered_enemy_team = self.enemy_team_filter.get_team();
 
             self.most_recent_world.ball = filtered_ball;
-            self.most_recent_world.enemy_team = filtered_enemy_team;
-            self.most_recent_world.friendly_team = filtered_friendly_team;
+            self.most_recent_world.yellow_team = filtered_enemy_team;
+            self.most_recent_world.blue_team = filtered_friendly_team;
+            self.output.world.try_send(self.most_recent_world.clone()).unwrap();
         }
         // println!("Perception got packet {}", packet);
         // self.output.world.try_send();
@@ -118,8 +116,8 @@ impl Perception {
             enemy_team_filter: TeamFilter::new(),
             most_recent_world: World {
                 ball: None,
-                friendly_team: Team::new(),
-                enemy_team: Team::new(),
+                blue_team: vec![],
+                yellow_team: vec![],
                 field: None,
             },
         }
@@ -195,7 +193,7 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
         defense_y_length: penalty_area_width,
         goal_x_length: field_pb.goal_depth as f32 * METERS_PER_MILLIMETER,
         goal_y_length: field_pb.goal_width as f32 * METERS_PER_MILLIMETER,
-        boundary_buffer_size: field_pb.boundary_width as f32 * METERS_PER_MILLIMETER,
+        boundary_size: field_pb.boundary_width as f32 * METERS_PER_MILLIMETER,
         center_circle_radius: center_circle_radius,
     }
 }

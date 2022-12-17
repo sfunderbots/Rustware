@@ -19,7 +19,7 @@ from field.field import Field
 from util.zmq_pub_sub import ZmqPubSub
 from field.raw_vision_layer import RawVisionLayer
 # from field.sim_control_layer import SimControlLayer
-# from field.filtered_vision_layer import FilteredVisionLayer
+from field.filtered_vision_layer import FilteredVisionLayer
 # from field.trajectory_layer import TrajectoryLayer
 # from field.trajectory_obstacle_layer import TrajectoryObstacleLayer
 # from play.playinfo import PlayInfoWidget, MiscInfoWidget
@@ -27,6 +27,7 @@ from field.raw_vision_layer import RawVisionLayer
 # from proto import ssl_vision
 # import proto_paths
 from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
+from proto.visualization_pb2 import Visualization
 # from third_party.ssl_vision.
 
 DIV_B_TOTAL_FIELD_X_LENGTH = 9
@@ -94,35 +95,17 @@ class RustwareGui(QMainWindow):
 
 
         raw_vision_layer = RawVisionLayer()
-
-        # def raw_vision_callback(x):
-        #     pass
-        #     data = SSL_WrapperPacket()
-        #     data.ParseFromString(x)
-        #     raw_vision_layer.update_detection_map(data)
-
-        self.pub_sub_manager.register_callback(raw_vision_layer.update_detection_map, "test", SSL_WrapperPacket)
-        # self.register_callback(
-        #     lambda x: raw_vision_layer.update_friendly_defending_positive_side(
-        #         x.friendly_team_info.defending_positive_side
-        #     ),
-        #     topic="game_data",
-        # )
+        self.pub_sub_manager.register_callback(raw_vision_layer.update_detection_map, "ssl_vision", SSL_WrapperPacket)
         field.add_layer("Raw Vision", raw_vision_layer)
 
-        # return field
-    #
-    #     filtered_vision_layer = FilteredVisionLayer()
-    #     # self.register_callback(
-    #     #     callback=filtered_vision_layer.update_world, topic="world"
-    #     # )
-    #     # self.register_callback(
-    #     #     callback=lambda x: filtered_vision_layer.update_friendly_color(
-    #     #         x.friendly_team_info.is_blue
-    #     #     ),
-    #     #     topic="game_data",
-    #     # )
-    #     field.add_layer("Filtered Vision", filtered_vision_layer)
+        def world_callback(msg: Visualization):
+            if msg.HasField("world"):
+                filtered_vision_layer.update_world(msg.world)
+        filtered_vision_layer = FilteredVisionLayer()
+        self.pub_sub_manager.register_callback(
+            world_callback, "world", Visualization
+        )
+        field.add_layer("Filtered Vision", filtered_vision_layer)
     #
     #     # sim_control_layer = SimControlLayer(
     #     #     pub_sim_command=lambda x: self.pub(

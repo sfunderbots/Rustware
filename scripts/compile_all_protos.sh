@@ -12,3 +12,9 @@ for f in $config_protos; do
     echo $f
     compile_proto_file "$f"
 done
+
+custom_protos=$(find $PROJECT_ROOT_DIR/proto/ -type f -name "*.proto")
+for f in $custom_protos; do
+    echo $f
+    compile_proto_file "$f"
+done

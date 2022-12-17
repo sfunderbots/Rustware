@@ -16,21 +16,20 @@ mod math;
 mod motion;
 mod perception;
 mod proto;
-mod world;
 mod config;
 
 use crate::communication::Node;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, Trajectory};
-use crate::world::{Field, Robot, World};
+use perception::{Field, Robot, World};
 use multiqueue2;
 use rand::Rng;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc};
+use std::sync::{Arc, mpsc};
 use std::{fs, thread};
 use std::error::Error;
-use std::thread::{sleep, JoinHandle};
+use std::thread::{JoinHandle, sleep};
 use std::time::Duration;
 use std::time::Instant;
 use zmq;
@@ -90,6 +89,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         gui_bridge_input: gui_bridge::Input {
             ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
+            perception_world: world_receiver.add_stream().clone()
         },
         gui_bridge_output: gui_bridge::Output {},
     };

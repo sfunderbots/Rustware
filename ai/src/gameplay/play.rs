@@ -1,5 +1,5 @@
 use super::tactic::Tactic;
-use crate::world::World;
+use crate::perception::World;
 use strum_macros::Display;
 use strum_macros::EnumIter;
 

@@ -55,31 +55,17 @@ fn main() -> Result<()> {
     prost_build::compile_protos(
         &[
             "../config/config.proto",
+            "../proto/visualization.proto",
         ],
-        &["../config/"],
+        &["../config/", "../proto/"],
     )
         .unwrap();
     protobuf_codegen::Codegen::new()
         .includes(&["../config"])
         .input("../config/config.proto")
-        .cargo_out_dir("protos")
+        .cargo_out_dir("config")
         .run_from_script();
 
-    protobuf_codegen::Codegen::new()
-        .includes(&["../third_party/"])
-        .input("../third_party/ssl_vision/messages_robocup_ssl_geometry.proto")
-        .input("../third_party/ssl_vision/messages_robocup_ssl_detection.proto")
-        .input("../third_party/ssl_vision/messages_robocup_ssl_wrapper.proto")
-        .cargo_out_dir("ssl_vision")
-        .run_from_script();
-    // prost_build::compile_protos(
-    //     &[
-    //         "../third_party/ssl_vision/messages_robocup_ssl_geometry.proto",
-    //         "../third_party/ssl_vision/messages_robocup_ssl_detection.proto",
-    //         "../third_party/ssl_vision/messages_robocup_ssl_wrapper.proto",
-    //     ],
-    //     &["../third_party/"],
-    // )
 
     Ok(())
 }

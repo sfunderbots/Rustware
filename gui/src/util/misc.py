@@ -2,6 +2,7 @@ from PyQt6.QtCore import QPointF, QLineF
 # from src.geom.point import Point
 # from src.geom.vector import Vector
 from PyQt6.QtCore import QPointF
+from PyQt6.QtGui import QPainterPath, QFont, QTransform
 
 def create_text_path(
         text: str, pos: QPointF, width: float, bold: bool = False
