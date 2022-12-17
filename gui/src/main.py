@@ -1,5 +1,3 @@
-import os
-
 from sys import path
 from pathlib import Path
 
@@ -7,6 +5,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 path.append(str(project_root))
 
+from config.config_pb2 import Config
+from google.protobuf.text_format import MessageToString, Parse
+
+import os
 import pyqtgraph as pg
 from pyqtgraph.dockarea import *
 from PyQt6.QtWidgets import QTabWidget, QMainWindow
@@ -150,10 +152,32 @@ class RustwareGui(QMainWindow):
 
         return field
 
+def check_all_fields_set(msg, msg_type) -> bool:
+    unset_fields = set()
+    for name in [field.name for field in msg_type.DESCRIPTOR.fields]:
+        if not msg.HasField(name):
+            unset_fields.add(name)
+
+    if unset_fields:
+        print("The following fields are not set in the message:\n* {}".format("\n* ".join(unset_fields)))
+        return False
+    return True
+
+def load_config() -> Config:
+    config_path = project_root / "config/config.pbtxt"
+    with open(str(config_path), "r") as infile:
+        data = infile.read()
+        config = Parse(data, Config())
+        print(config)
+        check_all_fields_set(config, Config)
+        return config
+
+
 def main():
+    config = load_config()
+    print(config.backend.ssl_vision_ip)
     app = pg.mkQApp("Gui")
     w = RustwareGui()
-    print(os.environ.values())
     w.show()
     app.exec()
 

@@ -17,6 +17,7 @@ mod motion;
 mod perception;
 mod proto;
 mod world;
+mod config;
 
 use crate::communication::Node;
 use crate::geom::{Point, Vector};
@@ -27,11 +28,15 @@ use multiqueue2;
 use rand::Rng;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
-use std::thread;
+use std::{fs, thread};
+use std::error::Error;
 use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 use zmq;
+use protobuf;
+use prost::Message;
+use protobuf::reflect::rt::v2::make_oneof_copy_has_get_set_simpler_accessors;
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -153,15 +158,9 @@ fn run_nodes_in_parallel_threads() {
 }
 
 fn main() {
-    // gui_bridge::GuiBridge::new()
-
+    let cfg = config::load_config().expect("Config should be fully initialized");
+    println!("{}", cfg.backend.ssl_vision_ip);
     // experimental::run();
     // run_nodes_synchronously();
     run_nodes_in_parallel_threads();
-    // gui::run_gui();
-    //
-    // println!("Hello proto");
-    // let mut geom = proto::ssl_vision::Vector2f::default();
-    // geom.x = 0.1;
-    // geom.y = 0.5
 }
