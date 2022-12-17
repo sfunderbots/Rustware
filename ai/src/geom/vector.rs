@@ -35,13 +35,12 @@ impl Vector {
     }
 }
 
-
 impl Div<f32> for Vector {
     type Output = Vector;
     fn div(self, rhs: f32) -> Self::Output {
-        Vector{
+        Vector {
             x: self.x / rhs,
-            y: self.y / rhs
+            y: self.y / rhs,
         }
     }
 }

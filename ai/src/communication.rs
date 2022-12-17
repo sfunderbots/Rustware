@@ -33,7 +33,7 @@ pub fn run_forever(mut node: Box<dyn Node>, should_stop: Arc<AtomicBool>, name: 
 
 pub fn dump_receiver<T>(mut receiver: &multiqueue2::BroadcastReceiver<T>) -> Result<Vec<T>, ()>
 where
-T: Clone
+    T: Clone,
 {
     let mut data: Vec<T> = vec![];
     loop {
@@ -51,8 +51,8 @@ T: Clone
 }
 
 pub fn take_last<T>(mut receiver: &multiqueue2::BroadcastReceiver<T>) -> Result<Option<T>, ()>
-    where
-        T: Clone
+where
+    T: Clone,
 {
     let mut data: Option<T> = None;
     loop {

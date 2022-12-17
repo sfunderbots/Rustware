@@ -2,7 +2,7 @@ mod ball_filter;
 mod robot_filter;
 mod world;
 
-use crate::communication::{Node, run_forever, dump_receiver};
+use crate::communication::{dump_receiver, run_forever, Node};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
 use crate::proto;
@@ -13,7 +13,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-pub use world::{World, Team, Robot, Ball, Field};
+pub use world::{Ball, Field, Robot, Team, World};
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -42,7 +42,7 @@ impl Node for Perception {
                         let ball_detection = BallDetection {
                             position: Point {
                                 x: b.x * METERS_PER_MILLIMETER,
-                                y: b.y * METERS_PER_MILLIMETER
+                                y: b.y * METERS_PER_MILLIMETER,
                             },
                             timestamp: detection.t_capture as f32,
                         };
@@ -55,7 +55,7 @@ impl Node for Perception {
                                     as usize,
                                 position: Point {
                                     x: r.x * METERS_PER_MILLIMETER,
-                                    y: r.y * METERS_PER_MILLIMETER
+                                    y: r.y * METERS_PER_MILLIMETER,
                                 },
                                 orientation: Angle::from_radians(
                                     r.orientation
@@ -72,7 +72,7 @@ impl Node for Perception {
                                     as usize,
                                 position: Point {
                                     x: r.x * METERS_PER_MILLIMETER,
-                                    y: r.y * METERS_PER_MILLIMETER
+                                    y: r.y * METERS_PER_MILLIMETER,
                                 },
                                 orientation: Angle::from_radians(
                                     r.orientation
@@ -97,7 +97,10 @@ impl Node for Perception {
             self.most_recent_world.ball = filtered_ball;
             self.most_recent_world.yellow_team = filtered_enemy_team;
             self.most_recent_world.blue_team = filtered_friendly_team;
-            self.output.world.try_send(self.most_recent_world.clone()).unwrap();
+            self.output
+                .world
+                .try_send(self.most_recent_world.clone())
+                .unwrap();
         }
         // println!("Perception got packet {}", packet);
         // self.output.world.try_send();

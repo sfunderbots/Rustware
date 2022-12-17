@@ -5,6 +5,7 @@ extern crate core;
 
 mod backend;
 mod communication;
+mod config;
 mod constants;
 mod evaluation;
 mod experimental;
@@ -16,26 +17,25 @@ mod math;
 mod motion;
 mod perception;
 mod proto;
-mod config;
 
 use crate::communication::Node;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, Trajectory};
-use perception::{Field, Robot, World};
 use multiqueue2;
+use perception::{Field, Robot, World};
+use prost::Message;
+use protobuf;
+use protobuf::reflect::rt::v2::make_oneof_copy_has_get_set_simpler_accessors;
 use rand::Rng;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, mpsc};
-use std::{fs, thread};
 use std::error::Error;
-use std::thread::{JoinHandle, sleep};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
+use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
+use std::{fs, thread};
 use zmq;
-use protobuf;
-use prost::Message;
-use protobuf::reflect::rt::v2::make_oneof_copy_has_get_set_simpler_accessors;
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -89,7 +89,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         gui_bridge_input: gui_bridge::Input {
             ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
-            perception_world: world_receiver.add_stream().clone()
+            perception_world: world_receiver.add_stream().clone(),
         },
         gui_bridge_output: gui_bridge::Output {},
     };

@@ -1,5 +1,5 @@
-use std::io::Result;
 use protobuf_codegen::Customize;
+use std::io::Result;
 
 fn main() -> Result<()> {
     prost_build::compile_protos(
@@ -53,19 +53,15 @@ fn main() -> Result<()> {
     )
     .unwrap();
     prost_build::compile_protos(
-        &[
-            "../config/config.proto",
-            "../proto/visualization.proto",
-        ],
+        &["../config/config.proto", "../proto/visualization.proto"],
         &["../config/", "../proto/"],
     )
-        .unwrap();
+    .unwrap();
     protobuf_codegen::Codegen::new()
         .includes(&["../config"])
         .input("../config/config.proto")
         .cargo_out_dir("config")
         .run_from_script();
-
 
     Ok(())
 }

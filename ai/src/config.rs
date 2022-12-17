@@ -1,8 +1,8 @@
+use crate::proto;
+use prost::Message;
+use protobuf;
 use std::error::Error;
 use std::fs;
-use protobuf;
-use prost::Message;
-use crate::proto;
 
 // Sadly the rust-protobuf crate always generates structs with Option<T>
 // fields, even if the field is "required" in proto2. There are accessor
@@ -17,10 +17,12 @@ pub fn load_config() -> Result<proto::Config, Box<dyn Error>> {
     convert_rust_protobuf_to_prost(config)
 }
 
-fn convert_rust_protobuf_to_prost(msg: proto::config::Config) -> Result<proto::Config, Box<dyn Error>> {
+fn convert_rust_protobuf_to_prost(
+    msg: proto::config::Config,
+) -> Result<proto::Config, Box<dyn Error>> {
     let intermediate_bytes: Vec<u8> = protobuf::Message::write_to_bytes(&msg).unwrap();
     match proto::Config::decode(intermediate_bytes.as_slice()) {
         Ok(m) => Ok(m),
-        Err(e) => Err(Box::new(e))
+        Err(e) => Err(Box::new(e)),
     }
 }

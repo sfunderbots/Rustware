@@ -1,4 +1,3 @@
-
 use prost::Message;
 
 pub mod ssl_vision {
