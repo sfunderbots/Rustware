@@ -1,7 +1,10 @@
 use protobuf_codegen::Customize;
 use std::io::Result;
+use std::path::Path;
+use std::env;
+use cmake;
 
-fn main() -> Result<()> {
+fn main() {
     prost_build::compile_protos(
         &[
             "../third_party/ssl_vision/messages_robocup_ssl_geometry.proto",
@@ -62,6 +65,27 @@ fn main() -> Result<()> {
         .input("../config/config.proto")
         .cargo_out_dir("config")
         .run_from_script();
+    // println!("cargo:rustc-link-search=/home/mathew/Projects/rustware/third_party/erforce_simulator/build/src/amun/simulator/");
+    // println!("cargo:rustc-link-search=/usr/local/lib");
+    // println!("cargo:rustc-link-search=.");
+    // let dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    // println!("cargo:rustc-link-search=native={}", Path::new(&dir).display());
+    // println!("cargo:rustc-link-lib=static=mathewtest");
+    // println!("cargo:rustc-link-lib=/home/mathew/Projects/rustware/third_party/erforce_simulator/build/src/amun/simulator/libsimulator.a");
+    // println!("cargo:rustc-link-lib=static=simulator");
+    // println!("cargo:rustc-link-search=.");
+    // println!("cargo:rustc-link-search=native=.");
+    // println!("cargo:rustc-link-lib=simulator");
 
-    Ok(())
+    // let dst = cmake::build("/home/mathew/Projects/rustware/third_party/erforce_simulator/src/amun/simulator/");
+
+    cxx_build::bridge("src/main.rs")
+        .file("src/ersim_wrapper/ersim.cpp")
+        // .file("src/ersim_wrapper/ersim.h")
+        // .flag_if_supported("-std=c++14")
+        .compile("cxxbridge-demo");
+    println!("cargo:rerun-if-changed=src/main.rs");
+    println!("cargo:rerun-if-changed=src/ersim_wrapper/ersim.cpp");
+    println!("cargo:rerun-if-changed=src/ersim_wrapper/ersim.h");
+
 }
