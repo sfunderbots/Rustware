@@ -15,11 +15,14 @@ from PyQt6.QtWidgets import QTabWidget, QMainWindow
 from PyQt6.QtCore import QTimer
 from PyQt6 import QtCore
 from field.field import Field
+
 # from gui.util.zmq_pub_sub import ZmqPubSub
 from util.zmq_pub_sub import ZmqPubSub
 from field.raw_vision_layer import RawVisionLayer
+
 # from field.sim_control_layer import SimControlLayer
 from field.filtered_vision_layer import FilteredVisionLayer
+
 # from field.trajectory_layer import TrajectoryLayer
 # from field.trajectory_obstacle_layer import TrajectoryObstacleLayer
 # from play.playinfo import PlayInfoWidget, MiscInfoWidget
@@ -28,10 +31,12 @@ from field.filtered_vision_layer import FilteredVisionLayer
 # import proto_paths
 from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
 from proto.visualization_pb2 import Visualization
+
 # from third_party.ssl_vision.
 
 DIV_B_TOTAL_FIELD_X_LENGTH = 9
 DIV_B_TOTAL_FIELD_Y_LENGTH = 6
+
 
 class RustwareGui(QMainWindow):
     def __init__(self):
@@ -58,9 +63,7 @@ class RustwareGui(QMainWindow):
 
     def _setup_gameplay_controls_dock_area(self):
         field_dock = Dock("field")
-        field_dock.addWidget(
-            self.setup_field_widget()
-        )
+        field_dock.addWidget(self.setup_field_widget())
         self.dock_area.addDock(field_dock)
 
         # logs_dock = Dock("Logs")
@@ -93,47 +96,48 @@ class RustwareGui(QMainWindow):
             max_y_range=DIV_B_TOTAL_FIELD_Y_LENGTH,
         )
 
-
         raw_vision_layer = RawVisionLayer()
-        self.pub_sub_manager.register_callback(raw_vision_layer.update_detection_map, "ssl_vision", SSL_WrapperPacket)
+        self.pub_sub_manager.register_callback(
+            raw_vision_layer.update_detection_map, "ssl_vision", SSL_WrapperPacket
+        )
         field.add_layer("Raw Vision", raw_vision_layer)
 
         def world_callback(msg: Visualization):
             if msg.HasField("world"):
                 filtered_vision_layer.update_world(msg.world)
+
         filtered_vision_layer = FilteredVisionLayer()
-        self.pub_sub_manager.register_callback(
-            world_callback, "world", Visualization
-        )
+        self.pub_sub_manager.register_callback(world_callback, "world", Visualization)
         field.add_layer("Filtered Vision", filtered_vision_layer)
-    #
-    #     # sim_control_layer = SimControlLayer(
-    #     #     pub_sim_command=lambda x: self.pub(
-    #     #         obj=x, topic="sim_control", keep_only_last_message=False
-    #     #     )
-    #     # )
-    #     # field.add_layer("Sim Control", sim_control_layer)
-    #
-    #     trajectory_layer = TrajectoryLayer()
-    #     # self.register_callback(
-    #     #     callback=trajectory_layer.update_trajectories, topic="trajectories"
-    #     # )
-    #     field.add_layer("Robot Trajectories", trajectory_layer)
-    #
-    #     trajectory_obstacle_layer = TrajectoryObstacleLayer()
-    #     # self.register_callback(
-    #     #     callback=lambda x: trajectory_obstacle_layer.update_obstacles(
-    #     #         x.robot_trajectory_obstacles
-    #     #     ),
-    #     #     topic="gameplay_data",
-    #     # )
-    #     field.add_layer(
-    #         "Trajectory Obstacles", trajectory_obstacle_layer, visible=False
-    #     )
-    #
+        #
+        #     # sim_control_layer = SimControlLayer(
+        #     #     pub_sim_command=lambda x: self.pub(
+        #     #         obj=x, topic="sim_control", keep_only_last_message=False
+        #     #     )
+        #     # )
+        #     # field.add_layer("Sim Control", sim_control_layer)
+        #
+        #     trajectory_layer = TrajectoryLayer()
+        #     # self.register_callback(
+        #     #     callback=trajectory_layer.update_trajectories, topic="trajectories"
+        #     # )
+        #     field.add_layer("Robot Trajectories", trajectory_layer)
+        #
+        #     trajectory_obstacle_layer = TrajectoryObstacleLayer()
+        #     # self.register_callback(
+        #     #     callback=lambda x: trajectory_obstacle_layer.update_obstacles(
+        #     #         x.robot_trajectory_obstacles
+        #     #     ),
+        #     #     topic="gameplay_data",
+        #     # )
+        #     field.add_layer(
+        #         "Trajectory Obstacles", trajectory_obstacle_layer, visible=False
+        #     )
+        #
         self.register_refresh_function(field.refresh, refresh_interval_ms=1)
 
         return field
+
 
 def check_all_fields_set(msg, msg_type) -> bool:
     unset_fields = set()
@@ -142,9 +146,14 @@ def check_all_fields_set(msg, msg_type) -> bool:
             unset_fields.add(name)
 
     if unset_fields:
-        print("The following fields are not set in the message:\n* {}".format("\n* ".join(unset_fields)))
+        print(
+            "The following fields are not set in the message:\n* {}".format(
+                "\n* ".join(unset_fields)
+            )
+        )
         return False
     return True
+
 
 def load_config() -> Config:
     config_path = project_root / "config/config.pbtxt"
@@ -163,6 +172,7 @@ def main():
     w = RustwareGui()
     w.show()
     app.exec()
+
 
 if __name__ == "__main__":
     main()

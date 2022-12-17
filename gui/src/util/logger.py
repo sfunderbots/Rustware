@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from multiprocessing import Queue
 from logging.handlers import QueueHandler, QueueListener
+
 # from src.communication.zmq_util import *
 
 # log_queue = Queue(maxsize=-1)

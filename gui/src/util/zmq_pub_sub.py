@@ -13,7 +13,6 @@ from .logger import LOG
 from collections import deque
 
 
-
 @dataclass
 class ZmqPubTopicInfo:
     topic: str
@@ -28,7 +27,7 @@ class ZmqSubTopicInfo:
     callbacks: List[Callable] = dataclass_field(default_factory=list)
 
 
-class ZmqPubSub():
+class ZmqPubSub:
     def __init__(self, pub_noblock=True):
         self.context = zmq.Context()
 
@@ -62,11 +61,15 @@ class ZmqPubSub():
         except zmq.ZMQError:
             LOG.error("ZMQ publisher queue full for topic: {}".format(topic))
 
-    def register_callback(self, callback, topic, msg_type: Message, keep_only_last_message=True):
+    def register_callback(
+        self, callback, topic, msg_type: Message, keep_only_last_message=True
+    ):
         if topic not in self.sub_topic_map:
             socket = create_sub_socket(self.context, keep_only_last_message)
             socket.connect(socket_interface_from_topic(topic))
-            self.sub_topic_map[topic] = ZmqSubTopicInfo(topic=topic, socket=socket, proto_msg_type=msg_type)
+            self.sub_topic_map[topic] = ZmqSubTopicInfo(
+                topic=topic, socket=socket, proto_msg_type=msg_type
+            )
 
         self.sub_topic_map[topic].callbacks.append(callback)
 

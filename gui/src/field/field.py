@@ -1,10 +1,13 @@
 import pyqtgraph as pg
+
 # from util.logger import LOG
 from pyqtgraph.Qt.QtWidgets import *
 from pyqtgraph.Qt import QtCore, QtGui
 from PyQt6.QtCore import QPointF
+
 # from . import FieldLayer
 from src.field.field_layer import FieldLayer
+
 # from src.visualizer.colors import BACKGROUND_COLOR
 # from gui.
 # from gui.colors import BACKGROUND_COLOR
@@ -13,9 +16,11 @@ from src.colors import BACKGROUND_COLOR
 # from field_layer import FieldLayer
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 from PyQt6 import QtCore
+
 # from ... import colors
 
 from .raw_vision_layer import RawVisionLayer
+
 # from .sim_control_layer import SimControlLayer
 # from .filtered_vision_layer import FilteredVisionLayer
 # from .trajectory_layer import TrajectoryLayer

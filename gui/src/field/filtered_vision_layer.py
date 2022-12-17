@@ -17,8 +17,10 @@ from proto.visualization_pb2 import Visualization, PerceptionWorld
 # Make the ball a little easier to see
 BALL_MAX_RADIUS_METERS *= 1.5
 
+
 def to_degrees(x: float) -> float:
     return x * 180.0 / math.pi
+
 
 class FilteredVisionLayer(FieldLayer):
     TextSymbol = namedtuple("TextSymbol", "label symbol scale")

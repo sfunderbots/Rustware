@@ -3,7 +3,7 @@ import zmq
 
 
 def create_pub_socket(
-        context: zmq.Context, buffer_size_messages: int = None, keep_only_last_message=False
+    context: zmq.Context, buffer_size_messages: int = None, keep_only_last_message=False
 ):
     if buffer_size_messages is not None and keep_only_last_message:
         raise ValueError(
@@ -19,9 +19,9 @@ def create_pub_socket(
 
 
 def create_sub_socket(
-        context: zmq.Context,
-        buffer_size_messages: int = None,
-        keep_only_last_message=False,
+    context: zmq.Context,
+    buffer_size_messages: int = None,
+    keep_only_last_message=False,
 ):
     if buffer_size_messages is not None and keep_only_last_message:
         raise ValueError(
@@ -40,6 +40,7 @@ def pub_proto(socket: zmq.Socket, msg, noblock=True):
     raw_data = msg.SerializeToString()
     socket.send(data=raw_data, flags=zmq.NOBLOCK if noblock else 0)
 
+
 def recv_proto(socket: zmq.Socket, msg_type):
     raw_data = socket.recv()
     msg = msg_type()
@@ -49,6 +50,7 @@ def recv_proto(socket: zmq.Socket, msg_type):
     except Exception as e:
         print("Failed to parse proto")
     return None
+
 
 def socket_interface_from_topic(topic: str):
     return ZMQ_BASE_UNIX_SOCKET + topic
