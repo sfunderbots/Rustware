@@ -1,8 +1,10 @@
 #include "rustware/src/ersim_wrapper/ersim.h"
 #include "rustware/src/main.rs.h"
 #include <mtest.hpp>
-//#include <snappy.h>
 #include <memory>
+//#include <snappy.h>
+
+
 
 int ersquare(int x) {
 //    int foo = mysquarecpp(x);
@@ -15,3 +17,16 @@ int ersquare(int x) {
     return x*x;
 }
 
+SimulatorWrapper::SimulatorWrapper() : impl(new Simulator()) {}
+
+void SimulatorWrapper::set(int x) const{
+    impl->set_num(x);
+}
+
+int SimulatorWrapper::get() const {
+    return impl->get_num();
+}
+
+std::unique_ptr<SimulatorWrapper> new_simulator_wrapper() {
+    return std::make_unique<SimulatorWrapper>();
+}

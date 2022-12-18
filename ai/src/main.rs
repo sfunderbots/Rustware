@@ -36,6 +36,8 @@ use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
 use zmq;
+use cxx::UniquePtr;
+use std::pin::Pin;
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -212,6 +214,10 @@ mod ffi {
     unsafe extern "C++" {
         include!("rustware/src/ersim_wrapper/ersim.h");
         fn ersquare(x: i32) -> i32;
+        type SimulatorWrapper;
+        fn new_simulator_wrapper() -> UniquePtr<SimulatorWrapper>;
+        fn set(&self, x: i32);
+        fn get(&self) -> i32;
     }
 }
 
@@ -226,4 +232,8 @@ fn main() {
     // println!("square: {}", z);
     let foo = ffi::ersquare(40);
     println!("square: {}", foo);
+    let wrapper = ffi::new_simulator_wrapper();
+    println!("{}", wrapper.get());
+    wrapper.set(5);
+    println!("{}", wrapper.get());
 }
