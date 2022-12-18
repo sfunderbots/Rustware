@@ -200,6 +200,13 @@ fn run_nodes_in_parallel_threads() {
 //     fn square(val: i32) -> i32;
 // }
 //
+
+// #[link(name = "snappy")]
+// extern "C" {
+//     // fn square(val: i32) -> i32;
+//
+// }
+
 #[cxx::bridge()]
 mod ffi {
     unsafe extern "C++" {

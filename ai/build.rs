@@ -79,13 +79,23 @@ fn main() {
 
     // let dst = cmake::build("/home/mathew/Projects/rustware/third_party/erforce_simulator/src/amun/simulator/");
 
+
     cxx_build::bridge("src/main.rs")
         .file("src/ersim_wrapper/ersim.cpp")
+        .flag("-lsnappy")
+        .flag("-lmathewtestcpp")
         // .file("src/ersim_wrapper/ersim.h")
         // .flag_if_supported("-std=c++14")
+        // .flag("-lmathewtestcpp")
+        // .flag("-lmathewtest")
+        // .flag("-lmtest")
         .compile("cxxbridge-demo");
     println!("cargo:rerun-if-changed=src/main.rs");
     println!("cargo:rerun-if-changed=src/ersim_wrapper/ersim.cpp");
     println!("cargo:rerun-if-changed=src/ersim_wrapper/ersim.h");
+
+    // println!("cargo:rustc-link-search=/usr/local/lib");
+    println!("cargo:rustc-link-lib=mathewtestcpp");
+    // println!("cargo:rustc-link-lib=dylib=snappy");
 
 }
