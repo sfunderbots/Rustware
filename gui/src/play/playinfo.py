@@ -4,9 +4,8 @@ import pyqtgraph as pg
 from abc import abstractmethod
 import pyqtgraph.console as pg_console
 from pyqtgraph.Qt import QtCore, QtGui
-from pyqtgraph.Qt.QtWidgets import *
-from src.gameplay.gameplay_data import GameplayData
 from collections import defaultdict
+from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
 
 
 class TableInfoWidget(QTableWidget):
@@ -17,7 +16,7 @@ class TableInfoWidget(QTableWidget):
         self.table_data = defaultdict(list)
 
     @abstractmethod
-    def update_data(self, data: GameplayData):
+    def update_data(self, data):
         pass
 
     def set_data(self, data):
@@ -65,7 +64,7 @@ class PlayInfoWidget(TableInfoWidget):
     def __init__(self):
         TableInfoWidget.__init__(self)
 
-    def update_data(self, data: GameplayData):
+    def update_data(self, data):
         self.table_data.clear()
         for id, tactic in data.assigned_tactics.items():
             self.table_data["Play"].append(data.play.name())
@@ -78,7 +77,7 @@ class MiscInfoWidget(TableInfoWidget):
     def __init__(self):
         TableInfoWidget.__init__(self)
 
-    def update_data(self, data: GameplayData):
+    def update_data(self, data):
         self.table_data.clear()
         self.table_data["Key"].append("Friendly Possession")
         self.table_data["Value"].append(str(data.friendly_has_possession))

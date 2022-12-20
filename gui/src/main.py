@@ -16,6 +16,8 @@ from PyQt6.QtCore import QTimer
 from PyQt6 import QtCore
 from field.field import Field
 from named_value_plotter import NamedValuePlotter
+from log_widget import LogWidget
+from play.playinfo import PlayInfoWidget, MiscInfoWidget
 
 # from gui.util.zmq_pub_sub import ZmqPubSub
 from util.zmq_pub_sub import ZmqPubSub
@@ -64,21 +66,21 @@ class RustwareGui(QMainWindow):
         field_dock.addWidget(self.setup_field_widget())
         self.dock_area.addDock(field_dock)
 
-        # logs_dock = Dock("Logs")
-        # logs_dock.addWidget(self.setup_log_widget())
-        # self.dock_area.addDock(logs_dock, "left", field_dock)
-        #
+        logs_dock = Dock("Logs")
+        logs_dock.addWidget(self.setup_log_widget())
+        self.dock_area.addDock(logs_dock, "left", field_dock)
+
         performance_dock = Dock("Performance")
         performance_dock.addWidget(self.setup_performance_plot().win)
         self.dock_area.addDock(performance_dock, "bottom", field_dock)
-        #
-        # playinfo_dock = Dock("Play Info")
-        # playinfo_dock.addWidget(self.setup_play_info_widget())
-        # self.dock_area.addDock(playinfo_dock, "left", performance_dock)
-        #
-        # miscinfo_dock = Dock("Misc Info")
-        # miscinfo_dock.addWidget(self.setup_misc_info_widget())
-        # self.dock_area.addDock(miscinfo_dock, "bottom", playinfo_dock)
+
+        playinfo_dock = Dock("Play Info")
+        playinfo_dock.addWidget(self.setup_play_info_widget())
+        self.dock_area.addDock(playinfo_dock, "left", performance_dock)
+
+        miscinfo_dock = Dock("Misc Info")
+        miscinfo_dock.addWidget(self.setup_misc_info_widget())
+        self.dock_area.addDock(miscinfo_dock, "bottom", playinfo_dock)
 
     def register_refresh_function(self, refresh_func, refresh_interval_ms=5):
         refresh_timer = QTimer()
@@ -87,6 +89,26 @@ class RustwareGui(QMainWindow):
         refresh_timer.start(refresh_interval_ms)
 
         self.refresh_timers.append(refresh_timer)
+
+    def setup_play_info_widget(self):
+        play_info = PlayInfoWidget()
+
+        self.register_refresh_function(play_info.refresh)
+
+        return play_info
+
+    def setup_misc_info_widget(self):
+        misc_info = MiscInfoWidget()
+
+        self.register_refresh_function(misc_info.refresh)
+
+        return misc_info
+
+    def setup_log_widget(self):
+        logs = LogWidget()
+        self.register_refresh_function(logs.refresh)
+
+        return logs
 
     def setup_field_widget(self):
         field = Field(
