@@ -9,6 +9,7 @@ from config.config_pb2 import Config
 from google.protobuf.text_format import MessageToString, Parse
 
 import os
+from src.field.sim_control_layer import SimControlLayer
 import pyqtgraph as pg
 from pyqtgraph.dockarea import *
 from PyQt6.QtWidgets import QTabWidget, QMainWindow
@@ -129,13 +130,14 @@ class RustwareGui(QMainWindow):
         filtered_vision_layer = FilteredVisionLayer()
         self.pub_sub_manager.register_callback(world_callback, "world", Visualization)
         field.add_layer("Filtered Vision", filtered_vision_layer)
-        #
-        #     # sim_control_layer = SimControlLayer(
-        #     #     pub_sim_command=lambda x: self.pub(
-        #     #         obj=x, topic="sim_control", keep_only_last_message=False
-        #     #     )
-        #     # )
-        #     # field.add_layer("Sim Control", sim_control_layer)
+
+        sim_control_layer = SimControlLayer(
+            # pub_sim_command=lambda x: self.pub(
+            #     obj=x, topic="sim_control", keep_only_last_message=False
+            # )
+            pub_sim_command=lambda x: print("TODO: pub sim control")
+        )
+        field.add_layer("Sim Control", sim_control_layer)
         #
         #     trajectory_layer = TrajectoryLayer()
         #     # self.register_callback(

@@ -1,10 +1,8 @@
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
-from src.util.logger import LOG
-from src.visualizer.field.field_layer import FieldLayer
-import src.visualizer.colors as colors
-from src.backend.simulator import *
-from src.visualizer.util import *
+from src.field.field_layer import FieldLayer
+import src.colors as colors
+from PyQt6.QtCore import QPointF, QLineF
 
 
 class SimControlLayer(FieldLayer):
@@ -36,16 +34,16 @@ class SimControlLayer(FieldLayer):
             and not event.isAutoRepeat()
             and self._ball_command_line is not None
         ):
-            command = SimControlCommand(
-                ball=Ball(
-                    position=toPoint(self._ball_command_line.p1()),
-                    velocity=toVector(self._ball_command_line),
-                )
-            )
+            # command = SimControlCommand(
+            #     ball=Ball(
+            #         position=toPoint(self._ball_command_line.p1()),
+            #         velocity=toVector(self._ball_command_line),
+            #     )
+            # )
             # TODO: For some reason the key has to be pressed twice before commands start getting through, but
             # it works as expected after that. Not sure why, but should check zmq isn't always
             # one tick behind
-            self._pub_sim_command(command)
+            # self._pub_sim_command(command)
             self._ball_command_line = None
 
     def onMouseMoved(self, pos: QPointF):

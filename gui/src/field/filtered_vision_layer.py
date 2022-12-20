@@ -33,7 +33,6 @@ class FilteredVisionLayer(FieldLayer):
 
     def update_world(self, world: PerceptionWorld):
         self.buffer.append(world)
-        # print(len(self.buffer))
 
     # def update_friendly_color(self, is_friendly_team_blue: bool):
     #     self.is_friendly_team_blue = is_friendly_team_blue
@@ -148,14 +147,12 @@ class FilteredVisionLayer(FieldLayer):
         """
         try:
             self.cached_world = self.buffer.popleft()
-            print("updated cache")
         except IndexError:
             pass
 
         # if self.cached_world and self.is_friendly_team_blue is not None:
         if self.cached_world is not None:
             if self.cached_world.HasField("field"):
-                print("draring ball")
                 self.draw_field(painter, self.cached_world.field)
             self.draw_robots(
                 painter,
@@ -172,5 +169,4 @@ class FilteredVisionLayer(FieldLayer):
                 else colors.YELLOW_ROBOT_COLOR,
             )
             if self.cached_world.HasField("ball"):
-                print("draring field")
                 self.draw_ball(painter, self.cached_world.ball)
