@@ -35,9 +35,6 @@ use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
-use zmq;
-use cxx::UniquePtr;
-use std::pin::Pin;
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -159,81 +156,12 @@ fn run_nodes_in_parallel_threads() {
     println!("Done join");
 }
 
-// use libc::size_t;
-//
-// #[link(name = "mathewtest")]
-// extern "C" {
-//     fn mysquarefunc(val: size_t) -> size_t;
-// }
-//
-// fn main() {
-//     // let cfg = config::load_config().expect("Config should be fully initialized");
-//     // println!("{}", cfg.backend.ssl_vision_ip);
-//     // experimental::run();
-//     // run_nodes_synchronously();
-//     // run_nodes_in_parallel_threads();
-//
-//     println!("Hellow world");
-//     let r = unsafe { mysquarefunc(4)};
-//     // println!("square is {}", r);
-// }
-
-// use libc::size_t;
-
-// #[link(name = "snappy")]
-// extern {
-//     fn snappy_max_compressed_length(source_length: size_t) -> size_t;
-// }
-
-// #[link(name = "mathewtest")]
-// extern "C" {
-//     fn mysquare(val: i32) -> i32;
-// }
-//
-// // #[link(name = "mathewtestcpp")]
-// // extern "C" {
-// //     fn mysquarecpp(val: i32) -> i32;
-// //     // type Simulator;
-// //     // fn new_simulator() -> UniquePtr<Simulator>;
-// // }
-//
-// #[link(name = "hello")]
-// extern "C" {
-//     fn square(val: i32) -> i32;
-// }
-//
-
-// #[link(name = "snappy")]
-// extern "C" {
-//     // fn square(val: i32) -> i32;
-//
-// }
-
-#[cxx::bridge()]
-mod ffi {
-    unsafe extern "C++" {
-        include!("rustware/src/ersim_wrapper/ersim.h");
-        fn ersquare(x: i32) -> i32;
-        type SimulatorWrapper;
-        fn new_simulator_wrapper() -> UniquePtr<SimulatorWrapper>;
-        // fn set(&self, x: i32);
-        // fn get(&self) -> i32;
-    }
-}
-
 fn main() {
-    // let x = unsafe { snappy_max_compressed_length(100) };
-    // println!("max compressed length of a 100 byte buffer: {}", x);
-    // let y = unsafe { mysquare(100) };
-    // println!("square: {}", y);
-    // let y = unsafe { mysquarecpp(100) };
-    // println!("square: {}", y);
-    // let z = unsafe { square(100) };
-    // println!("square: {}", z);
-    let foo = ffi::ersquare(40);
-    println!("square: {}", foo);
-    let wrapper = ffi::new_simulator_wrapper();
-    // println!("{}", wrapper.get());
-    // wrapper.set(5);
-    // println!("{}", wrapper.get());
+    // let cfg = config::load_config().expect("config should be fully initialized");
+    // println!("{}", cfg.backend.ssl_vision_ip);
+    // experimental::run();
+    // run_nodes_synchronously();
+    run_nodes_in_parallel_threads();
+
+    // println!("square is {}", r);
 }
