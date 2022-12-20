@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import QTabWidget, QMainWindow
 from PyQt6.QtCore import QTimer
 from PyQt6 import QtCore
 from field.field import Field
+from named_value_plotter import NamedValuePlotter
 
 # from gui.util.zmq_pub_sub import ZmqPubSub
 from util.zmq_pub_sub import ZmqPubSub
@@ -43,9 +44,6 @@ class RustwareGui(QMainWindow):
         super().__init__()
 
         self.pub_sub_manager = ZmqPubSub()
-        # def foo(x):
-        #     print("in callback")
-        # self.pub_sub_manager.register_callback(foo, "test", SSL_WrapperPacket)
 
         self.setWindowTitle("Underbots GUI")
 
@@ -70,9 +68,9 @@ class RustwareGui(QMainWindow):
         # logs_dock.addWidget(self.setup_log_widget())
         # self.dock_area.addDock(logs_dock, "left", field_dock)
         #
-        # performance_dock = Dock("Performance")
-        # performance_dock.addWidget(self.setup_performance_plot().win)
-        # self.dock_area.addDock(performance_dock, "bottom", field_dock)
+        performance_dock = Dock("Performance")
+        performance_dock.addWidget(self.setup_performance_plot().win)
+        self.dock_area.addDock(performance_dock, "bottom", field_dock)
         #
         # playinfo_dock = Dock("Play Info")
         # playinfo_dock.addWidget(self.setup_play_info_widget())
@@ -137,6 +135,14 @@ class RustwareGui(QMainWindow):
         self.register_refresh_function(field.refresh, refresh_interval_ms=1)
 
         return field
+
+    def setup_performance_plot(self):
+        named_value_plotter = NamedValuePlotter()
+        self.register_refresh_function(named_value_plotter.refresh)
+
+        return named_value_plotter
+
+
 
 
 def check_all_fields_set(msg, msg_type) -> bool:
