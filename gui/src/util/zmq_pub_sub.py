@@ -89,6 +89,6 @@ class ZmqPubSub:
                 self._handle_callbacks(info, poll_timeout_ms=250)
 
         for topic, info in self.sub_topic_map.items():
-            t = Thread(target=_run, kwargs={"info": info})
+            t = Thread(target=_run, kwargs={"info": info}, daemon=True)
             self.callback_handler_threads[topic] = t
             self.callback_handler_threads[topic].start()

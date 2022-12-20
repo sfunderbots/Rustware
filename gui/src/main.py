@@ -8,6 +8,8 @@ path.append(str(project_root))
 from config.config_pb2 import Config
 from google.protobuf.text_format import MessageToString, Parse
 
+import signal
+
 import os
 from src.field.sim_control_layer import SimControlLayer
 import pyqtgraph as pg
@@ -177,9 +179,16 @@ def load_config() -> Config:
         check_all_fields_set(config, Config)
         return config
 
+def shutdown(a, b):
+    print("Caught signal, shutting down")
+    QtCore.QCoreApplication.quit()
 
 def main():
     config = load_config()
+
+    signal.signal(signal.SIGINT, shutdown)
+    signal.signal(signal.SIGTERM, shutdown)
+
     print(config.backend.ssl_vision_ip)
     app = pg.mkQApp("Gui")
     w = RustwareGui()
