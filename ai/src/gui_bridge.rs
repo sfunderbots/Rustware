@@ -94,9 +94,6 @@ impl Node for GuiBridge {
         if let Some(world) = take_last(&self.input.perception_world)? {
             // println!("sending world");
             let foo = world_to_proto(&world);
-            if let Some(field) = foo.field.as_ref() {
-                println!("{}", field.x_length);
-            }
             let vis_msg = Visualization { world: Some(foo) };
             self.world_socket.send(proto::encode(vis_msg), 0).unwrap();
         }

@@ -138,24 +138,7 @@ class RustwareGui(QMainWindow):
             pub_sim_command=lambda x: print("TODO: pub sim control")
         )
         field.add_layer("Sim Control", sim_control_layer)
-        #
-        #     trajectory_layer = TrajectoryLayer()
-        #     # self.register_callback(
-        #     #     callback=trajectory_layer.update_trajectories, topic="trajectories"
-        #     # )
-        #     field.add_layer("Robot Trajectories", trajectory_layer)
-        #
-        #     trajectory_obstacle_layer = TrajectoryObstacleLayer()
-        #     # self.register_callback(
-        #     #     callback=lambda x: trajectory_obstacle_layer.update_obstacles(
-        #     #         x.robot_trajectory_obstacles
-        #     #     ),
-        #     #     topic="gameplay_data",
-        #     # )
-        #     field.add_layer(
-        #         "Trajectory Obstacles", trajectory_obstacle_layer, visible=False
-        #     )
-        #
+
         self.register_refresh_function(field.refresh, refresh_interval_ms=1)
 
         return field
