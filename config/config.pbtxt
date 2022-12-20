@@ -18,3 +18,13 @@ gui_bridge {
     log_topic: "log"
     world_topic: "world"
 }
+rules {
+    robot_max_radius = 0.09;
+    ball_max_radius = 0.0215;
+    max_robot_id = 15;
+    max_kick_speed = 6.5;
+    div_a_total_field_x_length = 13.4;
+    div_a_total_field_y_length = 10.4;
+    div_b_total_field_x_length = 10.4;
+    div_b_total_field_y_length = 7.4;
+}

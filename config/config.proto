@@ -36,9 +36,21 @@ message GuiBridge {
     required string world_topic = 5;
 }
 
+message Rules {
+    required float robot_max_radius = 1;
+    required float ball_max_radius = 2;
+    required uint32 max_robot_id = 3;
+    required float max_kick_speed = 4;
+    required float div_a_total_field_x_length = 5;
+    required float div_a_total_field_y_length = 6;
+    required float div_b_total_field_x_length = 7;
+    required float div_b_total_field_y_length = 8;
+}
+
 message Config {
     required Backend backend = 1;
     required Perception perception = 2;
     required Gameplay gameplay = 3;
     required GuiBridge gui_bridge = 4;
+    required Rules rules = 5;
 }
