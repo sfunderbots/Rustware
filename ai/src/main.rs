@@ -216,8 +216,8 @@ mod ffi {
         fn ersquare(x: i32) -> i32;
         type SimulatorWrapper;
         fn new_simulator_wrapper() -> UniquePtr<SimulatorWrapper>;
-        fn set(&self, x: i32);
-        fn get(&self) -> i32;
+        // fn set(&self, x: i32);
+        // fn get(&self) -> i32;
     }
 }
 
@@ -233,7 +233,7 @@ fn main() {
     let foo = ffi::ersquare(40);
     println!("square: {}", foo);
     let wrapper = ffi::new_simulator_wrapper();
-    println!("{}", wrapper.get());
-    wrapper.set(5);
-    println!("{}", wrapper.get());
+    // println!("{}", wrapper.get());
+    // wrapper.set(5);
+    // println!("{}", wrapper.get());
 }
