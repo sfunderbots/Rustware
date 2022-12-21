@@ -27,4 +27,5 @@ rules {
     div_a_total_field_y_length: 10.4;
     div_b_total_field_x_length: 10.4;
     div_b_total_field_y_length: 7.4;
+    ball_in_play_after_restart_move_dist: 0.05;
 }

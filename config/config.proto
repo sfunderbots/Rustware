@@ -21,8 +21,9 @@ message Backend {
 }
 
 message Perception {
-    required DefendingSide defending_side = 1;
-    required FriendlyColor friendly_color = 2;
+    required string team_name = 1;
+    required DefendingSide defending_side = 2;
+    required FriendlyColor friendly_color = 3;
 }
 
 message Gameplay {
@@ -46,6 +47,8 @@ message Rules {
     required float div_a_total_field_y_length = 6;
     required float div_b_total_field_x_length = 7;
     required float div_b_total_field_y_length = 8;
+    // How far the ball must move after a kickoff, free kick, or penalty before it's considered in-play
+    required float ball_in_play_after_restart_move_dist = 9;
 }
 
 message Config {
