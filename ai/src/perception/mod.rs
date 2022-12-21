@@ -58,41 +58,41 @@ impl Node for Perception {
                             timestamp: detection.t_capture as f32,
                         };
                         self.ball_filter.add_detection(ball_detection);
+                    }
 
-                        // TODO: Use actual friendly/enemy team colors here
-                        for r in &detection.robots_yellow {
-                            let detection = RobotDetection {
-                                id: r.robot_id.expect("Should always have robot id in proto")
-                                    as usize,
-                                position: Point {
-                                    x: r.x * METERS_PER_MILLIMETER,
-                                    y: r.y * METERS_PER_MILLIMETER,
-                                },
-                                orientation: Angle::from_radians(
-                                    r.orientation
-                                        .expect("Should always have robot orientation in proto"),
-                                ),
-                                timestamp: detection.t_capture as f32,
-                            };
-                            self.friendly_team_filter.add_detection(detection);
-                        }
+                    // TODO: Use actual friendly/enemy team colors here
+                    for r in &detection.robots_yellow {
+                        let detection = RobotDetection {
+                            id: r.robot_id.expect("Should always have robot id in proto")
+                                as usize,
+                            position: Point {
+                                x: r.x * METERS_PER_MILLIMETER,
+                                y: r.y * METERS_PER_MILLIMETER,
+                            },
+                            orientation: Angle::from_radians(
+                                r.orientation
+                                    .expect("Should always have robot orientation in proto"),
+                            ),
+                            timestamp: detection.t_capture as f32,
+                        };
+                        self.friendly_team_filter.add_detection(detection);
+                    }
 
-                        for r in &detection.robots_blue {
-                            let detection = RobotDetection {
-                                id: r.robot_id.expect("Should always have robot id in proto")
-                                    as usize,
-                                position: Point {
-                                    x: r.x * METERS_PER_MILLIMETER,
-                                    y: r.y * METERS_PER_MILLIMETER,
-                                },
-                                orientation: Angle::from_radians(
-                                    r.orientation
-                                        .expect("Should always have robot orientation in proto"),
-                                ),
-                                timestamp: detection.t_capture as f32,
-                            };
-                            self.enemy_team_filter.add_detection(detection);
-                        }
+                    for r in &detection.robots_blue {
+                        let detection = RobotDetection {
+                            id: r.robot_id.expect("Should always have robot id in proto")
+                                as usize,
+                            position: Point {
+                                x: r.x * METERS_PER_MILLIMETER,
+                                y: r.y * METERS_PER_MILLIMETER,
+                            },
+                            orientation: Angle::from_radians(
+                                r.orientation
+                                    .expect("Should always have robot orientation in proto"),
+                            ),
+                            timestamp: detection.t_capture as f32,
+                        };
+                        self.enemy_team_filter.add_detection(detection);
                     }
                 }
 
