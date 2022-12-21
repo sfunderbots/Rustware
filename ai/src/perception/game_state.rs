@@ -49,6 +49,7 @@ fn is_friendly_team_defending_positive_side(referee: Option<&Referee>, config: &
     }
 }
 
+#[derive(Clone)]
 pub struct TeamInfo {
     pub is_blue: bool,
     pub score: usize,
@@ -76,7 +77,7 @@ impl TeamInfo {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 enum PlayState {
     Halt,
     Stop,
@@ -85,7 +86,7 @@ enum PlayState {
     Playing
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 enum RestartReason {
     None,
     Kickoff,
@@ -94,6 +95,7 @@ enum RestartReason {
     BallPlacement
 }
 
+#[derive(Clone)]
 pub struct GameState {
     play_state: PlayState,
     restart_reason: RestartReason,
@@ -274,6 +276,7 @@ impl GameState {
     }
 }
 
+#[derive(Clone)]
 pub struct Gamecontroller {
     pub game_state: GameState,
     pub friendly_team_info: TeamInfo,

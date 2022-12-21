@@ -1,7 +1,7 @@
 mod ball_filter;
 mod robot_filter;
 mod world;
-mod game_state;
+pub mod game_state;
 
 use crate::communication::{dump_receiver, run_forever, Node};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
@@ -17,6 +17,8 @@ use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
 use crate::perception::game_state::{GameState, Gamecontroller, TeamInfo};
 use crate::proto::config;
+use crate::proto::ssl_gamecontroller::{Command, referee};
+use crate::proto::ssl_gamecontroller;
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -24,6 +26,7 @@ pub struct Input {
 }
 pub struct Output {
     pub world: multiqueue2::BroadcastSender<World>,
+    pub gamecontroller: multiqueue2::BroadcastSender<Gamecontroller>,
 }
 
 pub struct Perception {
@@ -110,16 +113,34 @@ impl Node for Perception {
                 .unwrap();
         }
 
+        if let Some(info) = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true) {
+            self.friendly_team_info = Some(info);
+        }
+        if let Some(info) = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, false) {
+            self.enemy_team_info = Some(info);
+        }
         let ssl_referee_packets = dump_receiver(&self.input.ssl_refbox_proto)?;
         if !ssl_referee_packets.is_empty() {
-            for packet in ssl_referee_packets {
-                // self.friendly_team_info = TeamInfo::from_referee(Some(packet), )
-
-                // self.game_state.up
+            for packet in &ssl_referee_packets {
+                if let Some(info) = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, true) {
+                    self.friendly_team_info = Some(info);
+                }
+                if let Some(info) = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, false) {
+                    self.enemy_team_info = Some(info);
+                }
+                if let Some(info) = &self.friendly_team_info {
+                    self.game_state.update_command(referee::Command::from_i32(packet.command).unwrap(), info.is_blue)
+                }
             }
         }
-        // println!("Perception got packet {}", packet);
-        // self.output.world.try_send();
+        if self.friendly_team_info.is_some() && self.enemy_team_info.is_some() {
+            let gc = Gamecontroller{
+                game_state: self.game_state.clone(),
+                friendly_team_info: self.friendly_team_info.clone().unwrap(),
+                enemy_team_info: self.enemy_team_info.clone().unwrap()
+            };
+            self.output.gamecontroller.try_send(gc).unwrap();
+        }
 
         Ok(())
     }

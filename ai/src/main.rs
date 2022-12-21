@@ -22,6 +22,7 @@ use crate::communication::Node;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, Trajectory};
+use crate::perception::game_state::Gamecontroller;
 use multiqueue2;
 use perception::{Field, Robot, World};
 use prost::Message;
@@ -61,6 +62,7 @@ fn set_up_node_io() -> AllNodeIo {
     let (ssl_gc_referee_sender, ssl_gc_referee_receiver) =
         multiqueue2::broadcast_queue::<proto::ssl_gamecontroller::Referee>(10);
     let (world_sender, world_receiver) = multiqueue2::broadcast_queue::<World>(10);
+    let (gc_sender, gc_receiver) = multiqueue2::broadcast_queue::<Gamecontroller>(10);
     let (trajectories_sender, trajectories_receiver) =
         multiqueue2::broadcast_queue::<std::collections::HashMap<usize, Trajectory>>(10);
 
@@ -73,6 +75,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         perception_output: perception::Output {
             world: world_sender,
+            gamecontroller: gc_sender
         },
         gameplay_input: gameplay::Input {
             world: world_receiver.add_stream().clone(),
