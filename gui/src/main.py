@@ -147,8 +147,6 @@ class RustwareGui(QMainWindow):
         return named_value_plotter
 
 
-
-
 def check_all_fields_set(msg, msg_type) -> bool:
     unset_fields = set()
     for name in [field.name for field in msg_type.DESCRIPTOR.fields]:
@@ -174,9 +172,11 @@ def load_config() -> Config:
         check_all_fields_set(config, Config)
         return config
 
+
 def shutdown(a, b):
     print("Caught signal, shutting down")
     QtCore.QCoreApplication.quit()
+
 
 def main():
     config = load_config()

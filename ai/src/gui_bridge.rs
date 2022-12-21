@@ -103,7 +103,8 @@ impl Node for GuiBridge {
 }
 
 fn world_to_proto(world: &perception::World) -> proto::visualization::PerceptionWorld {
-    let mut msg: proto::visualization::PerceptionWorld = proto::visualization::PerceptionWorld::default();
+    let mut msg: proto::visualization::PerceptionWorld =
+        proto::visualization::PerceptionWorld::default();
     if let Some(ball) = &world.ball {
         let mut ball_proto: proto::visualization::perception_world::Ball =
             proto::visualization::perception_world::Ball::default();

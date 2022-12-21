@@ -1,12 +1,16 @@
 mod ball_filter;
+pub mod game_state;
 mod robot_filter;
 mod world;
-pub mod game_state;
 
 use crate::communication::{dump_receiver, run_forever, Node};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
+use crate::perception::game_state::{GameState, Gamecontroller, TeamInfo};
 use crate::proto;
+use crate::proto::config;
+use crate::proto::ssl_gamecontroller;
+use crate::proto::ssl_gamecontroller::{referee, Command};
 use ball_filter::{BallDetection, BallFilter};
 use multiqueue2;
 use robot_filter::{RobotDetection, TeamFilter};
@@ -15,10 +19,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
-use crate::perception::game_state::{GameState, Gamecontroller, TeamInfo};
-use crate::proto::config;
-use crate::proto::ssl_gamecontroller::{Command, referee};
-use crate::proto::ssl_gamecontroller;
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -39,7 +39,7 @@ pub struct Perception {
     game_state: GameState,
     friendly_team_info: Option<TeamInfo>,
     enemy_team_info: Option<TeamInfo>,
-    config: Arc<Mutex<config::Config>>
+    config: Arc<Mutex<config::Config>>,
 }
 
 impl Node for Perception {
@@ -113,31 +113,46 @@ impl Node for Perception {
                 .unwrap();
         }
 
-        if let Some(info) = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true) {
+        if let Some(info) =
+            TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true)
+        {
             self.friendly_team_info = Some(info);
         }
-        if let Some(info) = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, false) {
+        if let Some(info) =
+            TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, false)
+        {
             self.enemy_team_info = Some(info);
         }
         let ssl_referee_packets = dump_receiver(&self.input.ssl_refbox_proto)?;
         if !ssl_referee_packets.is_empty() {
             for packet in &ssl_referee_packets {
-                if let Some(info) = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, true) {
+                if let Some(info) = TeamInfo::from_referee(
+                    Some(packet),
+                    &self.config.lock().unwrap().perception,
+                    true,
+                ) {
                     self.friendly_team_info = Some(info);
                 }
-                if let Some(info) = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, false) {
+                if let Some(info) = TeamInfo::from_referee(
+                    Some(packet),
+                    &self.config.lock().unwrap().perception,
+                    false,
+                ) {
                     self.enemy_team_info = Some(info);
                 }
                 if let Some(info) = &self.friendly_team_info {
-                    self.game_state.update_command(referee::Command::from_i32(packet.command).unwrap(), info.is_blue)
+                    self.game_state.update_command(
+                        referee::Command::from_i32(packet.command).unwrap(),
+                        info.is_blue,
+                    )
                 }
             }
         }
         if self.friendly_team_info.is_some() && self.enemy_team_info.is_some() {
-            let gc = Gamecontroller{
+            let gc = Gamecontroller {
                 game_state: self.game_state.clone(),
                 friendly_team_info: self.friendly_team_info.clone().unwrap(),
-                enemy_team_info: self.enemy_team_info.clone().unwrap()
+                enemy_team_info: self.enemy_team_info.clone().unwrap(),
             };
             self.output.gamecontroller.try_send(gc).unwrap();
         }
@@ -163,7 +178,7 @@ impl Perception {
             game_state: GameState::new(),
             friendly_team_info: None,
             enemy_team_info: None,
-            config: config
+            config: config,
         }
     }
     pub fn create_in_thread(

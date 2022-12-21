@@ -19,6 +19,7 @@ mod perception;
 mod proto;
 
 use crate::communication::Node;
+use crate::config::load_config;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, Trajectory};
@@ -36,7 +37,6 @@ use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
-use crate::config::load_config;
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -75,7 +75,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         perception_output: perception::Output {
             world: world_sender,
-            gamecontroller: gc_sender
+            gamecontroller: gc_sender,
         },
         gameplay_input: gameplay::Input {
             world: world_receiver.add_stream().clone(),
@@ -110,7 +110,11 @@ fn set_up_node_io() -> AllNodeIo {
 fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
     let config = Arc::new(Mutex::new(load_config().unwrap()));
     SynchronousNodes {
-        perception: perception::Perception::new(io.perception_input, io.perception_output, Arc::clone(&config)),
+        perception: perception::Perception::new(
+            io.perception_input,
+            io.perception_output,
+            Arc::clone(&config),
+        ),
         gameplay: gameplay::Gameplay::new(io.gameplay_input, io.gameplay_output),
         backend: backend::SslSynchronousSimulator::new(io.backend_input, io.backend_output),
         gui_bridge: gui_bridge::GuiBridge::new(io.gui_bridge_input, io.gui_bridge_output),

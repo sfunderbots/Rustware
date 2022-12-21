@@ -1,11 +1,11 @@
-use std::cell::Ref;
 use crate::geom::Point;
 use crate::perception::game_state::PlayState::Halt;
 use crate::perception::game_state::RestartReason::Kickoff;
 use crate::perception::Team;
-use crate::proto::ssl_gamecontroller::{Referee, referee, referee::Command};
 use crate::proto::config;
 use crate::proto::config::Perception;
+use crate::proto::ssl_gamecontroller::{referee, referee::Command, Referee};
+use std::cell::Ref;
 
 fn is_friendly_team_blue(referee: Option<&Referee>, config: &Perception) -> Option<bool> {
     match config::FriendlyColor::from_i32(config.friendly_color) {
@@ -19,33 +19,37 @@ fn is_friendly_team_blue(referee: Option<&Referee>, config: &Perception) -> Opti
                     println!("Friendly team name not found in either referee team names");
                     None
                 }
-            }else {
+            } else {
                 None
             }
-        },
+        }
         Some(config::FriendlyColor::Blue) => Some(true),
         Some(config::FriendlyColor::Yellow) => Some(false),
-        None => panic!("Should be impossible to get invalid team color from config")
+        None => panic!("Should be impossible to get invalid team color from config"),
     }
 }
 
-fn is_friendly_team_defending_positive_side(referee: Option<&Referee>, config: &Perception, is_friendly_team_blue: bool) -> Option<bool> {
+fn is_friendly_team_defending_positive_side(
+    referee: Option<&Referee>,
+    config: &Perception,
+    is_friendly_team_blue: bool,
+) -> Option<bool> {
     match config::DefendingSide::from_i32(config.defending_side) {
         Some(config::DefendingSide::AutorefSide) => {
             if let Some(msg) = referee {
                 if let Some(msg_blue_team_on_positive_half) = msg.blue_team_on_positive_half {
                     Some(msg_blue_team_on_positive_half == is_friendly_team_blue)
-                }else {
+                } else {
                     println!("Autoref hasn't specified a side to defend");
                     None
                 }
-            }else {
+            } else {
                 None
             }
-        },
+        }
         Some(config::DefendingSide::Negative) => Some(false),
         Some(config::DefendingSide::Positive) => Some(true),
-        None => panic!("Should be impossible to get invalid defending side from config")
+        None => panic!("Should be impossible to get invalid defending side from config"),
     }
 }
 
@@ -58,20 +62,25 @@ pub struct TeamInfo {
 }
 
 impl TeamInfo {
-    pub fn from_referee(referee: Option<&Referee>, config: &Perception, is_friendly_team: bool) -> Option<TeamInfo> {
+    pub fn from_referee(
+        referee: Option<&Referee>,
+        config: &Perception,
+        is_friendly_team: bool,
+    ) -> Option<TeamInfo> {
         let is_friendly_team_blue = is_friendly_team_blue(referee, config)?;
-        let is_friendly_team_defending_positive_side = is_friendly_team_defending_positive_side(referee, config, is_friendly_team_blue)?;
+        let is_friendly_team_defending_positive_side =
+            is_friendly_team_defending_positive_side(referee, config, is_friendly_team_blue)?;
         let is_blue = is_friendly_team_blue == is_friendly_team;
         let defending_positive_side = is_friendly_team_defending_positive_side == is_friendly_team;
         if let Some(msg) = referee {
-            let info = if is_blue {&msg.blue} else {&msg.yellow};
-            Some(TeamInfo{
+            let info = if is_blue { &msg.blue } else { &msg.yellow };
+            Some(TeamInfo {
                 is_blue,
                 defending_positive_side,
                 score: info.score as usize,
                 goalie_id: info.goalkeeper as usize,
             })
-        }else {
+        } else {
             None
         }
     }
@@ -83,7 +92,7 @@ enum PlayState {
     Stop,
     Setup,
     Ready,
-    Playing
+    Playing,
 }
 
 #[derive(PartialEq, Clone)]
@@ -92,7 +101,7 @@ enum RestartReason {
     Kickoff,
     FreeKick,
     Penalty,
-    BallPlacement
+    BallPlacement,
 }
 
 #[derive(Clone)]
@@ -105,11 +114,11 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> GameState {
-        GameState{
+        GameState {
             play_state: PlayState::Halt,
             restart_reason: RestartReason::None,
             our_restart: false,
-            ball_position_at_restart: None
+            ball_position_at_restart: None,
         }
     }
 
@@ -192,12 +201,14 @@ impl GameState {
             }
             PlayState::Ready => {
                 if let Some(pos_at_restart) = self.ball_position_at_restart {
-                    if (pos_at_restart - ball_position).length() > config.ball_in_play_after_restart_move_dist {
+                    if (pos_at_restart - ball_position).length()
+                        > config.ball_in_play_after_restart_move_dist
+                    {
                         self.set_restart_completed()
                     }
                 }
             }
-            _ => ()
+            _ => (),
         }
     }
 
@@ -258,7 +269,8 @@ impl GameState {
         self.ball_placement() && !self.our_restart
     }
     pub fn can_manipulate_ball(&self) -> bool {
-        (self.play_state == PlayState::Playing) || (self.our_restart && self.play_state == PlayState::Ready)
+        (self.play_state == PlayState::Playing)
+            || (self.our_restart && self.play_state == PlayState::Ready)
     }
     pub fn friendly_stay_away_from_ball(&self) -> bool {
         (self.play_state != PlayState::Playing) && !self.our_restart
@@ -267,7 +279,7 @@ impl GameState {
         // Our robots must stay on our half of the field
         let ps = match self.play_state {
             PlayState::Setup | PlayState::Ready => true,
-            _ => false
+            _ => false,
         };
         ps && (self.restart_reason == RestartReason::Kickoff) && !self.our_restart
     }
@@ -280,5 +292,5 @@ impl GameState {
 pub struct Gamecontroller {
     pub game_state: GameState,
     pub friendly_team_info: TeamInfo,
-    pub enemy_team_info: TeamInfo
+    pub enemy_team_info: TeamInfo,
 }
