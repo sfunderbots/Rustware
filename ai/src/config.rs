@@ -11,7 +11,7 @@ use std::fs;
 // (since that is unsupported in Prost), and then convert to Prost
 pub fn load_config() -> Result<proto::config::Config, Box<dyn Error>> {
     // Path relative to Cargo.toml
-    let config_filepath = "../config/config.pbtxt";
+    let config_filepath = "config/config.pbtxt";
     let file_contents = fs::read_to_string(config_filepath)?;
     let config = protobuf::text_format::parse_from_str(file_contents.as_str())?;
     convert_rust_protobuf_to_prost(config)

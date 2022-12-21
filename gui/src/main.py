@@ -1,9 +1,4 @@
-from sys import path
 from pathlib import Path
-
-# So we can import protos from third_party
-project_root = Path(__file__).parent.parent.parent
-path.append(str(project_root))
 
 from config.config_pb2 import Config
 from google.protobuf.text_format import MessageToString, Parse
@@ -171,7 +166,7 @@ def check_all_fields_set(msg, msg_type) -> bool:
 
 
 def load_config() -> Config:
-    config_path = project_root / "config/config.pbtxt"
+    config_path = Path(__file__).parent.parent / "config/config.pbtxt"
     with open(str(config_path), "r") as infile:
         data = infile.read()
         config = Parse(data, Config())
