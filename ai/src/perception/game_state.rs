@@ -2,6 +2,7 @@ use std::cell::Ref;
 use crate::geom::Point;
 use crate::perception::game_state::PlayState::Halt;
 use crate::perception::game_state::RestartReason::Kickoff;
+use crate::perception::Team;
 use crate::proto::ssl_gamecontroller::{Referee, referee, referee::Command};
 use crate::proto::config;
 use crate::proto::config::Perception;
@@ -101,6 +102,15 @@ pub struct GameState {
 }
 
 impl GameState {
+    pub fn new() -> GameState {
+        GameState{
+            play_state: PlayState::Halt,
+            restart_reason: RestartReason::None,
+            our_restart: false,
+            ball_position_at_restart: None
+        }
+    }
+
     pub fn update_command(&mut self, command: Command, is_friendly_team_blue: bool) {
         match command {
             Command::Halt => {
@@ -262,4 +272,10 @@ impl GameState {
     pub fn stay_behind_penalty_line(&self) -> bool {
         self.restart_reason == RestartReason::Penalty
     }
+}
+
+pub struct Gamecontroller {
+    pub game_state: GameState,
+    pub friendly_team_info: TeamInfo,
+    pub enemy_team_info: TeamInfo
 }

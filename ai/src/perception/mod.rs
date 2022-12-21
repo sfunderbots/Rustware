@@ -15,6 +15,7 @@ use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
+use crate::perception::game_state::{GameState, Gamecontroller, TeamInfo};
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -31,6 +32,9 @@ pub struct Perception {
     friendly_team_filter: TeamFilter,
     enemy_team_filter: TeamFilter,
     most_recent_world: World,
+    game_state: GameState,
+    friendly_team_info: Option<TeamInfo>,
+    enemy_team_info: Option<TeamInfo>,
 }
 
 impl Node for Perception {
@@ -103,6 +107,15 @@ impl Node for Perception {
                 .try_send(self.most_recent_world.clone())
                 .unwrap();
         }
+
+        let ssl_referee_packets = dump_receiver(&self.input.ssl_refbox_proto)?;
+        if !ssl_referee_packets.is_empty() {
+            for packet in ssl_referee_packets {
+                // self.friendly_team_info = TeamInfo::from_referee(Some(packet), )
+
+                // self.game_state.up
+            }
+        }
         // println!("Perception got packet {}", packet);
         // self.output.world.try_send();
 
@@ -124,6 +137,9 @@ impl Perception {
                 yellow_team: vec![],
                 field: None,
             },
+            game_state: GameState::new(),
+            friendly_team_info: None,
+            enemy_team_info: None
         }
     }
     pub fn create_in_thread(
