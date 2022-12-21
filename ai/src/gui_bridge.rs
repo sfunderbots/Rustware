@@ -7,11 +7,12 @@ use crate::proto::visualization::Visualization;
 use prost::Message;
 use std::mem::take;
 use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 use proto::metrics::NodePerformance;
+use crate::proto::config;
 
 pub struct Input {
     pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -27,69 +28,80 @@ pub struct GuiBridge {
     ssl_vision_socket: zmq::Socket,
     ssl_gc_socket: zmq::Socket,
     world_socket: zmq::Socket,
-    metrics_socket: zmq::Socket
+    metrics_socket: zmq::Socket,
+    config: Arc<Mutex<config::Config>>,
 }
 
 fn create_endpoint(socket_prefix: String, topic: String) -> String {
     socket_prefix + topic.as_str()
 }
+fn create_endpoint2(socket_prefix: &str, topic: &str) -> String {
+    socket_prefix.to_owned() + topic
+}
 
 impl GuiBridge {
-    pub fn new(input: Input, output: Output) -> Self {
-        let ctx = zmq::Context::new();
-        let ssl_vision_socket = ctx.socket(zmq::PUB).unwrap();
+    pub fn new(input: Input, output: Output, config: Arc<Mutex<config::Config>>) -> Self {
+        let context = zmq::Context::new();
+        let ssl_vision_socket = context.socket(zmq::PUB).unwrap();
+        // BEWARE: The config mutex is only unlocked when the retrieved value goes out of scope.
+        // For function calls, this isn't until after the function, so if multiple function
+        // parameters try access the config mutex, this will cause a deadlock
+        let socket_prefix = config.lock().unwrap().gui_bridge.unix_socket_prefix.to_string();
         ssl_vision_socket
             .bind(
                 create_endpoint(
-                    "ipc:///tmp/underbots_zmq_".to_string(),
-                    "ssl_vision".to_string(),
+                    socket_prefix.clone(),
+                    config.lock().unwrap().gui_bridge.ssl_vision_topic.to_string().clone(),
                 )
                 .as_str(),
             )
             .unwrap();
-        let ssl_gc_socket = ctx.socket(zmq::PUB).unwrap();
+        let ssl_gc_socket = context.socket(zmq::PUB).unwrap();
         ssl_gc_socket
             .bind(
                 create_endpoint(
-                    "ipc:///tmp/underbots_zmq_".to_string(),
-                    "ssl_gc".to_string(),
+                    socket_prefix.clone(),
+                    config.lock().unwrap().gui_bridge.ssl_gc_topic.to_string(),
                 )
                 .as_str(),
             )
             .unwrap();
-        let world_socket = ctx.socket(zmq::PUB).unwrap();
+        let world_socket = context.socket(zmq::PUB).unwrap();
         world_socket
             .bind(
-                create_endpoint("ipc:///tmp/underbots_zmq_".to_string(), "world".to_string())
+                create_endpoint(socket_prefix.clone(), config.lock().unwrap().gui_bridge.world_topic.to_string())
                     .as_str(),
             )
             .unwrap();
-        let metrics_socket = ctx.socket(zmq::PUB).unwrap();
+        let metrics_socket = context.socket(zmq::PUB).unwrap();
         metrics_socket
             .bind(
-                create_endpoint("ipc:///tmp/underbots_zmq_".to_string(), "metrics".to_string())
+                create_endpoint(socket_prefix.clone(), config.lock().unwrap().gui_bridge.metrics_topic.to_string())
                     .as_str(),
             )
             .unwrap();
         Self {
             input,
             output,
-            context: ctx,
+            context,
             ssl_vision_socket,
             ssl_gc_socket,
             world_socket,
-            metrics_socket
+            metrics_socket,
+            config
         }
     }
 
     pub fn create_in_thread(
         input: Input,
         output: Output,
+        config: &Arc<Mutex<config::Config>>,
         should_stop: &Arc<AtomicBool>,
     ) -> JoinHandle<()> {
         let should_stop = Arc::clone(should_stop);
+        let local_config = Arc::clone(config);
         thread::spawn(move || {
-            let node = Self::new(input, output);
+            let node = Self::new(input, output, local_config);
             run_forever(Box::new(node), should_stop, "GuiBridge");
         })
     }
@@ -97,6 +109,7 @@ impl GuiBridge {
 
 impl Node for GuiBridge {
     fn run_once(&mut self) -> Result<(), ()> {
+        // println!("sending ssl vision on bridge");
         for msg in dump_receiver(&self.input.ssl_vision_proto)? {
             // TODO: faster to batch send?
             self.ssl_vision_socket

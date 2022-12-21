@@ -123,7 +123,7 @@ fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
         ),
         gameplay: gameplay::Gameplay::new(io.gameplay_input, io.gameplay_output),
         backend: backend::SslSynchronousSimulator::new(io.backend_input, io.backend_output),
-        gui_bridge: gui_bridge::GuiBridge::new(io.gui_bridge_input, io.gui_bridge_output),
+        gui_bridge: gui_bridge::GuiBridge::new(io.gui_bridge_input, io.gui_bridge_output, Arc::clone(&config)),
     }
 }
 
@@ -142,6 +142,7 @@ fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Vec<
         gui_bridge::GuiBridge::create_in_thread(
             io.gui_bridge_input,
             io.gui_bridge_output,
+            &config,
             should_stop,
         ),
     ]

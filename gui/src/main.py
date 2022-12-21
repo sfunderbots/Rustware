@@ -44,7 +44,8 @@ class RustwareGui(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.pub_sub_manager = ZmqPubSub()
+        self.config = load_config()
+        self.pub_sub_manager = ZmqPubSub(self.config.gui_bridge.unix_socket_prefix)
 
         self.setWindowTitle("Underbots GUI")
 
@@ -117,7 +118,7 @@ class RustwareGui(QMainWindow):
 
         raw_vision_layer = RawVisionLayer()
         self.pub_sub_manager.register_callback(
-            raw_vision_layer.update_detection_map, "ssl_vision", SSL_WrapperPacket
+            raw_vision_layer.update_detection_map, self.config.gui_bridge.ssl_vision_topic, SSL_WrapperPacket
         )
         field.add_layer("Raw Vision", raw_vision_layer)
 
@@ -126,7 +127,7 @@ class RustwareGui(QMainWindow):
                 filtered_vision_layer.update_world(msg.world)
 
         filtered_vision_layer = FilteredVisionLayer()
-        self.pub_sub_manager.register_callback(world_callback, "world", Visualization)
+        self.pub_sub_manager.register_callback(world_callback, self.config.gui_bridge.world_topic, Visualization)
         field.add_layer("Filtered Vision", filtered_vision_layer)
 
         sim_control_layer = SimControlLayer(
@@ -147,7 +148,7 @@ class RustwareGui(QMainWindow):
         def callback(x):
             named_value_plotter.update_data(x.mean_publish_period_ms)
 
-        self.pub_sub_manager.register_callback(callback, "metrics", NodePerformance)
+        self.pub_sub_manager.register_callback(callback, self.config.gui_bridge.metrics_topic, NodePerformance)
 
         self.register_refresh_function(named_value_plotter.refresh)
 
@@ -186,12 +187,10 @@ def shutdown(a, b):
 
 
 def main():
-    config = load_config()
 
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    print(config.backend.ssl_vision_ip)
     app = pg.mkQApp("Gui")
     w = RustwareGui()
     w.show()

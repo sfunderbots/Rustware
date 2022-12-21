@@ -1,4 +1,3 @@
-from src.constants import ZMQ_BASE_UNIX_SOCKET
 import zmq
 
 
@@ -50,7 +49,3 @@ def recv_proto(socket: zmq.Socket, msg_type):
     except Exception as e:
         print("Failed to parse proto")
     return None
-
-
-def socket_interface_from_topic(topic: str):
-    return ZMQ_BASE_UNIX_SOCKET + topic

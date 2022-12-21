@@ -178,7 +178,7 @@ impl Perception {
             game_state: GameState::new(),
             friendly_team_info: None,
             enemy_team_info: None,
-            config: config,
+            config,
         }
     }
     pub fn create_in_thread(

@@ -36,6 +36,7 @@ message GuiBridge {
     required string ssl_gc_topic = 3;
     required string log_topic = 4;
     required string world_topic = 5;
+    required string metrics_topic = 6;
 }
 
 message Rules {

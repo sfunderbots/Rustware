@@ -28,15 +28,18 @@ class ZmqSubTopicInfo:
 
 
 class ZmqPubSub:
-    def __init__(self, pub_noblock=True):
+    def __init__(self, socket_prefix, pub_noblock=True):
         self.context = zmq.Context()
-
+        self.socket_prefix = socket_prefix
         self.pub_topic_map: Dict[str, ZmqPubTopicInfo] = dict()
         self.sub_topic_map: Dict[str, ZmqSubTopicInfo] = dict()
         self.callback_handler_threads: Dict[str, Thread] = dict()
         self.shutdown_event = multiprocessing.Event()
 
         self.pub_noblock = pub_noblock
+
+    def socket_interface_from_topic(self, topic: str):
+        return self.socket_prefix + topic
 
     def shutdown(self):
         self.shutdown_event.set()
@@ -50,23 +53,16 @@ class ZmqPubSub:
         if topic not in self.pub_topic_map:
             topic_info = ZmqPubTopicInfo(topic=topic)
             topic_socket = create_pub_socket(self.context, keep_only_last_message)
-            topic_socket.bind(socket_interface_from_topic(topic))
+            topic_socket.bind(self.socket_interface_from_topic(topic))
             topic_info.socket = topic_socket
             self.pub_topic_map[topic] = topic_info
-
-    def pub(self, msg, topic, keep_only_last_message: bool = True):
-        self._update_pub_socket_map(topic, keep_only_last_message)
-        try:
-            pub_obj(self.pub_topic_map[topic].socket, obj=msg, noblock=self.pub_noblock)
-        except zmq.ZMQError:
-            LOG.error("ZMQ publisher queue full for topic: {}".format(topic))
 
     def register_callback(
         self, callback, topic, msg_type: Message, keep_only_last_message=True
     ):
         if topic not in self.sub_topic_map:
             socket = create_sub_socket(self.context, keep_only_last_message)
-            socket.connect(socket_interface_from_topic(topic))
+            socket.connect(self.socket_interface_from_topic(topic))
             self.sub_topic_map[topic] = ZmqSubTopicInfo(
                 topic=topic, socket=socket, proto_msg_type=msg_type
             )
