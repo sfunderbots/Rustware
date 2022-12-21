@@ -53,8 +53,8 @@ fn main() {
     )
     .unwrap();
     prost_build::compile_protos(
-        &["../proto/visualization.proto"],
-        &["../proto/"],
+        &["proto/visualization.proto"],
+        &["proto/"],
     )
     .unwrap();
     prost_build::compile_protos(
