@@ -1,4 +1,4 @@
-use crate::communication::{dump_receiver, run_forever, take_last, Node};
+use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver};
 use crate::motion::Trajectory;
 use crate::perception;
 use crate::proto;
@@ -12,8 +12,8 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 pub struct Input {
-    pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
-    pub perception_world: multiqueue2::BroadcastReceiver<perception::World>,
+    pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
+    pub perception_world: NodeReceiver<perception::World>,
 }
 pub struct Output {}
 

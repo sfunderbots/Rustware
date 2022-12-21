@@ -1,7 +1,7 @@
 mod play;
 mod tactic;
 
-use crate::communication::{run_forever, Node};
+use crate::communication::{run_forever, Node, NodeReceiver, NodeSender};
 use crate::motion::Trajectory;
 use crate::perception::World;
 use multiqueue2;
@@ -16,10 +16,10 @@ use strum::IntoEnumIterator;
 use tactic::Tactic;
 
 pub struct Input {
-    pub world: multiqueue2::BroadcastReceiver<World>,
+    pub world: NodeReceiver<World>,
 }
 pub struct Output {
-    pub trajectories: multiqueue2::BroadcastSender<HashMap<usize, Trajectory>>,
+    pub trajectories: NodeSender<HashMap<usize, Trajectory>>,
 }
 
 pub struct Gameplay {

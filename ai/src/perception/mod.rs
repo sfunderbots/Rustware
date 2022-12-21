@@ -3,7 +3,7 @@ pub mod game_state;
 mod robot_filter;
 mod world;
 
-use crate::communication::{dump_receiver, run_forever, Node};
+use crate::communication::{dump_receiver, run_forever, Node, NodeSender};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
 use crate::perception::game_state::{GameState, Gamecontroller, TeamInfo};
@@ -19,14 +19,15 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
+use crate::communication::NodeReceiver;
 
 pub struct Input {
-    pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
-    pub ssl_refbox_proto: multiqueue2::BroadcastReceiver<proto::ssl_gamecontroller::Referee>,
+    pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
+    pub ssl_refbox_proto: NodeReceiver<proto::ssl_gamecontroller::Referee>,
 }
 pub struct Output {
-    pub world: multiqueue2::BroadcastSender<World>,
-    pub gamecontroller: multiqueue2::BroadcastSender<Gamecontroller>,
+    pub world: NodeSender<World>,
+    pub gamecontroller: NodeSender<Gamecontroller>,
 }
 
 pub struct Perception {
@@ -109,8 +110,7 @@ impl Node for Perception {
             self.most_recent_world.blue_team = filtered_friendly_team;
             self.output
                 .world
-                .try_send(self.most_recent_world.clone())
-                .unwrap();
+                .try_send(self.most_recent_world.clone());
         }
 
         if let Some(info) =
