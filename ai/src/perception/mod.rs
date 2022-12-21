@@ -20,6 +20,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
+use crate::proto::ssl_vision::SslDetectionRobot;
 
 pub struct Input {
     pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -45,72 +46,6 @@ pub struct Perception {
 
 impl Node for Perception {
     fn run_once(&mut self) -> Result<(), ()> {
-        let ssl_wrapper_packets = dump_receiver(&self.input.ssl_vision_proto)?;
-        if !ssl_wrapper_packets.is_empty() {
-            for packet in ssl_wrapper_packets {
-                if let Some(detection) = packet.detection {
-                    for b in detection.balls {
-                        let ball_detection = BallDetection {
-                            position: Point {
-                                x: b.x * METERS_PER_MILLIMETER,
-                                y: b.y * METERS_PER_MILLIMETER,
-                            },
-                            timestamp: detection.t_capture as f32,
-                        };
-                        self.ball_filter.add_detection(ball_detection);
-                    }
-
-                    // TODO: Use actual friendly/enemy team colors here
-                    for r in &detection.robots_yellow {
-                        let detection = RobotDetection {
-                            id: r.robot_id.expect("Should always have robot id in proto")
-                                as usize,
-                            position: Point {
-                                x: r.x * METERS_PER_MILLIMETER,
-                                y: r.y * METERS_PER_MILLIMETER,
-                            },
-                            orientation: Angle::from_radians(
-                                r.orientation
-                                    .expect("Should always have robot orientation in proto"),
-                            ),
-                            timestamp: detection.t_capture as f32,
-                        };
-                        self.friendly_team_filter.add_detection(detection);
-                    }
-
-                    for r in &detection.robots_blue {
-                        let detection = RobotDetection {
-                            id: r.robot_id.expect("Should always have robot id in proto")
-                                as usize,
-                            position: Point {
-                                x: r.x * METERS_PER_MILLIMETER,
-                                y: r.y * METERS_PER_MILLIMETER,
-                            },
-                            orientation: Angle::from_radians(
-                                r.orientation
-                                    .expect("Should always have robot orientation in proto"),
-                            ),
-                            timestamp: detection.t_capture as f32,
-                        };
-                        self.enemy_team_filter.add_detection(detection);
-                    }
-                }
-
-                if let Some(geometry) = packet.geometry {
-                    self.most_recent_world.field = Some(field_from_proto(&geometry.field));
-                }
-            }
-
-            let filtered_ball = self.ball_filter.get_ball();
-            let filtered_friendly_team = self.friendly_team_filter.get_team();
-            let filtered_enemy_team = self.enemy_team_filter.get_team();
-
-            self.most_recent_world.ball = filtered_ball;
-            self.most_recent_world.yellow_team = filtered_enemy_team;
-            self.most_recent_world.blue_team = filtered_friendly_team;
-            self.output.world.try_send(self.most_recent_world.clone());
-        }
-
         if let Some(info) =
             TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true)
         {
@@ -154,6 +89,67 @@ impl Node for Perception {
             };
             self.output.gamecontroller.try_send(gc).unwrap();
         }
+
+        let ssl_wrapper_packets = dump_receiver(&self.input.ssl_vision_proto)?;
+        if !ssl_wrapper_packets.is_empty() {
+            for packet in ssl_wrapper_packets {
+                if let Some(detection) = packet.detection {
+                    for b in detection.balls {
+                        let ball_detection = BallDetection {
+                            position: Point {
+                                x: b.x * METERS_PER_MILLIMETER,
+                                y: b.y * METERS_PER_MILLIMETER,
+                            },
+                            timestamp: detection.t_capture as f32,
+                        };
+                        self.ball_filter.add_detection(ball_detection);
+                    }
+
+                    let create_robot_detection = |ssl_robot: &SslDetectionRobot, t_capture: f32| -> RobotDetection {
+                        RobotDetection {
+                            id: ssl_robot.robot_id.expect("Should always have robot id in proto")
+                                as usize,
+                            position: Point {
+                                x: ssl_robot.x * METERS_PER_MILLIMETER,
+                                y: ssl_robot.y * METERS_PER_MILLIMETER,
+                            },
+                            orientation: Angle::from_radians(
+                                ssl_robot.orientation
+                                    .expect("Should always have robot orientation in proto"),
+                            ),
+                            timestamp: t_capture,
+                        }
+                    };
+
+                    if let Some(info) = &self.friendly_team_info {
+                        let friendly_robots = if info.is_blue {&detection.robots_blue} else {&detection.robots_yellow};
+                        let enemy_robots = if info.is_blue {&detection.robots_yellow} else {&detection.robots_blue};
+
+                        for r in friendly_robots {
+                            self.friendly_team_filter.add_detection(create_robot_detection(r, detection.t_capture as f32));
+                        }
+                        for r in enemy_robots {
+                            self.enemy_team_filter.add_detection(create_robot_detection(r, detection.t_capture as f32));
+                        }
+                    }
+                }
+
+                if let Some(geometry) = packet.geometry {
+                    self.most_recent_world.field = Some(field_from_proto(&geometry.field));
+                }
+            }
+
+            let filtered_ball = self.ball_filter.get_ball();
+            let filtered_friendly_team = self.friendly_team_filter.get_team();
+            let filtered_enemy_team = self.enemy_team_filter.get_team();
+
+            self.most_recent_world.ball = filtered_ball;
+            self.most_recent_world.yellow_team = filtered_enemy_team;
+            self.most_recent_world.blue_team = filtered_friendly_team;
+            self.output.world.try_send(self.most_recent_world.clone());
+        }
+
+
 
         Ok(())
     }
