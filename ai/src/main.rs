@@ -30,11 +30,12 @@ use protobuf::reflect::rt::v2::make_oneof_copy_has_get_set_simpler_accessors;
 use rand::Rng;
 use std::error::Error;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
+use crate::config::load_config;
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -104,8 +105,9 @@ fn set_up_node_io() -> AllNodeIo {
 }
 
 fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
+    let config = Arc::new(Mutex::new(load_config().unwrap()));
     SynchronousNodes {
-        perception: perception::Perception::new(io.perception_input, io.perception_output),
+        perception: perception::Perception::new(io.perception_input, io.perception_output, Arc::clone(&config)),
         gameplay: gameplay::Gameplay::new(io.gameplay_input, io.gameplay_output),
         backend: backend::SslSynchronousSimulator::new(io.backend_input, io.backend_output),
         gui_bridge: gui_bridge::GuiBridge::new(io.gui_bridge_input, io.gui_bridge_output),
@@ -113,10 +115,12 @@ fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
 }
 
 fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Vec<JoinHandle<()>> {
+    let config = Arc::new(Mutex::new(load_config().unwrap()));
     vec![
         perception::Perception::create_in_thread(
             io.perception_input,
             io.perception_output,
+            &config,
             should_stop,
         ),
         gameplay::Gameplay::create_in_thread(io.gameplay_input, io.gameplay_output, should_stop),

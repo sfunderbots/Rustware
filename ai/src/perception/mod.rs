@@ -11,11 +11,12 @@ use ball_filter::{BallDetection, BallFilter};
 use multiqueue2;
 use robot_filter::{RobotDetection, TeamFilter};
 use std::sync::atomic::AtomicBool;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
 use crate::perception::game_state::{GameState, Gamecontroller, TeamInfo};
+use crate::proto::config;
 
 pub struct Input {
     pub ssl_vision_proto: multiqueue2::BroadcastReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -35,6 +36,7 @@ pub struct Perception {
     game_state: GameState,
     friendly_team_info: Option<TeamInfo>,
     enemy_team_info: Option<TeamInfo>,
+    config: Arc<Mutex<config::Config>>
 }
 
 impl Node for Perception {
@@ -124,7 +126,7 @@ impl Node for Perception {
 }
 
 impl Perception {
-    pub fn new(input: Input, output: Output) -> Self {
+    pub fn new(input: Input, output: Output, config: Arc<Mutex<config::Config>>) -> Self {
         Self {
             input: input,
             output: output,
@@ -139,17 +141,20 @@ impl Perception {
             },
             game_state: GameState::new(),
             friendly_team_info: None,
-            enemy_team_info: None
+            enemy_team_info: None,
+            config: config
         }
     }
     pub fn create_in_thread(
         input: Input,
         output: Output,
+        config: &Arc<Mutex<config::Config>>,
         should_stop: &Arc<AtomicBool>,
     ) -> JoinHandle<()> {
         let should_stop = Arc::clone(should_stop);
+        let local_config = Arc::clone(config);
         thread::spawn(move || {
-            let node = Self::new(input, output);
+            let node = Self::new(input, output, local_config);
             run_forever(Box::new(node), should_stop, "Perception");
         })
     }
