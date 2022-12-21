@@ -37,10 +37,6 @@ impl<T: Copy> CircularBuffer<T> {
         self.buffer.push_back(item);
     }
 
-    // pub fn values(&self) -> impl Iterator<Item = &T> {
-    //     self.buffer.iter()
-    // }
-
     pub fn as_slice(&mut self) -> &[T] {
         self.buffer.make_contiguous()
     }
@@ -71,7 +67,7 @@ impl<T: Clone> NodeSender<T> {
                 .windows(2)
                 .map(|x| x[1] - x[0])
                 .sum::<Duration>()
-                / self.pub_times_buffer.len() as u32;
+                / (self.pub_times_buffer.len()-1) as u32;
             let average_pub_period_ms = average_duration.as_secs_f32() * 1000.0;
             self.metrics_sender
                 .try_send((self.topic_name.clone(), average_pub_period_ms));
@@ -114,7 +110,7 @@ pub fn node_connection<T: Clone>(
     let node_sender = NodeSender {
         sender,
         metrics_sender,
-        pub_times_buffer: CircularBuffer::new(10),
+        pub_times_buffer: CircularBuffer::new(50),
         topic_name,
     };
     let node_receiver = NodeReceiver { receiver };
