@@ -9,7 +9,7 @@ use std::fs;
 // functions, but they also provide a default value. In general I prefer
 // the interface of Prost, so we use rust-protobuf to read the text format
 // (since that is unsupported in Prost), and then convert to Prost
-pub fn load_config() -> Result<proto::Config, Box<dyn Error>> {
+pub fn load_config() -> Result<proto::config::Config, Box<dyn Error>> {
     // Path relative to Cargo.toml
     let config_filepath = "../config/config.pbtxt";
     let file_contents = fs::read_to_string(config_filepath)?;
@@ -18,10 +18,10 @@ pub fn load_config() -> Result<proto::Config, Box<dyn Error>> {
 }
 
 fn convert_rust_protobuf_to_prost(
-    msg: proto::config::Config,
-) -> Result<proto::Config, Box<dyn Error>> {
+    msg: proto::internal::config::Config,
+) -> Result<proto::config::Config, Box<dyn Error>> {
     let intermediate_bytes: Vec<u8> = protobuf::Message::write_to_bytes(&msg).unwrap();
-    match proto::Config::decode(intermediate_bytes.as_slice()) {
+    match proto::config::Config::decode(intermediate_bytes.as_slice()) {
         Ok(m) => Ok(m),
         Err(e) => Err(Box::new(e)),
     }

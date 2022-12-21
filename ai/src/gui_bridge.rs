@@ -2,7 +2,7 @@ use crate::communication::{dump_receiver, run_forever, take_last, Node};
 use crate::motion::Trajectory;
 use crate::perception;
 use crate::proto;
-use crate::proto::Visualization;
+use crate::proto::visualization::Visualization;
 use prost::Message;
 use std::mem::take;
 use std::sync::atomic::AtomicBool;
@@ -102,11 +102,11 @@ impl Node for GuiBridge {
     }
 }
 
-fn world_to_proto(world: &perception::World) -> proto::PerceptionWorld {
-    let mut msg: proto::PerceptionWorld = proto::PerceptionWorld::default();
+fn world_to_proto(world: &perception::World) -> proto::visualization::PerceptionWorld {
+    let mut msg: proto::visualization::PerceptionWorld = proto::visualization::PerceptionWorld::default();
     if let Some(ball) = &world.ball {
-        let mut ball_proto: proto::perception_world::Ball =
-            proto::perception_world::Ball::default();
+        let mut ball_proto: proto::visualization::perception_world::Ball =
+            proto::visualization::perception_world::Ball::default();
         ball_proto.x = ball.position.x;
         ball_proto.y = ball.position.y;
         ball_proto.vx = ball.velocity.x;
@@ -114,8 +114,8 @@ fn world_to_proto(world: &perception::World) -> proto::PerceptionWorld {
         msg.ball = Some(ball_proto);
     }
     if let Some(field) = &world.field {
-        let mut field_proto: proto::perception_world::Field =
-            proto::perception_world::Field::default();
+        let mut field_proto: proto::visualization::perception_world::Field =
+            proto::visualization::perception_world::Field::default();
         field_proto.x_length = field.x_length;
         field_proto.y_length = field.y_length;
         field_proto.defense_x_length = field.defense_x_length;
@@ -126,8 +126,8 @@ fn world_to_proto(world: &perception::World) -> proto::PerceptionWorld {
         field_proto.center_circle_radius = field.center_circle_radius;
         msg.field = Some(field_proto);
     }
-    let robot_to_proto = |r: &perception::Robot| -> proto::perception_world::Robot {
-        proto::perception_world::Robot {
+    let robot_to_proto = |r: &perception::Robot| -> proto::visualization::perception_world::Robot {
+        proto::visualization::perception_world::Robot {
             id: r.id as u32,
             x: r.state.position.x,
             y: r.state.position.y,

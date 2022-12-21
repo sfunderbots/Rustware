@@ -12,10 +12,18 @@ pub mod ssl_simulation {
     include!(concat!(env!("OUT_DIR"), "/ssl_simulation_protocol.rs"));
 }
 
+pub mod visualization {
+    include!(concat!(env!("OUT_DIR"), "/visualization.rs"));
+}
+
 // Prost
-include!(concat!(env!("OUT_DIR"), "/_.rs"));
-// rust-protobuf
-include!(concat!(env!("OUT_DIR"), "/config/mod.rs"));
+pub mod config {
+    include!(concat!(env!("OUT_DIR"), "/config.rs"));
+}
+// rust-protobuf: only used for text serialization/deserialization
+pub mod internal {
+    include!(concat!(env!("OUT_DIR"), "/config/mod.rs"));
+}
 
 pub fn encode<T>(msg: T) -> Vec<u8>
 where

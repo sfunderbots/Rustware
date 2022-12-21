@@ -1,6 +1,7 @@
 mod ball_filter;
 mod robot_filter;
 mod world;
+mod game_state;
 
 use crate::communication::{dump_receiver, run_forever, Node};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};

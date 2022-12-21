@@ -11,7 +11,7 @@ from google.protobuf.text_format import MessageToString, Parse
 import signal
 
 import os
-from src.field.sim_control_layer import SimControlLayer
+from field.sim_control_layer import SimControlLayer
 import pyqtgraph as pg
 from pyqtgraph.dockarea import *
 from PyQt6.QtWidgets import QTabWidget, QMainWindow

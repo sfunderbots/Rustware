@@ -53,10 +53,15 @@ fn main() {
     )
     .unwrap();
     prost_build::compile_protos(
-        &["../config/config.proto", "../proto/visualization.proto"],
-        &["../config/", "../proto/"],
+        &["../proto/visualization.proto"],
+        &["../proto/"],
     )
     .unwrap();
+    prost_build::compile_protos(
+        &["../config/config.proto"],
+        &["../config/"],
+    )
+        .unwrap();
     protobuf_codegen::Codegen::new()
         .includes(&["../config"])
         .input("../config/config.proto")
