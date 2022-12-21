@@ -16,6 +16,10 @@ pub mod visualization {
     include!(concat!(env!("OUT_DIR"), "/visualization.rs"));
 }
 
+pub mod metrics {
+    include!(concat!(env!("OUT_DIR"), "/metrics.rs"));
+}
+
 // Prost
 pub mod config {
     include!(concat!(env!("OUT_DIR"), "/config.rs"));

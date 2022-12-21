@@ -60,6 +60,7 @@ struct AllNodeIo {
 fn set_up_node_io() -> AllNodeIo {
     let (metrics_sender, metrics_receiver) =
         multiqueue2::broadcast_queue::<(String, f32)>(1000);
+    let metrics_receiver = NodeReceiver::new(metrics_receiver);
     let (ssl_vision_proto_sender, ssl_vision_proto_receiver) =
         node_connection::<proto::ssl_vision::SslWrapperPacket>(10, metrics_sender.clone(), "ssl_vision".to_string());
     // let (foo, bar) = node_connection(10, metrics_sender.clone(), "ssl_vision".to_string());
@@ -97,6 +98,7 @@ fn set_up_node_io() -> AllNodeIo {
         gui_bridge_input: gui_bridge::Input {
             ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
             perception_world: world_receiver.add_stream().clone(),
+            metrics: metrics_receiver.add_stream().clone()
         },
         gui_bridge_output: gui_bridge::Output {},
     };

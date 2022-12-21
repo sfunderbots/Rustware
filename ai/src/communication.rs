@@ -82,6 +82,11 @@ pub struct NodeReceiver<T: Clone> {
 }
 
 impl<T: Clone> NodeReceiver<T> {
+    pub fn new(receiver: multiqueue2::BroadcastReceiver<T>) -> NodeReceiver<T> {
+        NodeReceiver{
+            receiver
+        }
+    }
     pub fn try_recv(&self) -> Result<T, TryRecvError> {
         self.receiver.try_recv()
     }
@@ -111,14 +116,6 @@ pub fn node_connection<T: Clone>(capacity: usize, metrics_sender: BroadcastSende
     };
     (node_sender, node_receiver)
 }
-
-// pub struct NodeConnection<T> {
-//     queue: multiqueue2::que<T>
-// }
-//
-// impl NodeConnection<T> {
-//     // pub fn new(capacity: usize) ->
-// }
 
 pub fn run_forever(mut node: Box<dyn Node>, should_stop: Arc<AtomicBool>, name: &str) {
     loop {

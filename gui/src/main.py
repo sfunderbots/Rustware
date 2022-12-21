@@ -32,6 +32,7 @@ from field.filtered_vision_layer import FilteredVisionLayer
 # import proto_paths
 from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
 from proto.visualization_pb2 import Visualization
+from proto.metrics_pb2 import NodePerformance
 
 # from third_party.ssl_vision.
 
@@ -142,6 +143,12 @@ class RustwareGui(QMainWindow):
 
     def setup_performance_plot(self):
         named_value_plotter = NamedValuePlotter()
+
+        def callback(x):
+            named_value_plotter.update_data(x.mean_publish_period_ms)
+
+        self.pub_sub_manager.register_callback(callback, "metrics", NodePerformance)
+
         self.register_refresh_function(named_value_plotter.refresh)
 
         return named_value_plotter

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver};
 use crate::motion::Trajectory;
 use crate::perception;
@@ -9,11 +10,13 @@ use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
-use std::time::Duration;
+use std::time::{Duration, Instant};
+use proto::metrics::NodePerformance;
 
 pub struct Input {
     pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
     pub perception_world: NodeReceiver<perception::World>,
+    pub metrics: NodeReceiver<(String, f32)>
 }
 pub struct Output {}
 
@@ -24,6 +27,7 @@ pub struct GuiBridge {
     ssl_vision_socket: zmq::Socket,
     ssl_gc_socket: zmq::Socket,
     world_socket: zmq::Socket,
+    metrics_socket: zmq::Socket
 }
 
 fn create_endpoint(socket_prefix: String, topic: String) -> String {
@@ -60,6 +64,13 @@ impl GuiBridge {
                     .as_str(),
             )
             .unwrap();
+        let metrics_socket = ctx.socket(zmq::PUB).unwrap();
+        metrics_socket
+            .bind(
+                create_endpoint("ipc:///tmp/underbots_zmq_".to_string(), "metrics".to_string())
+                    .as_str(),
+            )
+            .unwrap();
         Self {
             input,
             output,
@@ -67,6 +78,7 @@ impl GuiBridge {
             ssl_vision_socket,
             ssl_gc_socket,
             world_socket,
+            metrics_socket
         }
     }
 
@@ -85,19 +97,32 @@ impl GuiBridge {
 
 impl Node for GuiBridge {
     fn run_once(&mut self) -> Result<(), ()> {
-        if let Some(ssl_vision_msg) = take_last(&self.input.ssl_vision_proto)? {
+        for msg in dump_receiver(&self.input.ssl_vision_proto)? {
+            // TODO: faster to batch send?
             self.ssl_vision_socket
-                .send(proto::encode(ssl_vision_msg), 0)
+                .send(proto::encode(msg), 0)
                 .unwrap();
         }
 
         if let Some(world) = take_last(&self.input.perception_world)? {
-            // println!("sending world");
             let foo = world_to_proto(&world);
             let vis_msg = Visualization { world: Some(foo) };
             self.world_socket.send(proto::encode(vis_msg), 0).unwrap();
         }
 
+        let mut node_performance = HashMap::<String, f32>::new();
+        for (topic, pub_period_ms) in dump_receiver(&self.input.metrics)? {
+            if !node_performance.contains_key(&topic) {
+                node_performance.insert(topic, pub_period_ms);
+            }else {
+                *node_performance.get_mut(&topic).unwrap() = pub_period_ms;
+            }
+        }
+        let performance_msg = node_performance_to_proto(node_performance);
+        self.metrics_socket.send(proto::encode(performance_msg), 0).unwrap();
+
+        // Sending too fast overwhelms the unix sockets
+        std::thread::sleep(Duration::from_millis(5));
         Ok(())
     }
 }
@@ -144,5 +169,13 @@ fn world_to_proto(world: &perception::World) -> proto::visualization::Perception
         msg.yellow_robots.push(robot_to_proto(r));
     }
 
+    msg
+}
+
+pub fn node_performance_to_proto(p: HashMap<String, f32>) -> NodePerformance {
+    let mut msg: NodePerformance = NodePerformance::default();
+    for (k, v) in p {
+        msg.mean_publish_period_ms.insert(k, v);
+    }
     msg
 }
