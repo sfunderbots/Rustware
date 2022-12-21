@@ -39,7 +39,6 @@ class NamedValuePlotter(object):
     def update_data(self, new_data: dict):
         self.data.append((time.time(), new_data))
 
-
     def refresh(self):
         """Refreshes NamedValuePlotter and updates data in the respective
         plots.
@@ -51,14 +50,16 @@ class NamedValuePlotter(object):
                 # add it to necessary maps
                 if name not in self.plots:
                     if self.color_idx == len(self.colors):
-                        LOG.error("Generated {} unique colors but attempting to plot more than {} series".format(len(self.colors), len(self.colors)))
+                        LOG.error(
+                            "Generated {} unique colors but attempting to plot more than {} series".format(
+                                len(self.colors), len(self.colors)
+                            )
+                        )
                         self.color_idx -= 1
                     r, g, b = self.colors[self.color_idx]
                     self.color_idx += 1
                     self.plots[name] = self.win.plot(
-                        pen=QtGui.QColor(
-                            r*255, g*255, b*255
-                        ),
+                        pen=QtGui.QColor(r * 255, g * 255, b * 255),
                         name=name,
                         disableAutoRange=True,
                         brush=None,

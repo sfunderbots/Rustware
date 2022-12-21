@@ -118,7 +118,9 @@ class RustwareGui(QMainWindow):
 
         raw_vision_layer = RawVisionLayer()
         self.pub_sub_manager.register_callback(
-            raw_vision_layer.update_detection_map, self.config.gui_bridge.ssl_vision_topic, SSL_WrapperPacket
+            raw_vision_layer.update_detection_map,
+            self.config.gui_bridge.ssl_vision_topic,
+            SSL_WrapperPacket,
         )
         field.add_layer("Raw Vision", raw_vision_layer)
 
@@ -127,7 +129,9 @@ class RustwareGui(QMainWindow):
                 filtered_vision_layer.update_world(msg.world)
 
         filtered_vision_layer = FilteredVisionLayer()
-        self.pub_sub_manager.register_callback(world_callback, self.config.gui_bridge.world_topic, Visualization)
+        self.pub_sub_manager.register_callback(
+            world_callback, self.config.gui_bridge.world_topic, Visualization
+        )
         field.add_layer("Filtered Vision", filtered_vision_layer)
 
         sim_control_layer = SimControlLayer(
@@ -148,7 +152,9 @@ class RustwareGui(QMainWindow):
         def callback(x):
             named_value_plotter.update_data(x.mean_publish_period_ms)
 
-        self.pub_sub_manager.register_callback(callback, self.config.gui_bridge.metrics_topic, NodePerformance)
+        self.pub_sub_manager.register_callback(
+            callback, self.config.gui_bridge.metrics_topic, NodePerformance
+        )
 
         self.register_refresh_function(named_value_plotter.refresh)
 

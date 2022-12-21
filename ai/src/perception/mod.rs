@@ -3,6 +3,7 @@ pub mod game_state;
 mod robot_filter;
 mod world;
 
+use crate::communication::NodeReceiver;
 use crate::communication::{dump_receiver, run_forever, Node, NodeSender};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
@@ -19,7 +20,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
-use crate::communication::NodeReceiver;
 
 pub struct Input {
     pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -108,9 +108,7 @@ impl Node for Perception {
             self.most_recent_world.ball = filtered_ball;
             self.most_recent_world.yellow_team = filtered_enemy_team;
             self.most_recent_world.blue_team = filtered_friendly_team;
-            self.output
-                .world
-                .try_send(self.most_recent_world.clone());
+            self.output.world.try_send(self.most_recent_world.clone());
         }
 
         if let Some(info) =

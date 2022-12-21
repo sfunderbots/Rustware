@@ -19,6 +19,7 @@ mod perception;
 mod proto;
 
 use crate::communication::Node;
+use crate::communication::{node_connection, NodeReceiver, NodeSender};
 use crate::config::load_config;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
@@ -37,7 +38,6 @@ use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
-use crate::communication::{node_connection, NodeReceiver, NodeSender};
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -58,18 +58,31 @@ struct AllNodeIo {
 }
 
 fn set_up_node_io() -> AllNodeIo {
-    let (metrics_sender, metrics_receiver) =
-        multiqueue2::broadcast_queue::<(String, f32)>(1000);
+    let (metrics_sender, metrics_receiver) = multiqueue2::broadcast_queue::<(String, f32)>(1000);
     let metrics_receiver = NodeReceiver::new(metrics_receiver);
     let (ssl_vision_proto_sender, ssl_vision_proto_receiver) =
-        node_connection::<proto::ssl_vision::SslWrapperPacket>(10, metrics_sender.clone(), "ssl_vision".to_string());
+        node_connection::<proto::ssl_vision::SslWrapperPacket>(
+            10,
+            metrics_sender.clone(),
+            "ssl_vision".to_string(),
+        );
     // let (foo, bar) = node_connection(10, metrics_sender.clone(), "ssl_vision".to_string());
     let (ssl_gc_referee_sender, ssl_gc_referee_receiver) =
-        node_connection::<proto::ssl_gamecontroller::Referee>(10, metrics_sender.clone(), "ssl_gamecontroller".to_string());
-    let (world_sender, world_receiver) = node_connection::<World>(1, metrics_sender.clone(), "world".to_string());
-    let (gc_sender, gc_receiver) = node_connection::<Gamecontroller>(1, metrics_sender.clone(), "gamestate".to_string());
+        node_connection::<proto::ssl_gamecontroller::Referee>(
+            10,
+            metrics_sender.clone(),
+            "ssl_gamecontroller".to_string(),
+        );
+    let (world_sender, world_receiver) =
+        node_connection::<World>(1, metrics_sender.clone(), "world".to_string());
+    let (gc_sender, gc_receiver) =
+        node_connection::<Gamecontroller>(1, metrics_sender.clone(), "gamestate".to_string());
     let (trajectories_sender, trajectories_receiver) =
-        node_connection::<std::collections::HashMap<usize, Trajectory>>(1, metrics_sender.clone(), "Trajectories".to_string());
+        node_connection::<std::collections::HashMap<usize, Trajectory>>(
+            1,
+            metrics_sender.clone(),
+            "Trajectories".to_string(),
+        );
 
     // All Inputs must call add_stream() before clone() so the data is copied to each receiver.
     // All Outputs should not call clone, since we only expect a single producer per queue
@@ -98,7 +111,7 @@ fn set_up_node_io() -> AllNodeIo {
         gui_bridge_input: gui_bridge::Input {
             ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
             perception_world: world_receiver.add_stream().clone(),
-            metrics: metrics_receiver.add_stream().clone()
+            metrics: metrics_receiver.add_stream().clone(),
         },
         gui_bridge_output: gui_bridge::Output {},
     };
@@ -123,7 +136,11 @@ fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
         ),
         gameplay: gameplay::Gameplay::new(io.gameplay_input, io.gameplay_output),
         backend: backend::SslSynchronousSimulator::new(io.backend_input, io.backend_output),
-        gui_bridge: gui_bridge::GuiBridge::new(io.gui_bridge_input, io.gui_bridge_output, Arc::clone(&config)),
+        gui_bridge: gui_bridge::GuiBridge::new(
+            io.gui_bridge_input,
+            io.gui_bridge_output,
+            Arc::clone(&config),
+        ),
     }
 }
 

@@ -52,7 +52,11 @@ fn main() {
         &["third_party/"],
     )
     .unwrap();
-    prost_build::compile_protos(&["proto/visualization.proto", "proto/metrics.proto"], &["proto/"]).unwrap();
+    prost_build::compile_protos(
+        &["proto/visualization.proto", "proto/metrics.proto"],
+        &["proto/"],
+    )
+    .unwrap();
     prost_build::compile_protos(&["config/config.proto"], &["config/"]).unwrap();
     protobuf_codegen::Codegen::new()
         .includes(&["config"])

@@ -1,7 +1,7 @@
+use crate::communication::{NodeReceiver, NodeSender};
 use crate::motion::Trajectory;
 use crate::proto;
 use std::collections::HashMap;
-use crate::communication::{NodeReceiver, NodeSender};
 
 mod ssl_network_listener;
 mod ssl_network_simulator;

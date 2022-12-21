@@ -1,23 +1,23 @@
-use std::collections::HashMap;
 use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver};
 use crate::motion::Trajectory;
 use crate::perception;
 use crate::proto;
+use crate::proto::config;
 use crate::proto::visualization::Visualization;
 use prost::Message;
+use proto::metrics::NodePerformance;
+use std::collections::HashMap;
 use std::mem::take;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
-use proto::metrics::NodePerformance;
-use crate::proto::config;
 
 pub struct Input {
     pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
     pub perception_world: NodeReceiver<perception::World>,
-    pub metrics: NodeReceiver<(String, f32)>
+    pub metrics: NodeReceiver<(String, f32)>,
 }
 pub struct Output {}
 
@@ -46,12 +46,23 @@ impl GuiBridge {
         // BEWARE: The config mutex is only unlocked when the retrieved value goes out of scope.
         // For function calls, this isn't until after the function, so if multiple function
         // parameters try access the config mutex, this will cause a deadlock
-        let socket_prefix = config.lock().unwrap().gui_bridge.unix_socket_prefix.to_string();
+        let socket_prefix = config
+            .lock()
+            .unwrap()
+            .gui_bridge
+            .unix_socket_prefix
+            .to_string();
         ssl_vision_socket
             .bind(
                 create_endpoint(
                     socket_prefix.clone(),
-                    config.lock().unwrap().gui_bridge.ssl_vision_topic.to_string().clone(),
+                    config
+                        .lock()
+                        .unwrap()
+                        .gui_bridge
+                        .ssl_vision_topic
+                        .to_string()
+                        .clone(),
                 )
                 .as_str(),
             )
@@ -69,15 +80,21 @@ impl GuiBridge {
         let world_socket = context.socket(zmq::PUB).unwrap();
         world_socket
             .bind(
-                create_endpoint(socket_prefix.clone(), config.lock().unwrap().gui_bridge.world_topic.to_string())
-                    .as_str(),
+                create_endpoint(
+                    socket_prefix.clone(),
+                    config.lock().unwrap().gui_bridge.world_topic.to_string(),
+                )
+                .as_str(),
             )
             .unwrap();
         let metrics_socket = context.socket(zmq::PUB).unwrap();
         metrics_socket
             .bind(
-                create_endpoint(socket_prefix.clone(), config.lock().unwrap().gui_bridge.metrics_topic.to_string())
-                    .as_str(),
+                create_endpoint(
+                    socket_prefix.clone(),
+                    config.lock().unwrap().gui_bridge.metrics_topic.to_string(),
+                )
+                .as_str(),
             )
             .unwrap();
         Self {
@@ -88,7 +105,7 @@ impl GuiBridge {
             ssl_gc_socket,
             world_socket,
             metrics_socket,
-            config
+            config,
         }
     }
 
@@ -112,9 +129,7 @@ impl Node for GuiBridge {
         // println!("sending ssl vision on bridge");
         for msg in dump_receiver(&self.input.ssl_vision_proto)? {
             // TODO: faster to batch send?
-            self.ssl_vision_socket
-                .send(proto::encode(msg), 0)
-                .unwrap();
+            self.ssl_vision_socket.send(proto::encode(msg), 0).unwrap();
         }
 
         if let Some(world) = take_last(&self.input.perception_world)? {
@@ -127,12 +142,14 @@ impl Node for GuiBridge {
         for (topic, pub_period_ms) in dump_receiver(&self.input.metrics)? {
             if !node_performance.contains_key(&topic) {
                 node_performance.insert(topic, pub_period_ms);
-            }else {
+            } else {
                 *node_performance.get_mut(&topic).unwrap() = pub_period_ms;
             }
         }
         let performance_msg = node_performance_to_proto(node_performance);
-        self.metrics_socket.send(proto::encode(performance_msg), 0).unwrap();
+        self.metrics_socket
+            .send(proto::encode(performance_msg), 0)
+            .unwrap();
 
         // Sending too fast overwhelms the unix sockets
         std::thread::sleep(Duration::from_millis(5));
