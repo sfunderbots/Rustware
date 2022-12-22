@@ -47,18 +47,23 @@ fn friendly_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
                 3.0,
             ));
         }
-        let min_time = times_to_pos
+        // TODO: consider time it takes robot to rotate to face pass
+        // TODO: take into account robot radius when arriving at position
+        // The robot has to get there before the ball is < 1 radius away
+        let min_time_to_position = times_to_pos
             .iter()
             .fold(f32::INFINITY, |prev, curr| prev.min(*curr));
-        sigmoid(min_time, 0.5, -1.0)
+        // If positive, a friendly robot can get to the pass position before the ball will arrive there
+        let time_to_position_diff = p.time_to_complete() - min_time_to_position;
+        sigmoid(time_to_position_diff, 0.5, 1.0)
     } else {
         0.0
     }
 }
 
-fn time_to_intercept(p: &Pass, r: &Robot) -> f32 {
+fn enemy_min_tim_to_intercept(p: &Pass, r: &Robot) -> f32 {
     const REACTION_DELAY: f32 = 0.3;
-    const NUM_STEPS: usize = 1;
+    const NUM_STEPS: usize = 20;
     const ROBOT_RADIUS: f32 = 0.18;
     let x_incr = (p.end.x - p.start.x) / NUM_STEPS as f32;
     let y_incr = (p.end.y - p.start.y) / NUM_STEPS as f32;
@@ -68,6 +73,7 @@ fn time_to_intercept(p: &Pass, r: &Robot) -> f32 {
             x: p.start.x + i as f32 * x_incr + ROBOT_RADIUS,
             y: p.start.x + i as f32 * y_incr + ROBOT_RADIUS,
         };
+        // TODO: Take into consideration the robot radius
         let ttp = bb_time_to_position(&r.state.position, &r.state.velocity, &pos, 3.0, 3.0);
         let diff = ttp - p.time_to_complete();
         min_diff = min_diff.min(diff);
@@ -77,14 +83,18 @@ fn time_to_intercept(p: &Pass, r: &Robot) -> f32 {
 
 fn enemy_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
     if !robots.is_empty() {
-        let mut intercept_diffs: Vec<f32> = Vec::new();
+        let mut enemy_intercept_times: Vec<f32> = Vec::new();
         for r in robots {
-            intercept_diffs.push(time_to_intercept(p, r));
+            enemy_intercept_times.push(enemy_min_tim_to_intercept(p, r));
         }
-        let min_intercept_diff = intercept_diffs
+        let min_intercept_time = enemy_intercept_times
             .iter()
             .fold(f32::INFINITY, |prev, curr| prev.min(*curr));
-        sigmoid(min_intercept_diff, 0.2, 0.4)
+        // If positive, the ball should reach the pass destination before an enemy robot can
+        // intercept. If the value is negative at all, this means an enemy robot can intercept
+        // the pass (possibly before it arrives at it's destination)
+        let intercept_time_diff = p.time_to_complete() - min_intercept_time;
+        sigmoid(min_intercept_time, 0.2, 0.4)
     } else {
         1.0
     }
@@ -261,7 +271,7 @@ mod tests {
         const Y_DIVISIONS: usize = 300;
         let start = Point{x: 0.5, y: 2.9};
         let speed = 5.0;
-        let time_offset = 2.5;
+        let time_offset = 0.5;
         let field = Field::ssl_div_b();
         let friendly_robots: Vec<Robot> = vec![
             Robot {
@@ -302,16 +312,15 @@ mod tests {
             },
         ];
         let enemy_robots: Vec<Robot> = vec![
-            // Robot {
-            //     id: 1,
-            //     state: KinematicState{
-            //         position: Point { x: 1.0, y: -2.0 },
-            //         velocity: Vector::new(),
-            //         orientation: Angle::zero(),
-            //         angular_velocity: Angle::zero()
-            //     }
-            //
-            // },
+            Robot {
+                id: 1,
+                state: KinematicState{
+                    position: Point { x: -1.0, y: -2.0 },
+                    velocity: Vector::new(),
+                    orientation: Angle::zero(),
+                    angular_velocity: Angle::zero()
+                }
+            },
             // Robot {
             //     id: 2,
             //     state: KinematicState{
