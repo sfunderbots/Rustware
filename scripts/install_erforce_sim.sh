@@ -7,31 +7,40 @@ echo "Installing ER-Force simulator..."
 
 if [[ "$OSTYPE" == 'darwin'* ]]; then
     echo "Installing dependencies with brew..."
-    brew install cmake git sdl2 protobuf libusb qt@5
+    xcode-select --install
+    # openssl isn't listed in the README instructions, but seems to be necessary for cmake
+    brew install cmake git sdl2 protobuf libusb python@2 qt@5 openssl
 else
     # https://github.com/robotics-erlangen/framework/blob/master/COMPILE.md
     echo "Installing dependencies with apt..."
     sudo apt install cmake protobuf-compiler libprotobuf-dev qtbase5-dev libqt5opengl5-dev g++ libusb-1.0-0-dev libsdl2-dev libqt5svg5-dev
 fi
 
-sim_location="/opt"
-clone_name="erforce-framework"
-sim_path="$sim_location/$clone_name"
-if [ -d "$sim_path" ]; then
+clone_dir="$PROJECT_ROOT_DIR/third_party/"
+clone_name="erforce_simulator"
+clone_path="$clone_dir/$clone_name"
+if [ -d "$clone_path" ]; then
     echo "Removing old erforce sim..."
-    sudo rm -r "$sim_path"
+    rm -rf "$clone_path"
 fi
 
-cd $sim_location
-sudo git clone https://github.com/robotics-erlangen/framework.git $clone_name
-cd $sim_path
-sudo mkdir build
-cd build
-sudo cmake ..
-sudo make simulator-cli
+cd $clone_dir
+git clone https://github.com/sfunderbots/ER-Force-Simulator.git $clone_name
+cd $clone_path
+
+# Build the cli, our pybind version, and install the cli to the host computer
 if [[ "$OSTYPE" == 'darwin'* ]]; then
-    sudo ln -sf $sim_path/build/bin/simulator-cli.app/Contents/MacOS/simulator-cli /usr/local/bin/ersim
+    mkdir build-mac && cd build-mac
+    # Need to manually point to openssl on mac for some reason
+    # PIC is needed for pybind
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib ..
+    make -j$(nproc) simulator-cli
+    sudo ln -sf $clone_path/build-mac/bin/simulator-cli.app/Contents/MacOS/simulator-cli /usr/local/bin/ersim
 else
-    sudo ln -sf $sim_path/build/bin/simulator-cli /usr/local/bin/ersim
+    mkdir build
+    cd build
+    # PIC is needed for pybind
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON ..
+    make -j$(nproc) simulator-cli
+    sudo ln -sf $clone_path/build/bin/simulator-cli /usr/local/bin/ersim
 fi
-

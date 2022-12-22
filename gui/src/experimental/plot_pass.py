@@ -1,5 +1,6 @@
 import itertools
 import cProfile
+import json
 
 import time
 import numpy as np
@@ -34,51 +35,40 @@ def plot_score_function(data: dict):
     plt.show()
 
 def main():
-    data = {
-        "speed": 5,
-        "time_offset": 0.15,
-        "start": [0, 1],
-        "friendly_robots": [
-            [1, 1, 0, 0],
-            [-2, 0, 0, 0],
-            [0, -1, 0, 0],
-        ],
-        "enemy_robots": [
-            [-1, 1, 0, 0],
-            [2, 0, 0, 0],
-            [0, 1, 0, 0],
-        ],
-        "z": [
-            [1, 0.8, 0.1, 0.2, 0.4],
-            [0.8, 0.9, 0.1, 0.2, 0.7],
-            [0.4, 0.3, 0.45, 0.8, 0.4],
-        ],
-        "x": [
-            [-1, -0.5, 0, 0.5, 1],
-            [-1, -0.5, 0, 0.5, 1],
-            [-1, -0.5, 0, 0.5, 1],
-        ],
-        "y": [
-            [1, 1, 1, 1, 1],
-            [0, 0, 0, 0, 0],
-            [-1, -1, -1, -1, -1],
-        ]
-    }
-    plot_score_function(data)
+    # data = {
+    #     "speed": 5,
+    #     "time_offset": 0.15,
+    #     "start": [0, 1],
+    #     "friendly_robots": [
+    #         [1, 1, 0, 0],
+    #         [-2, 0, 0, 0],
+    #         [0, -1, 0, 0],
+    #     ],
+    #     "enemy_robots": [
+    #         [-1, 1, 0, 0],
+    #         [2, 0, 0, 0],
+    #         [0, 1, 0, 0],
+    #     ],
+    #     "z": [
+    #         [1, 0.8, 0.1, 0.2, 0.4],
+    #         [0.8, 0.9, 0.1, 0.2, 0.7],
+    #         [0.4, 0.3, 0.45, 0.8, 0.4],
+    #     ],
+    #     "x": [
+    #         [-1, -0.5, 0, 0.5, 1],
+    #         [-1, -0.5, 0, 0.5, 1],
+    #         [-1, -0.5, 0, 0.5, 1],
+    #     ],
+    #     "y": [
+    #         [1, 1, 1, 1, 1],
+    #         [0, 0, 0, 0, 0],
+    #         [-1, -1, -1, -1, -1],
+    #     ]
+    # }
+    #
+    with open("/tmp/underbots_passing_plot_data.json", "r") as infile:
+        data = json.load(infile)
+        plot_score_function(data)
 
 if __name__ == '__main__':
-    # main(plot=True)
     main()
-    # originall 0.06-0.07 ms per call
-    # After first np change, now 0.13 ms per call :(
-    # Back to 0.06
-    # cProfile.run("main()", sort="tottime")
-
-    # start = time.time()
-    # print(bb_time_to_position_1d(xi=0, vi=2, xf=4, vf=0, a=3, v_max=3))
-    # print(bb_time_to_position_1d(xi=0, vi=-2, xf=4, vf=0, a=3, v_max=3))
-    # print("Took {} ms".format((time.time()-start)*1000))
-
-    # start = time.time()
-    # print(bb_time_to_position())
-    # print("Took {} ms".format((time.time()-start)*1000))

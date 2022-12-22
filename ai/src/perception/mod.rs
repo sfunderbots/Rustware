@@ -1,7 +1,7 @@
 mod ball_filter;
 pub mod game_state;
 mod robot_filter;
-mod world;
+pub mod world;
 
 use crate::communication::NodeReceiver;
 use crate::communication::{dump_receiver, run_forever, Node, NodeSender};
