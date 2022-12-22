@@ -270,7 +270,7 @@ mod tests {
         const X_DIVISIONS: usize = 300;
         const Y_DIVISIONS: usize = 300;
         let start = Point{x: 0.5, y: 2.9};
-        let speed = 5.0;
+        let speed = 4.0;
         let time_offset = 0.5;
         let field = Field::ssl_div_b();
         let friendly_robots: Vec<Robot> = vec![
@@ -279,7 +279,7 @@ mod tests {
                 state: KinematicState{
                     position: Point::new(),
                     orientation: Angle::zero(),
-                    velocity: Vector::new(),
+                    velocity: Vector{x: 1.0, y: 0.0},
                     angular_velocity: Angle::zero()
                 }
             },
