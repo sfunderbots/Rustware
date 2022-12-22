@@ -12,11 +12,7 @@ pub fn rect_sigmoid(rect: Rectangle, p: &Point, width: f32) -> f32 {
     let y_offset = rect.centre().y;
     let x_size = rect.len_x() / 2.0;
     let y_size = rect.len_y() / 2.0;
-    let x = p.x;
-    let y = p.y;
-    let x_sigmoid =
-        sigmoid(p.x, x_offset + x_size, -width).min(sigmoid(x, x_offset - x_size, width));
-    let y_sigmoid =
-        sigmoid(p.y, y_offset + y_size, -width).min(sigmoid(y, y_offset - y_size, width));
+    let x_sigmoid = sigmoid(p.x, x_offset + x_size, -width).min(sigmoid(p.x, x_offset - x_size, width));
+    let y_sigmoid = sigmoid(p.y, y_offset + y_size, -width).min(sigmoid(p.y, y_offset - y_size, width));
     x_sigmoid * y_sigmoid
 }

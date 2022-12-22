@@ -28,11 +28,11 @@ impl Pass {
 }
 
 fn static_score(p: &Point, field: &Field) -> f32 {
-    let enemy_defense_cost = 1.0 - rect_sigmoid(field.enemy_defense_area(), p, 0.5);
-    let friendly_defense_cost = 1.0 - rect_sigmoid(field.enemy_defense_area(), p, 0.5);
     let on_field_score = rect_sigmoid(field.touch_lines(), p, 0.5);
+    let enemy_defense_score = 1.0 - rect_sigmoid(field.enemy_defense_area(), p, 0.5);
+    let friendly_defense_score = 1.0 - rect_sigmoid(field.friendly_defense_area(), p, 0.5);
     let field_progress_score = sigmoid(p.x, 0.0, field.x_length) / 10.0 + 0.9;
-    on_field_score * enemy_defense_cost * friendly_defense_cost * field_progress_score
+    on_field_score * enemy_defense_score * friendly_defense_score * field_progress_score
 }
 
 fn friendly_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
@@ -50,7 +50,7 @@ fn friendly_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
         let min_time = times_to_pos
             .iter()
             .fold(f32::INFINITY, |prev, curr| prev.min(*curr));
-        sigmoid(min_time, 0.5, 1.0)
+        sigmoid(min_time, 0.5, -1.0)
     } else {
         0.0
     }
@@ -257,45 +257,146 @@ mod tests {
 
     #[test]
     fn plot_score_function() {
-        // #[derive(Serialize, Deserialize)]
-        // struct PlotData {
-        //     speed: f32,
-        //     time_offset: f32
-        // }
+        const X_DIVISIONS: usize = 300;
+        const Y_DIVISIONS: usize = 300;
+        let start = Point{x: 0.5, y: 2.9};
+        let speed = 5.0;
+        let time_offset = 2.5;
+        let field = Field::ssl_div_b();
+        let friendly_robots: Vec<Robot> = vec![
+            Robot {
+                id: 0,
+                state: KinematicState{
+                    position: Point::new(),
+                    orientation: Angle::zero(),
+                    velocity: Vector::new(),
+                    angular_velocity: Angle::zero()
+                }
+            },
+            Robot {
+                id: 1,
+                state: KinematicState{
+                    position: Point { x: 1.0, y: 2.0 },
+                    velocity: Vector::new(),
+                    orientation: Angle::zero(),
+                    angular_velocity: Angle::zero()
+                }
+            },
+            // Robot {
+            //     id: 2,
+            //     state: KinematicState{
+            //         position: Point { x: 3.0, y: -1.0 },
+            //         velocity: Vector::new(),
+            //         orientation: Angle::zero(),
+            //         angular_velocity: Angle::zero()
+            //     }
+            // },
+            Robot {
+                id: 3,
+                state: KinematicState{
+                    position: Point { x: -3.0, y: -2.0 },
+                    velocity: Vector::new(),
+                    orientation: Angle::zero(),
+                    angular_velocity: Angle::zero()
+                }
+            },
+        ];
+        let enemy_robots: Vec<Robot> = vec![
+            // Robot {
+            //     id: 1,
+            //     state: KinematicState{
+            //         position: Point { x: 1.0, y: -2.0 },
+            //         velocity: Vector::new(),
+            //         orientation: Angle::zero(),
+            //         angular_velocity: Angle::zero()
+            //     }
+            //
+            // },
+            // Robot {
+            //     id: 2,
+            //     state: KinematicState{
+            //         position: Point { x: -3.0, y: 1.0 },
+            //         velocity: Vector::new(),
+            //         orientation: Angle::zero(),
+            //         angular_velocity: Angle::zero()
+            //     }
+            //
+            // },
+            // Robot {
+            //     id: 3,
+            //     state: KinematicState{
+            //         position: Point { x: 1.0, y: 3.0 },
+            //         velocity: Vector::new(),
+            //         orientation: Angle::zero(),
+            //         angular_velocity: Angle::zero()
+            //     }
+            //
+            // },
+        ];
+
+        // let mut x = [[0.0; X_DIVISIONS +1]; Y_DIVISIONS +1];
+        // let mut y = [[0.0; X_DIVISIONS +1]; Y_DIVISIONS +1];
+        // let mut z = [[0.0; X_DIVISIONS +1]; Y_DIVISIONS +1];
+        let mut x: Vec<Vec<f32>> = vec![];
+        let mut y: Vec<Vec<f32>> = vec![];
+        let mut z: Vec<Vec<f32>> = vec![];
+
+        for yy in 0..Y_DIVISIONS +1 {
+            x.push(Vec::with_capacity(X_DIVISIONS+1));
+            y.push(Vec::with_capacity(X_DIVISIONS+1));
+            z.push(Vec::with_capacity(X_DIVISIONS+1));
+            for xx in 0..X_DIVISIONS +1 {
+                let x_pos = -field.x_length/2.0 + (xx as f32 / X_DIVISIONS as f32)*field.x_length;
+                let y_pos = field.y_length/2.0 - (yy as f32 / Y_DIVISIONS as f32)*field.y_length;
+                x[yy].push(x_pos);
+                y[yy].push(y_pos);
+                let p = Pass{
+                    start,
+                    end: Point{x: x_pos, y: y_pos},
+                    speed,
+                    time_offset,
+                };
+                z[yy].push(score_pass(&p, &field, &friendly_robots, &enemy_robots));
+            }
+        }
+
+        let mut enemy_robot_info: Vec<[f32; 4]> = vec![];
+        for r in &enemy_robots {
+            enemy_robot_info.push([
+                r.state.position.x, r.state.position.y, r.state.velocity.x, r.state.velocity.y
+            ])
+        }
+        let mut friendly_robot_info: Vec<[f32; 4]> = vec![];
+        for r in &friendly_robots {
+            friendly_robot_info.push([
+                r.state.position.x, r.state.position.y, r.state.velocity.x, r.state.velocity.y
+            ])
+        }
 
         let data = json!({
-            "speed": 0.5,
-            "time_offset": 0.15,
-            "start": [0.0, 1.0],
-            "enemy_robots": [
-                [-1, 1, 0, 0],
-                [2, 0, 0, 0],
-                [0, 1, 0, 0],
-            ],
-            "friendly_robots": [
-                [1, 1, 0, 0],
-                [-2, 0, 0, 0],
-                [0, -1, 0, 0],
-            ],
-            "x": [
-                [-1, -0.5, 0, 0.5, 1],
-                [-1, -0.5, 0, 0.5, 1],
-                [-1, -0.5, 0, 0.5, 1],
-            ],
-            "y": [
-                [1, 1, 1, 1, 1],
-                [0, 0, 0, 0, 0],
-                [-1, -1, -1, -1, -1],
-            ],
-            "z": [
-                [1, 0.8, 0.1, 0.2, 0.4],
-                [0.8, 0.9, 0.1, 0.2, 0.7],
-                [0.4, 0.3, 0.45, 0.8, 0.4],
-            ],
+            "speed": speed,
+            "time_offset": time_offset,
+            "start": [start.x, start.y],
+            "enemy_robots": enemy_robot_info,
+            "friendly_robots": friendly_robot_info,
+            "x": x,
+            "y": y,
+            "z": z,
+            // "z": [
+            //     [1, 0, 0, 0, 1],
+            //     [0, 0, 0, 0, 0],
+            //     [0, 0, 0, 0, 0],
+            //     [0, 0, 0, 0, 0],
+            //     [1, 0, 0, 0, 1],
+            // ],
         });
         // let foo = serde_json::to_string(&data)?;
         let pretty_string = serde_json::to_string_pretty(&data).unwrap();
-        println!("{}", pretty_string);
+        // println!("{}", pretty_string);
+        // println!("{}, {}, {}", x[0][0], y[0][0], z[0][0]);
+        // println!("{}, {}, {}", x[0][X_DIVISIONS], y[0][X_DIVISIONS], z[0][X_DIVISIONS]);
+        // println!("{}, {}, {}", x[Y_DIVISIONS][X_DIVISIONS], y[Y_DIVISIONS][X_DIVISIONS], z[Y_DIVISIONS][X_DIVISIONS]);
+        // println!("{}, {}, {}", x[Y_DIVISIONS][0], y[Y_DIVISIONS][0], z[Y_DIVISIONS][0]);
         fs::write("/tmp/underbots_passing_plot_data.json", pretty_string).expect("Unable to write pass plot data file");
     }
 }
