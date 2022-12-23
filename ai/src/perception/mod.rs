@@ -12,6 +12,7 @@ use crate::proto;
 use crate::proto::config;
 use crate::proto::ssl_gamecontroller;
 use crate::proto::ssl_gamecontroller::{referee, Command};
+use crate::proto::ssl_vision::SslDetectionRobot;
 use ball_filter::{BallDetection, BallFilter};
 use multiqueue2;
 use robot_filter::{RobotDetection, TeamFilter};
@@ -20,7 +21,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 pub use world::{Ball, Field, Robot, Team, World};
-use crate::proto::ssl_vision::SslDetectionRobot;
 
 pub struct Input {
     pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -56,6 +56,9 @@ impl Node for Perception {
         {
             self.enemy_team_info = Some(info);
         }
+        // TODO: This is dumb, innefficient code that published GameState every single tick,
+        // which is unnecessarily fast. Ideally we should only publish when we get a packet, or
+        // every N seconds otherwise
         let ssl_referee_packets = dump_receiver(&self.input.ssl_refbox_proto)?;
         if !ssl_referee_packets.is_empty() {
             for packet in &ssl_referee_packets {
@@ -94,7 +97,6 @@ impl Node for Perception {
         if !ssl_wrapper_packets.is_empty() {
             for packet in ssl_wrapper_packets {
                 if let Some(detection) = packet.detection {
-                    // ASTING BREAKS IT
                     for b in detection.balls {
                         let ball_detection = BallDetection {
                             position: Point {
@@ -106,31 +108,46 @@ impl Node for Perception {
                         self.ball_filter.add_detection(ball_detection);
                     }
 
-                    let create_robot_detection = |ssl_robot: &SslDetectionRobot, t_capture: f64| -> RobotDetection {
-                        RobotDetection {
-                            id: ssl_robot.robot_id.expect("Should always have robot id in proto")
-                                as usize,
-                            position: Point {
-                                x: ssl_robot.x as f64 * METERS_PER_MILLIMETER,
-                                y: ssl_robot.y as f64 * METERS_PER_MILLIMETER,
-                            },
-                            orientation: Angle::from_radians(
-                                ssl_robot.orientation
-                                    .expect("Should always have robot orientation in proto") as f64,
-                            ),
-                            timestamp: t_capture,
-                        }
-                    };
+                    let create_robot_detection =
+                        |ssl_robot: &SslDetectionRobot, t_capture: f64| -> RobotDetection {
+                            RobotDetection {
+                                id: ssl_robot
+                                    .robot_id
+                                    .expect("Should always have robot id in proto")
+                                    as usize,
+                                position: Point {
+                                    x: ssl_robot.x as f64 * METERS_PER_MILLIMETER,
+                                    y: ssl_robot.y as f64 * METERS_PER_MILLIMETER,
+                                },
+                                orientation: Angle::from_radians(
+                                    ssl_robot
+                                        .orientation
+                                        .expect("Should always have robot orientation in proto")
+                                        as f64,
+                                ),
+                                timestamp: t_capture,
+                            }
+                        };
 
                     if let Some(info) = &self.friendly_team_info {
-                        let friendly_robots = if info.is_blue {&detection.robots_blue} else {&detection.robots_yellow};
-                        let enemy_robots = if info.is_blue {&detection.robots_yellow} else {&detection.robots_blue};
+                        let friendly_robots = if info.is_blue {
+                            &detection.robots_blue
+                        } else {
+                            &detection.robots_yellow
+                        };
+                        let enemy_robots = if info.is_blue {
+                            &detection.robots_yellow
+                        } else {
+                            &detection.robots_blue
+                        };
 
                         for r in friendly_robots {
-                            self.friendly_team_filter.add_detection(create_robot_detection(r, detection.t_capture));
+                            self.friendly_team_filter
+                                .add_detection(create_robot_detection(r, detection.t_capture));
                         }
                         for r in enemy_robots {
-                            self.enemy_team_filter.add_detection(create_robot_detection(r, detection.t_capture));
+                            self.enemy_team_filter
+                                .add_detection(create_robot_detection(r, detection.t_capture));
                         }
                     }
                 }
@@ -149,8 +166,6 @@ impl Node for Perception {
             self.most_recent_world.blue_team = filtered_friendly_team;
             self.output.world.try_send(self.most_recent_world.clone());
         }
-
-
 
         Ok(())
     }
@@ -196,7 +211,8 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
         for line in &field_pb.field_lines {
             if line.name == name {
                 return Some(
-                    (line.p1.x - line.p2.x).hypot(line.p1.y - line.p2.y) as f64 * METERS_PER_MILLIMETER,
+                    (line.p1.x - line.p2.x).hypot(line.p1.y - line.p2.y) as f64
+                        * METERS_PER_MILLIMETER,
                 );
             }
         }

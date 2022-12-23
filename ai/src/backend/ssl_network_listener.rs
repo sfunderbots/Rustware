@@ -44,7 +44,7 @@ impl Node for SslNetworkListener {
             {
                 Ok(msg) => {
                     self.output.ssl_referee_proto.try_send(msg);
-                },
+                }
                 Err(_) => break,
             }
         }

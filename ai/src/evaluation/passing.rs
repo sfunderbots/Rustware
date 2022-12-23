@@ -156,14 +156,13 @@ fn pass_gradient(
     ]
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::fs;
     use super::*;
     use serde_json;
-    use serde_json::Result;
     use serde_json::json;
+    use serde_json::Result;
+    use std::fs;
 
     #[test]
     fn profile_score_function() {
@@ -172,81 +171,77 @@ mod tests {
         let friendly_robots: Vec<Robot> = vec![
             Robot {
                 id: 0,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point::new(),
                     orientation: Angle::zero(),
                     velocity: Vector::new(),
-                    angular_velocity: Angle::zero()
-                }
+                    angular_velocity: Angle::zero(),
+                },
             },
             Robot {
                 id: 1,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: 1.0, y: 2.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
+                    angular_velocity: Angle::zero(),
+                },
             },
             Robot {
                 id: 2,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: 3.0, y: -1.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
+                    angular_velocity: Angle::zero(),
+                },
             },
             Robot {
                 id: 3,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: -1.0, y: -3.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
+                    angular_velocity: Angle::zero(),
+                },
             },
         ];
         let enemy_robots: Vec<Robot> = vec![
             Robot {
                 id: 0,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: -1.0, y: 2.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
-
+                    angular_velocity: Angle::zero(),
+                },
             },
             Robot {
                 id: 1,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: 1.0, y: -2.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
-
+                    angular_velocity: Angle::zero(),
+                },
             },
             Robot {
                 id: 2,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: -3.0, y: 1.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
-
+                    angular_velocity: Angle::zero(),
+                },
             },
             Robot {
                 id: 3,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: 1.0, y: 3.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
-
+                    angular_velocity: Angle::zero(),
+                },
             },
         ];
 
@@ -262,35 +257,37 @@ mod tests {
         let total_time_ms = total_time_ns as f64 / 1_000_000.0;
         let time_per_call_ms = total_time_ms / passes.len() as f64;
         let num_passes = passes.len();
-        println!("Total time for {num_passes}: {total_time_ms}ms. Time per call: {time_per_call_ms}ms");
+        println!(
+            "Total time for {num_passes}: {total_time_ms}ms. Time per call: {time_per_call_ms}ms"
+        );
     }
 
     #[test]
     fn plot_score_function() {
         const X_DIVISIONS: usize = 300;
         const Y_DIVISIONS: usize = 300;
-        let start = Point{x: 0.5, y: 2.9};
+        let start = Point { x: 0.5, y: 2.9 };
         let speed = 4.0;
         let time_offset = 0.5;
         let field = Field::ssl_div_b();
         let friendly_robots: Vec<Robot> = vec![
             Robot {
                 id: 0,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point::new(),
                     orientation: Angle::zero(),
-                    velocity: Vector{x: 1.0, y: 0.0},
-                    angular_velocity: Angle::zero()
-                }
+                    velocity: Vector { x: 1.0, y: 0.0 },
+                    angular_velocity: Angle::zero(),
+                },
             },
             Robot {
                 id: 1,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: 1.0, y: 2.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
+                    angular_velocity: Angle::zero(),
+                },
             },
             // Robot {
             //     id: 2,
@@ -303,23 +300,23 @@ mod tests {
             // },
             Robot {
                 id: 3,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: -3.0, y: -2.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
+                    angular_velocity: Angle::zero(),
+                },
             },
         ];
         let enemy_robots: Vec<Robot> = vec![
             Robot {
                 id: 1,
-                state: KinematicState{
+                state: KinematicState {
                     position: Point { x: -1.0, y: -2.0 },
                     velocity: Vector::new(),
                     orientation: Angle::zero(),
-                    angular_velocity: Angle::zero()
-                }
+                    angular_velocity: Angle::zero(),
+                },
             },
             // Robot {
             //     id: 2,
@@ -350,18 +347,20 @@ mod tests {
         let mut y: Vec<Vec<f64>> = vec![];
         let mut z: Vec<Vec<f64>> = vec![];
 
-        for yy in 0..Y_DIVISIONS +1 {
-            x.push(Vec::with_capacity(X_DIVISIONS+1));
-            y.push(Vec::with_capacity(X_DIVISIONS+1));
-            z.push(Vec::with_capacity(X_DIVISIONS+1));
-            for xx in 0..X_DIVISIONS +1 {
-                let x_pos = -field.x_length/2.0 + (xx as f64 / X_DIVISIONS as f64)*field.x_length;
-                let y_pos = field.y_length/2.0 - (yy as f64 / Y_DIVISIONS as f64)*field.y_length;
+        for yy in 0..Y_DIVISIONS + 1 {
+            x.push(Vec::with_capacity(X_DIVISIONS + 1));
+            y.push(Vec::with_capacity(X_DIVISIONS + 1));
+            z.push(Vec::with_capacity(X_DIVISIONS + 1));
+            for xx in 0..X_DIVISIONS + 1 {
+                let x_pos =
+                    -field.x_length / 2.0 + (xx as f64 / X_DIVISIONS as f64) * field.x_length;
+                let y_pos =
+                    field.y_length / 2.0 - (yy as f64 / Y_DIVISIONS as f64) * field.y_length;
                 x[yy].push(x_pos);
                 y[yy].push(y_pos);
-                let p = Pass{
+                let p = Pass {
                     start,
-                    end: Point{x: x_pos, y: y_pos},
+                    end: Point { x: x_pos, y: y_pos },
                     speed,
                     time_offset,
                 };
@@ -372,13 +371,19 @@ mod tests {
         let mut enemy_robot_info: Vec<[f64; 4]> = vec![];
         for r in &enemy_robots {
             enemy_robot_info.push([
-                r.state.position.x, r.state.position.y, r.state.velocity.x, r.state.velocity.y
+                r.state.position.x,
+                r.state.position.y,
+                r.state.velocity.x,
+                r.state.velocity.y,
             ])
         }
         let mut friendly_robot_info: Vec<[f64; 4]> = vec![];
         for r in &friendly_robots {
             friendly_robot_info.push([
-                r.state.position.x, r.state.position.y, r.state.velocity.x, r.state.velocity.y
+                r.state.position.x,
+                r.state.position.y,
+                r.state.velocity.x,
+                r.state.velocity.y,
             ])
         }
 
@@ -406,6 +411,7 @@ mod tests {
         // println!("{}, {}, {}", x[0][X_DIVISIONS], y[0][X_DIVISIONS], z[0][X_DIVISIONS]);
         // println!("{}, {}, {}", x[Y_DIVISIONS][X_DIVISIONS], y[Y_DIVISIONS][X_DIVISIONS], z[Y_DIVISIONS][X_DIVISIONS]);
         // println!("{}, {}, {}", x[Y_DIVISIONS][0], y[Y_DIVISIONS][0], z[Y_DIVISIONS][0]);
-        fs::write("/tmp/underbots_passing_plot_data.json", pretty_string).expect("Unable to write pass plot data file");
+        fs::write("/tmp/underbots_passing_plot_data.json", pretty_string)
+            .expect("Unable to write pass plot data file");
     }
 }

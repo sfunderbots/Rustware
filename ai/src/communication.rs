@@ -67,7 +67,7 @@ impl<T: Clone> NodeSender<T> {
                 .windows(2)
                 .map(|x| x[1] - x[0])
                 .sum::<Duration>()
-                / (self.pub_times_buffer.len()-1) as u32;
+                / (self.pub_times_buffer.len() - 1) as u32;
             let average_pub_period_ms = average_duration.as_secs_f64() * 1000.0;
             self.metrics_sender
                 .try_send((self.topic_name.clone(), average_pub_period_ms));

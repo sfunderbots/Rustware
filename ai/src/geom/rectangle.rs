@@ -30,8 +30,8 @@ impl Rectangle {
 
     pub fn centre(&self) -> Point {
         Point {
-            x: self.bottom_left.x + self.len_x()/2.0,
-            y: self.bottom_left.y + self.len_y()/2.0,
+            x: self.bottom_left.x + self.len_x() / 2.0,
+            y: self.bottom_left.y + self.len_y() / 2.0,
         }
     }
 }
