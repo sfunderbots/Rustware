@@ -58,7 +58,7 @@ struct AllNodeIo {
 }
 
 fn set_up_node_io() -> AllNodeIo {
-    let (metrics_sender, metrics_receiver) = multiqueue2::broadcast_queue::<(String, f32)>(1000);
+    let (metrics_sender, metrics_receiver) = multiqueue2::broadcast_queue::<(String, f64)>(1000);
     let metrics_receiver = NodeReceiver::new(metrics_receiver);
     let (ssl_vision_proto_sender, ssl_vision_proto_receiver) =
         node_connection::<proto::ssl_vision::SslWrapperPacket>(
@@ -191,6 +191,8 @@ fn run_nodes_in_parallel_threads() {
     println!("Done join");
 }
 
+// TODO: Note to self - timestamps should always be f64, since the erforce sim uses unix time
+// timestamps, which are too big for f64. The t_capture given in proto is f64, so we should respect that
 fn main() {
     // let cfg = config::load_config().expect("config should be fully initialized");
     // println!("{}", cfg.backend.ssl_vision_ip);

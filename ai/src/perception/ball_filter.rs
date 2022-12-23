@@ -5,7 +5,7 @@ use std::collections::vec_deque::VecDeque;
 
 pub struct BallDetection {
     pub position: Point,
-    pub timestamp: f32,
+    pub timestamp: f64,
 }
 
 pub struct BallFilter {

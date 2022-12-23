@@ -10,7 +10,7 @@ pub struct RobotDetection {
     pub id: usize,
     pub position: Point,
     pub orientation: Angle,
-    pub timestamp: f32,
+    pub timestamp: f64,
 }
 
 pub struct RobotFilter {
@@ -31,6 +31,7 @@ impl RobotFilter {
             .iter()
             .any(|x| x.timestamp.approx_eq_ulps(&detection.timestamp, 10))
         {
+            // println!("skipping detection");
             return;
         }
         self.detections.push_back(detection);
@@ -54,7 +55,7 @@ impl RobotFilter {
         let angular_velocity =
             (self.detections[1].orientation - self.detections[0].orientation) / time_diff;
         Some(Robot {
-            id: 0,
+            id: self.detections[0].id,
             state: KinematicState {
                 position,
                 orientation,

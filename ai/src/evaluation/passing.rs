@@ -16,18 +16,18 @@ use std::time::Instant;
 struct Pass {
     start: Point,
     end: Point,
-    speed: f32,
-    time_offset: f32,
+    speed: f64,
+    time_offset: f64,
 }
 
 impl Pass {
-    pub fn time_to_complete(&self) -> f32 {
+    pub fn time_to_complete(&self) -> f64 {
         let pass_dist = (self.end.x - self.start.x).hypot(self.end.y - self.start.y);
         pass_dist / self.speed + self.time_offset
     }
 }
 
-fn static_score(p: &Point, field: &Field) -> f32 {
+fn static_score(p: &Point, field: &Field) -> f64 {
     let on_field_score = rect_sigmoid(field.touch_lines(), p, 0.5);
     let enemy_defense_score = 1.0 - rect_sigmoid(field.enemy_defense_area(), p, 0.5);
     let friendly_defense_score = 1.0 - rect_sigmoid(field.friendly_defense_area(), p, 0.5);
@@ -35,9 +35,9 @@ fn static_score(p: &Point, field: &Field) -> f32 {
     on_field_score * enemy_defense_score * friendly_defense_score * field_progress_score
 }
 
-fn friendly_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
+fn friendly_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f64 {
     if !robots.is_empty() {
-        let mut times_to_pos: Vec<f32> = Vec::new();
+        let mut times_to_pos: Vec<f64> = Vec::new();
         for r in robots {
             times_to_pos.push(bb_time_to_position(
                 &r.state.position,
@@ -52,7 +52,7 @@ fn friendly_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
         // The robot has to get there before the ball is < 1 radius away
         let min_time_to_position = times_to_pos
             .iter()
-            .fold(f32::INFINITY, |prev, curr| prev.min(*curr));
+            .fold(f64::INFINITY, |prev, curr| prev.min(*curr));
         // If positive, a friendly robot can get to the pass position before the ball will arrive there
         let time_to_position_diff = p.time_to_complete() - min_time_to_position;
         sigmoid(time_to_position_diff, 0.5, 1.0)
@@ -61,17 +61,17 @@ fn friendly_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
     }
 }
 
-fn enemy_min_tim_to_intercept(p: &Pass, r: &Robot) -> f32 {
-    const REACTION_DELAY: f32 = 0.3;
+fn enemy_min_tim_to_intercept(p: &Pass, r: &Robot) -> f64 {
+    const REACTION_DELAY: f64 = 0.3;
     const NUM_STEPS: usize = 20;
-    const ROBOT_RADIUS: f32 = 0.18;
-    let x_incr = (p.end.x - p.start.x) / NUM_STEPS as f32;
-    let y_incr = (p.end.y - p.start.y) / NUM_STEPS as f32;
-    let mut min_diff = f32::INFINITY;
+    const ROBOT_RADIUS: f64 = 0.18;
+    let x_incr = (p.end.x - p.start.x) / NUM_STEPS as f64;
+    let y_incr = (p.end.y - p.start.y) / NUM_STEPS as f64;
+    let mut min_diff = f64::INFINITY;
     for i in 0..NUM_STEPS {
         let pos = Point {
-            x: p.start.x + i as f32 * x_incr + ROBOT_RADIUS,
-            y: p.start.x + i as f32 * y_incr + ROBOT_RADIUS,
+            x: p.start.x + i as f64 * x_incr + ROBOT_RADIUS,
+            y: p.start.x + i as f64 * y_incr + ROBOT_RADIUS,
         };
         // TODO: Take into consideration the robot radius
         let ttp = bb_time_to_position(&r.state.position, &r.state.velocity, &pos, 3.0, 3.0);
@@ -81,15 +81,15 @@ fn enemy_min_tim_to_intercept(p: &Pass, r: &Robot) -> f32 {
     min_diff + REACTION_DELAY
 }
 
-fn enemy_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f32 {
+fn enemy_intercept_score(p: &Pass, robots: &Vec<Robot>) -> f64 {
     if !robots.is_empty() {
-        let mut enemy_intercept_times: Vec<f32> = Vec::new();
+        let mut enemy_intercept_times: Vec<f64> = Vec::new();
         for r in robots {
             enemy_intercept_times.push(enemy_min_tim_to_intercept(p, r));
         }
         let min_intercept_time = enemy_intercept_times
             .iter()
-            .fold(f32::INFINITY, |prev, curr| prev.min(*curr));
+            .fold(f64::INFINITY, |prev, curr| prev.min(*curr));
         // If positive, the ball should reach the pass destination before an enemy robot can
         // intercept. If the value is negative at all, this means an enemy robot can intercept
         // the pass (possibly before it arrives at it's destination)
@@ -105,7 +105,7 @@ fn score_pass(
     field: &Field,
     friendly_robots: &Vec<Robot>,
     enemy_robots: &Vec<Robot>,
-) -> f32 {
+) -> f64 {
     let static_score = static_score(&p.end, field);
     let friendly_score = friendly_intercept_score(&p, friendly_robots);
     let enemy_score = enemy_intercept_score(&p, enemy_robots);
@@ -136,7 +136,7 @@ fn pass_gradient(
     field: &Field,
     friendly_robots: &Vec<Robot>,
     enemy_robots: &Vec<Robot>,
-) -> Vec<f32> {
+) -> Vec<f64> {
     let base = score_pass(&p, &field, &friendly_robots, &enemy_robots);
     let diff = 1.0e-3;
     let mut p1 = p.clone();
@@ -346,17 +346,17 @@ mod tests {
         // let mut x = [[0.0; X_DIVISIONS +1]; Y_DIVISIONS +1];
         // let mut y = [[0.0; X_DIVISIONS +1]; Y_DIVISIONS +1];
         // let mut z = [[0.0; X_DIVISIONS +1]; Y_DIVISIONS +1];
-        let mut x: Vec<Vec<f32>> = vec![];
-        let mut y: Vec<Vec<f32>> = vec![];
-        let mut z: Vec<Vec<f32>> = vec![];
+        let mut x: Vec<Vec<f64>> = vec![];
+        let mut y: Vec<Vec<f64>> = vec![];
+        let mut z: Vec<Vec<f64>> = vec![];
 
         for yy in 0..Y_DIVISIONS +1 {
             x.push(Vec::with_capacity(X_DIVISIONS+1));
             y.push(Vec::with_capacity(X_DIVISIONS+1));
             z.push(Vec::with_capacity(X_DIVISIONS+1));
             for xx in 0..X_DIVISIONS +1 {
-                let x_pos = -field.x_length/2.0 + (xx as f32 / X_DIVISIONS as f32)*field.x_length;
-                let y_pos = field.y_length/2.0 - (yy as f32 / Y_DIVISIONS as f32)*field.y_length;
+                let x_pos = -field.x_length/2.0 + (xx as f64 / X_DIVISIONS as f64)*field.x_length;
+                let y_pos = field.y_length/2.0 - (yy as f64 / Y_DIVISIONS as f64)*field.y_length;
                 x[yy].push(x_pos);
                 y[yy].push(y_pos);
                 let p = Pass{
@@ -369,13 +369,13 @@ mod tests {
             }
         }
 
-        let mut enemy_robot_info: Vec<[f32; 4]> = vec![];
+        let mut enemy_robot_info: Vec<[f64; 4]> = vec![];
         for r in &enemy_robots {
             enemy_robot_info.push([
                 r.state.position.x, r.state.position.y, r.state.velocity.x, r.state.velocity.y
             ])
         }
-        let mut friendly_robot_info: Vec<[f32; 4]> = vec![];
+        let mut friendly_robot_info: Vec<[f64; 4]> = vec![];
         for r in &friendly_robots {
             friendly_robot_info.push([
                 r.state.position.x, r.state.position.y, r.state.velocity.x, r.state.velocity.y

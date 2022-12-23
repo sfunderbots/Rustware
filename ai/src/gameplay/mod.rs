@@ -103,7 +103,7 @@ impl Node for Gameplay {
 }
 
 struct State {
-    enemy_max_speed: f32,
+    enemy_max_speed: f64,
     current_play: Play,
 }
 

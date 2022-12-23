@@ -4,14 +4,14 @@ use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct Field {
-    pub x_length: f32,
-    pub y_length: f32,
-    pub defense_x_length: f32,
-    pub defense_y_length: f32,
-    pub goal_x_length: f32,
-    pub goal_y_length: f32,
-    pub boundary_size: f32,
-    pub center_circle_radius: f32,
+    pub x_length: f64,
+    pub y_length: f64,
+    pub defense_x_length: f64,
+    pub defense_y_length: f64,
+    pub goal_x_length: f64,
+    pub goal_y_length: f64,
+    pub boundary_size: f64,
+    pub center_circle_radius: f64,
 }
 
 impl Field {

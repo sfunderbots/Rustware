@@ -4,7 +4,7 @@ use crate::geom::Angle;
 #[derive(Clone, Copy, Debug)]
 pub struct Circle {
     pub center: Point,
-    pub radius: f32,
+    pub radius: f64,
 }
 
 impl Circle {

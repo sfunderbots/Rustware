@@ -3,8 +3,8 @@ use std::ops::Div;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector {
-    pub x: f32,
-    pub y: f32,
+    pub x: f64,
+    pub y: f64,
 }
 
 impl Vector {
@@ -12,7 +12,7 @@ impl Vector {
         Vector { x: 0.0, y: 0.0 }
     }
 
-    pub fn length(&self) -> f32 {
+    pub fn length(&self) -> f64 {
         self.x.hypot(self.y)
     }
 
@@ -27,7 +27,7 @@ impl Vector {
         }
     }
 
-    pub fn norm(&self, dist: f32) -> Vector {
+    pub fn norm(&self, dist: f64) -> Vector {
         Vector {
             x: self.x / self.length() * dist,
             y: self.y / self.length() * dist,
@@ -35,9 +35,9 @@ impl Vector {
     }
 }
 
-impl Div<f32> for Vector {
+impl Div<f64> for Vector {
     type Output = Vector;
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         Vector {
             x: self.x / rhs,
             y: self.y / rhs,

@@ -40,16 +40,16 @@ message GuiBridge {
 }
 
 message Rules {
-    required float robot_max_radius = 1;
-    required float ball_max_radius = 2;
+    required double robot_max_radius = 1;
+    required double ball_max_radius = 2;
     required uint32 max_robot_id = 3;
-    required float max_kick_speed = 4;
-    required float div_a_total_field_x_length = 5;
-    required float div_a_total_field_y_length = 6;
-    required float div_b_total_field_x_length = 7;
-    required float div_b_total_field_y_length = 8;
+    required double max_kick_speed = 4;
+    required double div_a_total_field_x_length = 5;
+    required double div_a_total_field_y_length = 6;
+    required double div_b_total_field_x_length = 7;
+    required double div_b_total_field_y_length = 8;
     // How far the ball must move after a kickoff, free kick, or penalty before it's considered in-play
-    required float ball_in_play_after_restart_move_dist = 9;
+    required double ball_in_play_after_restart_move_dist = 9;
 }
 
 message Config {

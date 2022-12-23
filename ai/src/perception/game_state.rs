@@ -81,7 +81,12 @@ impl TeamInfo {
                 goalie_id: info.goalkeeper as usize,
             })
         } else {
-            None
+            Some(TeamInfo {
+                is_blue,
+                defending_positive_side,
+                score: 0,
+                goalie_id: 0,
+            })
         }
     }
 }

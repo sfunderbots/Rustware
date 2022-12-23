@@ -87,35 +87,36 @@ impl Node for Perception {
                 friendly_team_info: self.friendly_team_info.clone().unwrap(),
                 enemy_team_info: self.enemy_team_info.clone().unwrap(),
             };
-            self.output.gamecontroller.try_send(gc).unwrap();
+            self.output.gamecontroller.try_send(gc);
         }
 
         let ssl_wrapper_packets = dump_receiver(&self.input.ssl_vision_proto)?;
         if !ssl_wrapper_packets.is_empty() {
             for packet in ssl_wrapper_packets {
                 if let Some(detection) = packet.detection {
+                    // ASTING BREAKS IT
                     for b in detection.balls {
                         let ball_detection = BallDetection {
                             position: Point {
-                                x: b.x * METERS_PER_MILLIMETER,
-                                y: b.y * METERS_PER_MILLIMETER,
+                                x: b.x as f64 * METERS_PER_MILLIMETER,
+                                y: b.y as f64 * METERS_PER_MILLIMETER,
                             },
-                            timestamp: detection.t_capture as f32,
+                            timestamp: detection.t_capture,
                         };
                         self.ball_filter.add_detection(ball_detection);
                     }
 
-                    let create_robot_detection = |ssl_robot: &SslDetectionRobot, t_capture: f32| -> RobotDetection {
+                    let create_robot_detection = |ssl_robot: &SslDetectionRobot, t_capture: f64| -> RobotDetection {
                         RobotDetection {
                             id: ssl_robot.robot_id.expect("Should always have robot id in proto")
                                 as usize,
                             position: Point {
-                                x: ssl_robot.x * METERS_PER_MILLIMETER,
-                                y: ssl_robot.y * METERS_PER_MILLIMETER,
+                                x: ssl_robot.x as f64 * METERS_PER_MILLIMETER,
+                                y: ssl_robot.y as f64 * METERS_PER_MILLIMETER,
                             },
                             orientation: Angle::from_radians(
                                 ssl_robot.orientation
-                                    .expect("Should always have robot orientation in proto"),
+                                    .expect("Should always have robot orientation in proto") as f64,
                             ),
                             timestamp: t_capture,
                         }
@@ -126,10 +127,10 @@ impl Node for Perception {
                         let enemy_robots = if info.is_blue {&detection.robots_yellow} else {&detection.robots_blue};
 
                         for r in friendly_robots {
-                            self.friendly_team_filter.add_detection(create_robot_detection(r, detection.t_capture as f32));
+                            self.friendly_team_filter.add_detection(create_robot_detection(r, detection.t_capture));
                         }
                         for r in enemy_robots {
-                            self.enemy_team_filter.add_detection(create_robot_detection(r, detection.t_capture as f32));
+                            self.enemy_team_filter.add_detection(create_robot_detection(r, detection.t_capture));
                         }
                     }
                 }
@@ -191,20 +192,20 @@ impl Perception {
 }
 
 fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field {
-    let line_length_from_name = |name: &str| -> Option<f32> {
+    let line_length_from_name = |name: &str| -> Option<f64> {
         for line in &field_pb.field_lines {
             if line.name == name {
                 return Some(
-                    (line.p1.x - line.p2.x).hypot(line.p1.y - line.p2.y) * METERS_PER_MILLIMETER,
+                    (line.p1.x - line.p2.x).hypot(line.p1.y - line.p2.y) as f64 * METERS_PER_MILLIMETER,
                 );
             }
         }
         return None;
     };
-    let arc_radius_from_name = |name: &str| -> Option<f32> {
+    let arc_radius_from_name = |name: &str| -> Option<f64> {
         for arc in &field_pb.field_arcs {
             if arc.name == name {
-                return Some(arc.radius * METERS_PER_MILLIMETER);
+                return Some(arc.radius as f64 * METERS_PER_MILLIMETER);
             }
         }
         return None;
@@ -214,7 +215,7 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
     // of the same time will be the same length
     // (eg. right and left penalty stretch lines are the same)
     let penalty_area_depth = if let Some(depth) = field_pb.penalty_area_depth {
-        depth as f32 * METERS_PER_MILLIMETER
+        depth as f64 * METERS_PER_MILLIMETER
     } else {
         line_length_from_name("LeftFieldLeftPenaltyStretch").unwrap_or_else(|| {
             println!("Unable to find value for penalty area depth in proto");
@@ -223,7 +224,7 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
         })
     };
     let penalty_area_width = if let Some(width) = field_pb.penalty_area_width {
-        width as f32 * METERS_PER_MILLIMETER
+        width as f64 * METERS_PER_MILLIMETER
     } else {
         line_length_from_name("LeftPenaltyStretch").unwrap_or_else(|| {
             println!("Unable to find value for penalty area width in proto");
@@ -232,7 +233,7 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
         })
     };
     let center_circle_radius = if let Some(radius) = field_pb.center_circle_radius {
-        radius as f32 * METERS_PER_MILLIMETER
+        radius as f64 * METERS_PER_MILLIMETER
     } else {
         arc_radius_from_name("CenterCircle").unwrap_or_else(|| {
             println!("Unable to find value for center circle radius in proto");
@@ -242,13 +243,13 @@ fn field_from_proto(field_pb: &proto::ssl_vision::SslGeometryFieldSize) -> Field
     };
 
     Field {
-        x_length: field_pb.field_length as f32 * METERS_PER_MILLIMETER,
-        y_length: field_pb.field_width as f32 * METERS_PER_MILLIMETER,
+        x_length: field_pb.field_length as f64 * METERS_PER_MILLIMETER,
+        y_length: field_pb.field_width as f64 * METERS_PER_MILLIMETER,
         defense_x_length: penalty_area_depth,
         defense_y_length: penalty_area_width,
-        goal_x_length: field_pb.goal_depth as f32 * METERS_PER_MILLIMETER,
-        goal_y_length: field_pb.goal_width as f32 * METERS_PER_MILLIMETER,
-        boundary_size: field_pb.boundary_width as f32 * METERS_PER_MILLIMETER,
+        goal_x_length: field_pb.goal_depth as f64 * METERS_PER_MILLIMETER,
+        goal_y_length: field_pb.goal_width as f64 * METERS_PER_MILLIMETER,
+        boundary_size: field_pb.boundary_width as f64 * METERS_PER_MILLIMETER,
         center_circle_radius: center_circle_radius,
     }
 }

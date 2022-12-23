@@ -5,7 +5,7 @@ use net2::unix::UnixUdpBuilderExt;
 use prost::Message;
 use std::collections::vec_deque::VecDeque;
 use std::error::Error;
-use std::f32::consts::E;
+use std::f64::consts::E;
 use std::io::Cursor;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, ToSocketAddrs, UdpSocket};
 use std::ptr::addr_of_mut;
@@ -52,7 +52,7 @@ pub trait Node {
 
 pub struct NodeSender<T: Clone> {
     sender: BroadcastSender<T>,
-    metrics_sender: BroadcastSender<(String, f32)>,
+    metrics_sender: BroadcastSender<(String, f64)>,
     pub_times_buffer: CircularBuffer<Instant>,
     topic_name: String,
 }
@@ -68,7 +68,7 @@ impl<T: Clone> NodeSender<T> {
                 .map(|x| x[1] - x[0])
                 .sum::<Duration>()
                 / (self.pub_times_buffer.len()-1) as u32;
-            let average_pub_period_ms = average_duration.as_secs_f32() * 1000.0;
+            let average_pub_period_ms = average_duration.as_secs_f64() * 1000.0;
             self.metrics_sender
                 .try_send((self.topic_name.clone(), average_pub_period_ms));
         }
@@ -102,7 +102,7 @@ impl<T: Clone> NodeReceiver<T> {
 
 pub fn node_connection<T: Clone>(
     capacity: usize,
-    metrics_sender: BroadcastSender<(String, f32)>,
+    metrics_sender: BroadcastSender<(String, f64)>,
     topic_name: String,
 ) -> (NodeSender<T>, NodeReceiver<T>) {
     // The broadcast_queue capacity is an internal "Index" type which is really just u64

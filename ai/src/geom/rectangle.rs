@@ -20,11 +20,11 @@ impl Rectangle {
         }
     }
 
-    pub fn len_x(&self) -> f32 {
+    pub fn len_x(&self) -> f64 {
         self.top_right.x - self.bottom_left.x
     }
 
-    pub fn len_y(&self) -> f32 {
+    pub fn len_y(&self) -> f64 {
         self.top_right.y - self.bottom_left.y
     }
 

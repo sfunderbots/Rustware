@@ -2,5 +2,5 @@ syntax = "proto3";
 package metrics;
 
 message NodePerformance {
-  map<string, float> mean_publish_period_ms = 1;
+  map<string, double> mean_publish_period_ms = 1;
 }

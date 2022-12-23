@@ -1,11 +1,11 @@
 use float_cmp;
 use std::cmp::{Eq, Ord, Ordering, PartialOrd};
-use std::f32::consts::PI;
+use std::f64::consts::PI;
 use std::ops::{Add, Div, Neg, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Debug)]
 pub struct Angle {
-    radians: f32,
+    radians: f64,
 }
 
 impl Angle {
@@ -25,30 +25,30 @@ impl Angle {
         Angle { radians: 2.0 * PI }
     }
 
-    pub fn from_degrees(degrees: f32) -> Angle {
+    pub fn from_degrees(degrees: f64) -> Angle {
         Angle {
             radians: degrees / 180.0 * PI,
         }
     }
 
-    pub fn from_radians(radians: f32) -> Angle {
+    pub fn from_radians(radians: f64) -> Angle {
         Angle { radians: radians }
     }
 
-    pub fn degrees(&self) -> f32 {
+    pub fn degrees(&self) -> f64 {
         // TODO: possible optimization. Cache this value in the struct?
         self.radians * 180.0 / PI
     }
 
-    pub fn radians(&self) -> f32 {
+    pub fn radians(&self) -> f64 {
         self.radians
     }
 
-    pub fn sin(&self) -> f32 {
+    pub fn sin(&self) -> f64 {
         self.radians.sin()
     }
 
-    pub fn cos(&self) -> f32 {
+    pub fn cos(&self) -> f64 {
         self.radians.cos()
     }
 
@@ -74,11 +74,11 @@ impl Ord for Angle {
 impl PartialEq for Angle {
     fn eq(&self, other: &Self) -> bool {
         float_cmp::approx_eq!(
-            f32,
+            f64,
             self.radians,
             other.radians,
-            float_cmp::F32Margin {
-                epsilon: 5.0 * f32::EPSILON,
+            float_cmp::F64Margin {
+                epsilon: 5.0 * f64::EPSILON,
                 ulps: 5
             }
         )
@@ -121,9 +121,9 @@ impl Sub for &Angle {
     }
 }
 
-impl Div<f32> for Angle {
+impl Div<f64> for Angle {
     type Output = Angle;
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         Angle::from_radians(self.radians / rhs)
     }
 }

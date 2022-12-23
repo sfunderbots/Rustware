@@ -42,7 +42,9 @@ impl Node for SslNetworkListener {
                 .ssl_gamecontroller_udp_client
                 .read_proto::<proto::ssl_gamecontroller::Referee>()
             {
-                Ok(msg) => self.output.ssl_referee_proto.try_send(msg).unwrap(),
+                Ok(msg) => {
+                    self.output.ssl_referee_proto.try_send(msg);
+                },
                 Err(_) => break,
             }
         }

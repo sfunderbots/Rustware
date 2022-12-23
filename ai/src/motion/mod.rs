@@ -3,7 +3,7 @@ mod tracker;
 
 use crate::geom::{Angle, Point, Vector};
 
-pub fn bb_time_to_position_1d(xi: f32, vi: f32, xf: f32, vf: f32, a: f32, v_max: f32) -> f32 {
+pub fn bb_time_to_position_1d(xi: f64, vi: f64, xf: f64, vf: f64, a: f64, v_max: f64) -> f64 {
     assert!(vf == 0.0);
     assert!(a > 1.0e-3);
     assert!(v_max > 0.0);
@@ -67,9 +67,9 @@ pub fn bb_time_to_position(
     start: &Point,
     initial_velocity: &Vector,
     end: &Point,
-    a: f32,
-    max_speed: f32,
-) -> f32 {
+    a: f64,
+    max_speed: f64,
+) -> f64 {
     let time_for_x = bb_time_to_position_1d(start.x, initial_velocity.x, end.x, 0.0, a, max_speed);
     let time_for_y = bb_time_to_position_1d(start.y, initial_velocity.y, end.y, 0.0, a, max_speed);
     time_for_x.max(time_for_y)
@@ -88,8 +88,8 @@ pub struct Trajectory {
     points: Vec<Point>,
     final_orientation: Angle,
     dribble: bool,
-    autokick_speed: Option<f32>,
-    autochip_distance: Option<f32>,
+    autokick_speed: Option<f64>,
+    autochip_distance: Option<f64>,
 }
 
 impl Trajectory {

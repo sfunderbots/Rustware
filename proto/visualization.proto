@@ -3,30 +3,30 @@ package visualization;
 
 message PerceptionWorld {
     message Ball {
-        float x = 1;
-        float y = 2;
-        float vx = 3;
-        float vy = 4;
+        double x = 1;
+        double y = 2;
+        double vx = 3;
+        double vy = 4;
     }
 
     message Robot {
         uint32 id = 1;
-        float x = 2;
-        float y = 3;
-        float vx = 4;
-        float vy = 5;
-        float orientation = 6;
+        double x = 2;
+        double y = 3;
+        double vx = 4;
+        double vy = 5;
+        double orientation = 6;
     }
 
     message Field {
-        float x_length = 1; 
-        float y_length = 2; 
-        float defense_x_length = 3; 
-        float defense_y_length = 4; 
-        float goal_x_length = 5; 
-        float goal_y_length = 6; 
-        float boundary_size = 7; 
-        float center_circle_radius = 8; 
+        double x_length = 1;
+        double y_length = 2;
+        double defense_x_length = 3;
+        double defense_y_length = 4;
+        double goal_x_length = 5;
+        double goal_y_length = 6;
+        double boundary_size = 7;
+        double center_circle_radius = 8;
     }
 
     Ball ball = 1;

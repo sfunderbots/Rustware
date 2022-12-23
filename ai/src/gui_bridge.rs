@@ -17,7 +17,7 @@ use std::time::{Duration, Instant};
 pub struct Input {
     pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
     pub perception_world: NodeReceiver<perception::World>,
-    pub metrics: NodeReceiver<(String, f32)>,
+    pub metrics: NodeReceiver<(String, f64)>,
 }
 pub struct Output {}
 
@@ -138,7 +138,7 @@ impl Node for GuiBridge {
             self.world_socket.send(proto::encode(vis_msg), 0).unwrap();
         }
 
-        let mut node_performance = HashMap::<String, f32>::new();
+        let mut node_performance = HashMap::<String, f64>::new();
         for (topic, pub_period_ms) in dump_receiver(&self.input.metrics)? {
             if !node_performance.contains_key(&topic) {
                 node_performance.insert(topic, pub_period_ms);
@@ -202,7 +202,7 @@ fn world_to_proto(world: &perception::World) -> proto::visualization::Perception
     msg
 }
 
-pub fn node_performance_to_proto(p: HashMap<String, f32>) -> NodePerformance {
+pub fn node_performance_to_proto(p: HashMap<String, f64>) -> NodePerformance {
     let mut msg: NodePerformance = NodePerformance::default();
     for (k, v) in p {
         msg.mean_publish_period_ms.insert(k, v);
