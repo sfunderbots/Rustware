@@ -12,6 +12,13 @@ impl Vector {
         Vector { x: 0.0, y: 0.0 }
     }
 
+    pub fn from_angle(angle: Angle, length: f64) -> Vector {
+        Vector{
+            x: length * angle.cos(),
+            y: length * angle.sin()
+        }
+    }
+
     pub fn length(&self) -> f64 {
         self.x.hypot(self.y)
     }

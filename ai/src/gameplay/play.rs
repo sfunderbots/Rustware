@@ -4,6 +4,7 @@ use crate::gameplay::world::World;
 use crate::gameplay::State;
 use strum_macros::Display;
 use strum_macros::EnumIter;
+use crate::geom::{Angle, Point, Vector};
 
 pub struct RequestedTactics {
     greedy: Vec<Tactic>,
@@ -43,13 +44,27 @@ impl Play {
         }
     }
 
-    pub fn run(&self, state: &State) -> RequestedTactics {
+    pub fn run(&self, world: &World, state: &State) -> RequestedTactics {
         match self {
             Self::Halt => {
-                // state.vision.friendly_team.iter()
-                RequestedTactics::new()
+                RequestedTactics{
+                    greedy: world.friendly_team.all_robots().iter().map(|r| {
+                        Tactic::Stop
+                    }).collect(),
+                    optimized: vec![]
+                }
             }
-            Self::Stop => RequestedTactics::new(),
+            Self::Stop => {
+                let stop_positions: Vec<Point> = world.friendly_team.all_robots().iter().enumerate().map(|(i, _)| {
+                    world.ball.position + Vector::from_angle(Angle::full() / world.friendly_team.players().len() * i, 1.0)
+                }).collect();
+                RequestedTactics{
+                    greedy: stop_positions.into_iter().map(|p| {
+                        Tactic::Move((p, Angle::zero()))
+                    }).collect(),
+                    optimized: vec![]
+                }
+            },
             Self::Defense => RequestedTactics::new(),
         }
     }

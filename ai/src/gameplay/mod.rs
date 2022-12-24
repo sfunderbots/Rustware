@@ -60,6 +60,7 @@ impl Gameplay {
         self.update_current_play(world);
 
         // Get tactics
+        let requested_tactics = self.state.current_play.run(&world, &self.state);
 
         // Optimize/assign tactics
 
