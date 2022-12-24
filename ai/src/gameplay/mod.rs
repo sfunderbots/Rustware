@@ -1,14 +1,14 @@
+mod evaluation;
 mod play;
 mod tactic;
 pub mod world;
-mod evaluation;
 
+use crate::communication::take_last;
 use crate::communication::{run_forever, Node, NodeReceiver, NodeSender};
+use crate::gameplay::world::World;
 use crate::motion::Trajectory;
 use crate::world::World as PartialWorld;
-use world::World;
 use multiqueue2;
-use crate::communication::take_last;
 use play::{Play, RequestedTactics};
 use std::collections::HashMap;
 use std::hash::Hash;
@@ -86,15 +86,13 @@ impl Gameplay {
             );
         }
     }
-
-
 }
 
 impl Node for Gameplay {
     fn run_once(&mut self) -> Result<(), ()> {
         let partial_world = match self.input.world.recv() {
             Ok(world) => world,
-            Err(_) => return Err(())
+            Err(_) => return Err(()),
         };
         let world = World::from_partial_world(partial_world)?;
         let trajectories = self.tick(&world);

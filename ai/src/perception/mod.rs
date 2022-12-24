@@ -5,12 +5,12 @@ use crate::communication::NodeReceiver;
 use crate::communication::{dump_receiver, run_forever, Node, NodeSender};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
-use crate::world::{World, Robot, Ball, Team, GameState, TeamInfo, Field};
 use crate::proto;
 use crate::proto::config;
 use crate::proto::ssl_gamecontroller;
 use crate::proto::ssl_gamecontroller::{referee, Command};
 use crate::proto::ssl_vision::SslDetectionRobot;
+use crate::world::{Ball, Field, GameState, Robot, Team, TeamInfo, World};
 use ball_filter::{BallDetection, BallFilter};
 use multiqueue2;
 use robot_filter::{RobotDetection, TeamFilter};
@@ -39,16 +39,26 @@ pub struct Perception {
 
 impl Node for Perception {
     fn run_once(&mut self) -> Result<(), ()> {
-        self.world.friendly_team_info = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true);
-        self.world.enemy_team_info = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, false);
+        self.world.friendly_team_info =
+            TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true);
+        self.world.enemy_team_info =
+            TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, false);
         // TODO: This is dumb, innefficient code that published GameState every single tick,
         // which is unnecessarily fast. Ideally we should only publish when we get a packet, or
         // every N seconds otherwise
         let ssl_referee_packets = dump_receiver(&self.input.ssl_gc)?;
         if !ssl_referee_packets.is_empty() {
             for packet in &ssl_referee_packets {
-                self.world.friendly_team_info = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, true);
-                self.world.enemy_team_info = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, false);
+                self.world.friendly_team_info = TeamInfo::from_referee(
+                    Some(packet),
+                    &self.config.lock().unwrap().perception,
+                    true,
+                );
+                self.world.enemy_team_info = TeamInfo::from_referee(
+                    Some(packet),
+                    &self.config.lock().unwrap().perception,
+                    false,
+                );
                 if let Some(info) = &self.world.friendly_team_info {
                     self.world.game_state.update_command(
                         referee::Command::from_i32(packet.command).unwrap(),
@@ -153,7 +163,7 @@ impl Perception {
                 field: None,
                 game_state: GameState::new(),
                 friendly_team_info: None,
-                enemy_team_info: None
+                enemy_team_info: None,
             },
             config,
         }

@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-extern crate core;
-
 mod backend;
 mod communication;
 mod config;
@@ -11,12 +9,12 @@ mod experimental;
 mod gameplay;
 mod geom;
 mod gui_bridge;
+mod macros;
 mod math;
 mod motion;
 mod perception;
 mod proto;
 mod world;
-mod macros;
 
 use crate::communication::Node;
 use crate::communication::{node_connection, NodeReceiver, NodeSender};
@@ -24,8 +22,8 @@ use crate::config::load_config;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, Trajectory};
+use crate::world::World;
 use multiqueue2;
-use crate::world::{World};
 use prost::Message;
 use protobuf;
 use protobuf::reflect::rt::v2::make_oneof_copy_has_get_set_simpler_accessors;
@@ -65,12 +63,11 @@ fn set_up_node_io() -> AllNodeIo {
             metrics_sender.clone(),
             "ssl_vision".to_string(),
         );
-    let (ssl_gc_sender, ssl_gc_receiver) =
-        node_connection::<proto::ssl_gamecontroller::Referee>(
-            10,
-            metrics_sender.clone(),
-            "ssl_gamecontroller".to_string(),
-        );
+    let (ssl_gc_sender, ssl_gc_receiver) = node_connection::<proto::ssl_gamecontroller::Referee>(
+        10,
+        metrics_sender.clone(),
+        "ssl_gamecontroller".to_string(),
+    );
     let (world_sender, world_receiver) =
         node_connection::<World>(1, metrics_sender.clone(), "vision".to_string());
     let (trajectories_sender, trajectories_receiver) =

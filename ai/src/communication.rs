@@ -136,17 +136,6 @@ pub fn run_forever(mut node: Box<dyn Node>, should_stop: Arc<AtomicBool>, name: 
     }
 }
 
-// pub fn revc<T: Clone>(mut receiver: &NodeReceiver<T>) -> Result<T, ()> {
-//     match receiver.recv() {
-//         Ok(msg) => Ok(msg),
-//         Err(e) => match e {
-//             std::sync::mpsc::RecvError => {
-//                 return Err(());
-//             }
-//         },
-//     }
-// }
-
 // TODO: implement directly on receiver
 pub fn dump_receiver<T>(mut receiver: &NodeReceiver<T>) -> Result<Vec<T>, ()>
 where

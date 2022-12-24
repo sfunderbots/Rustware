@@ -1,9 +1,9 @@
 use super::tactic::Tactic;
+use crate::gameplay::world::GameState;
 use crate::gameplay::world::World;
+use crate::gameplay::State;
 use strum_macros::Display;
 use strum_macros::EnumIter;
-use crate::gameplay::State;
-use crate::gameplay::world::GameState;
 
 pub struct RequestedTactics {
     greedy: Vec<Tactic>,
@@ -48,7 +48,7 @@ impl Play {
             Self::Halt => {
                 // state.vision.friendly_team.iter()
                 RequestedTactics::new()
-            },
+            }
             Self::Stop => RequestedTactics::new(),
             Self::Defense => RequestedTactics::new(),
         }

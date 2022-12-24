@@ -1,9 +1,9 @@
 use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver};
 use crate::motion::Trajectory;
-use crate::world::{World, Robot, Ball, Field};
 use crate::proto;
 use crate::proto::config;
 use crate::proto::visualization::Visualization;
+use crate::world::{Ball, Field, Robot, World};
 use prost::Message;
 use proto::metrics::NodePerformance;
 use std::collections::HashMap;

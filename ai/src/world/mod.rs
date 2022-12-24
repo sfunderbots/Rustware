@@ -1,8 +1,8 @@
 mod game_state;
 mod vision;
 
-pub use vision::{Ball, Team, Field, Robot};
 pub use game_state::{GameState, TeamInfo};
+pub use vision::{Ball, Field, Robot, Team};
 
 #[derive(Clone)]
 pub struct World {
@@ -12,6 +12,5 @@ pub struct World {
     pub enemy_team: Team,
     pub game_state: GameState,
     pub friendly_team_info: Option<TeamInfo>,
-    pub enemy_team_info: Option<TeamInfo>
+    pub enemy_team_info: Option<TeamInfo>,
 }
-

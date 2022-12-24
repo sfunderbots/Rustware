@@ -1,8 +1,8 @@
 use crate::geom::Point;
-use crate::world::Team;
 use crate::proto::config;
 use crate::proto::config::Perception;
 use crate::proto::ssl_gamecontroller::{referee, referee::Command, Referee};
+use crate::world::Team;
 use std::cell::Ref;
 
 fn is_friendly_team_blue(referee: Option<&Referee>, config: &Perception) -> Option<bool> {

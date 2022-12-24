@@ -1,6 +1,6 @@
-pub use crate::world::{Field, Ball, Team, GameState, TeamInfo, Robot};
-use crate::world::World as PartialWorld;
 use crate::unwrap_or_err;
+use crate::world::World as PartialWorld;
+pub use crate::world::{Ball, Field, GameState, Robot, Team, TeamInfo};
 
 // A varient of the base world that has all the data required to run gameplay.
 // This is partially for convenience to avoid having to unwrap Option
@@ -13,7 +13,7 @@ pub struct World {
     pub enemy_team: Team,
     pub game_state: GameState,
     pub friendly_team_info: TeamInfo,
-    pub enemy_team_info: TeamInfo
+    pub enemy_team_info: TeamInfo,
 }
 
 impl World {
@@ -26,15 +26,14 @@ impl World {
         let friendly_team_info = unwrap_or_err!(world.friendly_team_info);
         let enemy_team_info = unwrap_or_err!(world.enemy_team_info);
 
-        Ok(World{
+        Ok(World {
             field,
             ball,
             friendly_team,
             enemy_team,
             game_state,
             friendly_team_info,
-            enemy_team_info
+            enemy_team_info,
         })
     }
 }
-

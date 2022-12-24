@@ -144,5 +144,3 @@ impl Team {
         self.clone()
     }
 }
-
-
