@@ -1,7 +1,5 @@
 use crate::geom::Point;
-use crate::perception::game_state::PlayState::Halt;
-use crate::perception::game_state::RestartReason::Kickoff;
-use crate::perception::Team;
+use crate::world::Team;
 use crate::proto::config;
 use crate::proto::config::Perception;
 use crate::proto::ssl_gamecontroller::{referee, referee::Command, Referee};
@@ -291,11 +289,4 @@ impl GameState {
     pub fn stay_behind_penalty_line(&self) -> bool {
         self.restart_reason == RestartReason::Penalty
     }
-}
-
-#[derive(Clone)]
-pub struct Gamecontroller {
-    pub game_state: GameState,
-    pub friendly_team_info: TeamInfo,
-    pub enemy_team_info: TeamInfo,
 }

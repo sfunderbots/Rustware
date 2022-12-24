@@ -25,7 +25,7 @@ impl Node for SslNetworkListener {
                 .read_proto::<proto::ssl_vision::SslWrapperPacket>()
             {
                 Ok(msg) => {
-                    match self.output.ssl_vision_proto.try_send(msg) {
+                    match self.output.ssl_vision.try_send(msg) {
                         Ok(_) => {
                             // println!("Sent data from backend");
                         }
@@ -43,7 +43,7 @@ impl Node for SslNetworkListener {
                 .read_proto::<proto::ssl_gamecontroller::Referee>()
             {
                 Ok(msg) => {
-                    self.output.ssl_referee_proto.try_send(msg);
+                    self.output.ssl_gc.try_send(msg);
                 }
                 Err(_) => break,
             }

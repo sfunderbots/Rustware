@@ -1,6 +1,6 @@
 use crate::geom::{Angle, Point};
 use crate::motion::KinematicState;
-use crate::perception::world::{Ball, Robot, Team};
+use crate::world::{Ball, Robot, Team};
 use float_cmp::ApproxEqUlps;
 use std::borrow::BorrowMut;
 use std::collections::vec_deque::VecDeque;
@@ -87,13 +87,13 @@ impl TeamFilter {
             .add_detection(detection);
     }
 
-    pub fn get_team(&self) -> Vec<Robot> {
+    pub fn get_team(&self) -> Team {
         let mut robots: Vec<Robot> = vec![];
         for (k, v) in &self.robot_filters {
             if let Some(r) = v.get_robot() {
                 robots.push(r);
             }
         }
-        robots
+        Team::new().with_robots(robots).build()
     }
 }

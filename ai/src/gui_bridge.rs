@@ -1,6 +1,6 @@
 use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver};
 use crate::motion::Trajectory;
-use crate::perception;
+use crate::world::{World, Robot, Ball, Field};
 use crate::proto;
 use crate::proto::config;
 use crate::proto::visualization::Visualization;
@@ -15,8 +15,8 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 pub struct Input {
-    pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
-    pub perception_world: NodeReceiver<perception::World>,
+    pub ssl_vision: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
+    pub world: NodeReceiver<World>,
     pub metrics: NodeReceiver<(String, f64)>,
 }
 pub struct Output {}
@@ -127,12 +127,12 @@ impl GuiBridge {
 impl Node for GuiBridge {
     fn run_once(&mut self) -> Result<(), ()> {
         // println!("sending ssl vision on bridge");
-        for msg in dump_receiver(&self.input.ssl_vision_proto)? {
+        for msg in dump_receiver(&self.input.ssl_vision)? {
             // TODO: faster to batch send?
             self.ssl_vision_socket.send(proto::encode(msg), 0).unwrap();
         }
 
-        if let Some(world) = take_last(&self.input.perception_world)? {
+        if let Some(world) = take_last(&self.input.world)? {
             let foo = world_to_proto(&world);
             let vis_msg = Visualization { world: Some(foo) };
             self.world_socket.send(proto::encode(vis_msg), 0).unwrap();
@@ -157,7 +157,7 @@ impl Node for GuiBridge {
     }
 }
 
-fn world_to_proto(world: &perception::World) -> proto::visualization::PerceptionWorld {
+fn world_to_proto(world: &World) -> proto::visualization::PerceptionWorld {
     let mut msg: proto::visualization::PerceptionWorld =
         proto::visualization::PerceptionWorld::default();
     if let Some(ball) = &world.ball {
@@ -182,7 +182,7 @@ fn world_to_proto(world: &perception::World) -> proto::visualization::Perception
         field_proto.center_circle_radius = field.center_circle_radius;
         msg.field = Some(field_proto);
     }
-    let robot_to_proto = |r: &perception::Robot| -> proto::visualization::perception_world::Robot {
+    let robot_to_proto = |r: &Robot| -> proto::visualization::perception_world::Robot {
         proto::visualization::perception_world::Robot {
             id: r.id as u32,
             x: r.state.position.x,
@@ -194,10 +194,10 @@ fn world_to_proto(world: &perception::World) -> proto::visualization::Perception
     };
     // TODO: use actual team colors. Perhaps the GUI should ignore
     // blue/yellow for the filtered vision
-    for r in &world.friendly_team {
+    for r in world.friendly_team.all_robots() {
         msg.blue_robots.push(robot_to_proto(r));
     }
-    for r in &world.enemy_team {
+    for r in world.enemy_team.all_robots() {
         msg.yellow_robots.push(robot_to_proto(r));
     }
 

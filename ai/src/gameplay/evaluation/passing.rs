@@ -2,7 +2,7 @@ use crate::communication::Node;
 use crate::geom::{Angle, Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, KinematicState};
-use crate::perception::world::{Field, Robot};
+use crate::gameplay::world::{Field, Robot};
 use multiqueue2;
 use rand::Rng;
 use std::sync::atomic::{AtomicBool, Ordering};

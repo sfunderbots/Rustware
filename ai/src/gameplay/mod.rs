@@ -1,9 +1,12 @@
 mod play;
 mod tactic;
+pub mod world;
+mod evaluation;
 
 use crate::communication::{run_forever, Node, NodeReceiver, NodeSender};
 use crate::motion::Trajectory;
-use crate::perception::World;
+use crate::world::World as PartialWorld;
+use world::World;
 use multiqueue2;
 use crate::communication::take_last;
 use play::{Play, RequestedTactics};
@@ -15,11 +18,9 @@ use std::thread;
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 use tactic::Tactic;
-use crate::perception::game_state::Gamecontroller;
 
 pub struct Input {
-    pub world: NodeReceiver<World>,
-    pub gamecontroller: NodeReceiver<Gamecontroller>,
+    pub world: NodeReceiver<PartialWorld>,
 }
 pub struct Output {
     pub trajectories: NodeSender<HashMap<usize, Trajectory>>,
@@ -28,7 +29,7 @@ pub struct Output {
 pub struct Gameplay {
     input: Input,
     output: Output,
-    state: Option<State>,
+    state: State,
 }
 
 impl Gameplay {
@@ -36,7 +37,7 @@ impl Gameplay {
         Self {
             input,
             output,
-            state: None,
+            state: State::new(),
         }
     }
 
@@ -52,11 +53,11 @@ impl Gameplay {
         })
     }
 
-    pub fn tick(&mut self) -> HashMap<usize, Trajectory> {
+    pub fn tick(&mut self, world: &World) -> HashMap<usize, Trajectory> {
         // Update possession, ball model, etc.
 
         // Update current play
-        update_current_play(self.state.as_mut().unwrap());
+        self.update_current_play(world);
 
         // Get tactics
 
@@ -69,80 +70,48 @@ impl Gameplay {
         HashMap::new()
     }
 
-
-}
-
-fn update_current_play(state: &mut State) {
-    if !state.current_play.can_continue(&state.gamecontroller.game_state) {
-        for p in Play::iter() {
-            if p.can_start(&state.gamecontroller.game_state) {
-                state.current_play = p;
-                println!("Starting play: {}", state.current_play.to_string());
-                return;
+    fn update_current_play(&mut self, world: &World) {
+        if !self.state.current_play.can_continue(&world.game_state) {
+            for p in Play::iter() {
+                if p.can_start(&world.game_state) {
+                    self.state.current_play = p;
+                    println!("Starting play: {}", self.state.current_play.to_string());
+                    return;
+                }
             }
+            self.state.current_play = Play::Halt;
+            println!(
+                "No play can start. Falling back to : {}",
+                self.state.current_play.to_string()
+            );
         }
-        state.current_play = Play::Halt;
-        println!(
-            "No play can start. Falling back to : {}",
-            state.current_play.to_string()
-        );
     }
+
+
 }
 
 impl Node for Gameplay {
     fn run_once(&mut self) -> Result<(), ()> {
-        let mut world_updated = false;
-        let mut gamecontroller_updated = false;
-
-        if self.state.is_none() {
-            let perception_world = match self.input.world.recv() {
-                Ok(world) => {
-                    world_updated = true;
-                    world
-                },
-                _ => return Err(())
-            };
-            let gamecontroller = match self.input.gamecontroller.recv() {
-                Ok(gc) => {
-                    gamecontroller_updated = true;
-                    gc
-                },
-                _ => return Err(())
-            };
-            self.state = Some(State::new(perception_world, gamecontroller));
-        }
-
-        if let Some(world) = take_last(&self.input.world)? {
-            self.state.as_mut().unwrap().world = world;
-            world_updated = true;
-        }
-
-        if let Some(gc) = take_last(&self.input.gamecontroller)? {
-            self.state.as_mut().unwrap().gamecontroller = gc;
-            gamecontroller_updated = true;
-        }
-
-        if gamecontroller_updated || world_updated {
-            let trajectories = self.tick();
-            self.output.trajectories.try_send(trajectories);
-        }
+        let partial_world = match self.input.world.recv() {
+            Ok(world) => world,
+            Err(_) => return Err(())
+        };
+        let world = World::from_partial_world(partial_world)?;
+        let trajectories = self.tick(&world);
+        self.output.trajectories.try_send(trajectories);
 
         Ok(())
     }
 }
 
 struct State {
-    world: World,
-    gamecontroller: Gamecontroller,
     enemy_max_speed: f64,
     current_play: Play,
 }
 
 impl State {
-    pub fn new(world: World, gamecontroller: Gamecontroller) -> Self {
+    pub fn new() -> Self {
         Self {
-            world,
-            gamecontroller,
             enemy_max_speed: 1.0, // Assume they can move somewhat
             current_play: Play::Halt,
         }

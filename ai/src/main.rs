@@ -7,7 +7,6 @@ mod backend;
 mod communication;
 mod config;
 mod constants;
-mod evaluation;
 mod experimental;
 mod gameplay;
 mod geom;
@@ -17,6 +16,8 @@ mod math;
 mod motion;
 mod perception;
 mod proto;
+mod world;
+mod macros;
 
 use crate::communication::Node;
 use crate::communication::{node_connection, NodeReceiver, NodeSender};
@@ -24,9 +25,8 @@ use crate::config::load_config;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, Trajectory};
-use crate::perception::game_state::Gamecontroller;
 use multiqueue2;
-use perception::{Field, Robot, World};
+use crate::world::{World};
 use prost::Message;
 use protobuf;
 use protobuf::reflect::rt::v2::make_oneof_copy_has_get_set_simpler_accessors;
@@ -60,23 +60,20 @@ struct AllNodeIo {
 fn set_up_node_io() -> AllNodeIo {
     let (metrics_sender, metrics_receiver) = multiqueue2::broadcast_queue::<(String, f64)>(1000);
     let metrics_receiver = NodeReceiver::new(metrics_receiver);
-    let (ssl_vision_proto_sender, ssl_vision_proto_receiver) =
+    let (ssl_vision_sender, ssl_vision_receiver) =
         node_connection::<proto::ssl_vision::SslWrapperPacket>(
             10,
             metrics_sender.clone(),
             "ssl_vision".to_string(),
         );
-    // let (foo, bar) = node_connection(10, metrics_sender.clone(), "ssl_vision".to_string());
-    let (ssl_gc_referee_sender, ssl_gc_referee_receiver) =
+    let (ssl_gc_sender, ssl_gc_receiver) =
         node_connection::<proto::ssl_gamecontroller::Referee>(
             10,
             metrics_sender.clone(),
             "ssl_gamecontroller".to_string(),
         );
     let (world_sender, world_receiver) =
-        node_connection::<World>(1, metrics_sender.clone(), "world".to_string());
-    let (gc_sender, gc_receiver) =
-        node_connection::<Gamecontroller>(1, metrics_sender.clone(), "gamestate".to_string());
+        node_connection::<World>(1, metrics_sender.clone(), "vision".to_string());
     let (trajectories_sender, trajectories_receiver) =
         node_connection::<std::collections::HashMap<usize, Trajectory>>(
             1,
@@ -88,16 +85,14 @@ fn set_up_node_io() -> AllNodeIo {
     // All Outputs should not call clone, since we only expect a single producer per queue
     let result = AllNodeIo {
         perception_input: perception::Input {
-            ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
-            ssl_refbox_proto: ssl_gc_referee_receiver.add_stream().clone(),
+            ssl_vision: ssl_vision_receiver.add_stream().clone(),
+            ssl_gc: ssl_gc_receiver.add_stream().clone(),
         },
         perception_output: perception::Output {
             world: world_sender,
-            gamecontroller: gc_sender,
         },
         gameplay_input: gameplay::Input {
             world: world_receiver.add_stream().clone(),
-            gamecontroller: gc_receiver.add_stream().clone()
         },
         gameplay_output: gameplay::Output {
             trajectories: trajectories_sender,
@@ -106,12 +101,12 @@ fn set_up_node_io() -> AllNodeIo {
             trajectories: trajectories_receiver.add_stream().clone(),
         },
         backend_output: backend::Output {
-            ssl_vision_proto: ssl_vision_proto_sender,
-            ssl_referee_proto: ssl_gc_referee_sender,
+            ssl_vision: ssl_vision_sender,
+            ssl_gc: ssl_gc_sender,
         },
         gui_bridge_input: gui_bridge::Input {
-            ssl_vision_proto: ssl_vision_proto_receiver.add_stream().clone(),
-            perception_world: world_receiver.add_stream().clone(),
+            ssl_vision: ssl_vision_receiver.add_stream().clone(),
+            world: world_receiver.add_stream().clone(),
             metrics: metrics_receiver.add_stream().clone(),
         },
         gui_bridge_output: gui_bridge::Output {},
@@ -119,8 +114,8 @@ fn set_up_node_io() -> AllNodeIo {
 
     // Drop the original readers - this removes them from the queues, meaning that the readers
     // in the new threads won't get starved by the lack of progress from recv
-    ssl_vision_proto_receiver.unsubscribe();
-    ssl_gc_referee_receiver.unsubscribe();
+    ssl_vision_receiver.unsubscribe();
+    ssl_gc_receiver.unsubscribe();
     trajectories_receiver.unsubscribe();
     world_receiver.unsubscribe();
 

@@ -12,8 +12,8 @@ pub use ssl_network_simulator::SslNetworkSimulator;
 pub use ssl_synchronous_simulator::SslSynchronousSimulator;
 
 pub struct Output {
-    pub ssl_vision_proto: NodeSender<proto::ssl_vision::SslWrapperPacket>,
-    pub ssl_referee_proto: NodeSender<proto::ssl_gamecontroller::Referee>,
+    pub ssl_vision: NodeSender<proto::ssl_vision::SslWrapperPacket>,
+    pub ssl_gc: NodeSender<proto::ssl_gamecontroller::Referee>,
 }
 
 pub struct Input {

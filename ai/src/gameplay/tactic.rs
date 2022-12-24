@@ -1,7 +1,7 @@
 use crate::geom::{Angle, Point};
 use crate::motion::planner::{stopping_trajectory, straight_line};
 use crate::motion::Trajectory;
-use crate::perception::Robot;
+use crate::gameplay::world::Robot;
 
 pub enum Tactic {
     Stop,

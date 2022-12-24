@@ -1,9 +1,9 @@
 use super::tactic::Tactic;
-use crate::perception::World;
+use crate::gameplay::world::World;
 use strum_macros::Display;
 use strum_macros::EnumIter;
 use crate::gameplay::State;
-use crate::perception::game_state::GameState;
+use crate::gameplay::world::GameState;
 
 pub struct RequestedTactics {
     greedy: Vec<Tactic>,
@@ -46,7 +46,7 @@ impl Play {
     pub fn run(&self, state: &State) -> RequestedTactics {
         match self {
             Self::Halt => {
-                // state.world.friendly_team.iter()
+                // state.vision.friendly_team.iter()
                 RequestedTactics::new()
             },
             Self::Stop => RequestedTactics::new(),

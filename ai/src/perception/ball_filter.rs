@@ -1,5 +1,5 @@
 use crate::geom::Point;
-use crate::perception::world::Ball;
+use crate::world::Ball;
 use float_cmp::ApproxEqUlps;
 use std::collections::vec_deque::VecDeque;
 

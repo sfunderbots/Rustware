@@ -1,13 +1,11 @@
 mod ball_filter;
-pub mod game_state;
 mod robot_filter;
-pub mod world;
 
 use crate::communication::NodeReceiver;
 use crate::communication::{dump_receiver, run_forever, Node, NodeSender};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
-use crate::perception::game_state::{GameState, Gamecontroller, TeamInfo};
+use crate::world::{World, Robot, Ball, Team, GameState, TeamInfo, Field};
 use crate::proto;
 use crate::proto::config;
 use crate::proto::ssl_gamecontroller;
@@ -20,15 +18,13 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
-pub use world::{Ball, Field, Robot, Team, World};
 
 pub struct Input {
-    pub ssl_vision_proto: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
-    pub ssl_refbox_proto: NodeReceiver<proto::ssl_gamecontroller::Referee>,
+    pub ssl_vision: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
+    pub ssl_gc: NodeReceiver<proto::ssl_gamecontroller::Referee>,
 }
 pub struct Output {
     pub world: NodeSender<World>,
-    pub gamecontroller: NodeSender<Gamecontroller>,
 }
 
 pub struct Perception {
@@ -37,63 +33,32 @@ pub struct Perception {
     ball_filter: BallFilter,
     friendly_team_filter: TeamFilter,
     enemy_team_filter: TeamFilter,
-    most_recent_world: World,
-    game_state: GameState,
-    friendly_team_info: Option<TeamInfo>,
-    enemy_team_info: Option<TeamInfo>,
+    world: World,
     config: Arc<Mutex<config::Config>>,
 }
 
 impl Node for Perception {
     fn run_once(&mut self) -> Result<(), ()> {
-        if let Some(info) =
-            TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true)
-        {
-            self.friendly_team_info = Some(info);
-        }
-        if let Some(info) =
-            TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, false)
-        {
-            self.enemy_team_info = Some(info);
-        }
+        self.world.friendly_team_info = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true);
+        self.world.enemy_team_info = TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, false);
         // TODO: This is dumb, innefficient code that published GameState every single tick,
         // which is unnecessarily fast. Ideally we should only publish when we get a packet, or
         // every N seconds otherwise
-        let ssl_referee_packets = dump_receiver(&self.input.ssl_refbox_proto)?;
+        let ssl_referee_packets = dump_receiver(&self.input.ssl_gc)?;
         if !ssl_referee_packets.is_empty() {
             for packet in &ssl_referee_packets {
-                if let Some(info) = TeamInfo::from_referee(
-                    Some(packet),
-                    &self.config.lock().unwrap().perception,
-                    true,
-                ) {
-                    self.friendly_team_info = Some(info);
-                }
-                if let Some(info) = TeamInfo::from_referee(
-                    Some(packet),
-                    &self.config.lock().unwrap().perception,
-                    false,
-                ) {
-                    self.enemy_team_info = Some(info);
-                }
-                if let Some(info) = &self.friendly_team_info {
-                    self.game_state.update_command(
+                self.world.friendly_team_info = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, true);
+                self.world.enemy_team_info = TeamInfo::from_referee(Some(packet), &self.config.lock().unwrap().perception, false);
+                if let Some(info) = &self.world.friendly_team_info {
+                    self.world.game_state.update_command(
                         referee::Command::from_i32(packet.command).unwrap(),
                         info.is_blue,
                     )
                 }
             }
         }
-        if self.friendly_team_info.is_some() && self.enemy_team_info.is_some() {
-            let gc = Gamecontroller {
-                game_state: self.game_state.clone(),
-                friendly_team_info: self.friendly_team_info.clone().unwrap(),
-                enemy_team_info: self.enemy_team_info.clone().unwrap(),
-            };
-            self.output.gamecontroller.try_send(gc);
-        }
 
-        let ssl_wrapper_packets = dump_receiver(&self.input.ssl_vision_proto)?;
+        let ssl_wrapper_packets = dump_receiver(&self.input.ssl_vision)?;
         if !ssl_wrapper_packets.is_empty() {
             for packet in ssl_wrapper_packets {
                 if let Some(detection) = packet.detection {
@@ -129,7 +94,7 @@ impl Node for Perception {
                             }
                         };
 
-                    if let Some(info) = &self.friendly_team_info {
+                    if let Some(info) = &self.world.friendly_team_info {
                         let friendly_robots = if info.is_blue {
                             &detection.robots_blue
                         } else {
@@ -153,14 +118,20 @@ impl Node for Perception {
                 }
 
                 if let Some(geometry) = packet.geometry {
-                    self.most_recent_world.field = Some(field_from_proto(&geometry.field));
+                    self.world.field = Some(field_from_proto(&geometry.field));
                 }
             }
 
-            self.most_recent_world.ball = self.ball_filter.get_ball();
-            self.most_recent_world.friendly_team = self.friendly_team_filter.get_team();
-            self.most_recent_world.enemy_team = self.enemy_team_filter.get_team();
-            self.output.world.try_send(self.most_recent_world.clone());
+            self.world.ball = self.ball_filter.get_ball();
+            self.world.friendly_team = self.friendly_team_filter.get_team();
+            if let Some(info) = &self.world.friendly_team_info {
+                self.world.friendly_team.set_goalie(Some(info.goalie_id));
+            }
+            self.world.enemy_team = self.enemy_team_filter.get_team();
+            if let Some(info) = &self.world.enemy_team_info {
+                self.world.enemy_team.set_goalie(Some(info.goalie_id));
+            }
+            self.output.world.try_send(self.world.clone());
         }
 
         Ok(())
@@ -175,15 +146,15 @@ impl Perception {
             ball_filter: BallFilter::new(),
             friendly_team_filter: TeamFilter::new(),
             enemy_team_filter: TeamFilter::new(),
-            most_recent_world: World {
+            world: World {
                 ball: None,
-                friendly_team: vec![],
-                enemy_team: vec![],
+                friendly_team: Team::new(),
+                enemy_team: Team::new(),
                 field: None,
+                game_state: GameState::new(),
+                friendly_team_info: None,
+                enemy_team_info: None
             },
-            game_state: GameState::new(),
-            friendly_team_info: None,
-            enemy_team_info: None,
             config,
         }
     }
