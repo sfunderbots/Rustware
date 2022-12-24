@@ -5,12 +5,12 @@ pub mod world;
 
 use crate::communication::take_last;
 use crate::communication::{run_forever, Node, NodeReceiver, NodeSender};
-use crate::gameplay::world::World;
+use crate::gameplay::world::{World, Robot};
 use crate::motion::Trajectory;
 use crate::world::World as PartialWorld;
 use multiqueue2;
 use play::{Play, RequestedTactics};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -18,6 +18,10 @@ use std::thread;
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 use tactic::Tactic;
+extern crate pathfinding;
+use pathfinding::prelude::{kuhn_munkres_min, Matrix, Weights};
+use float_ord;
+
 
 pub struct Input {
     pub world: NodeReceiver<PartialWorld>,
@@ -63,6 +67,45 @@ impl Gameplay {
         let requested_tactics = self.state.current_play.run(&world, &self.state);
 
         // Optimize/assign tactics
+        let mut robot_tactic_assigment: HashMap<usize, Tactic>  = HashMap::new();
+        // let mut unnasigned_robot_ids: HashSet<usize> = HashSet::from_iter(world.friendly_team.all_robots().iter().map(|r| {r.id}));
+        let mut unassigned_robots: HashMap<usize, Robot> = world.friendly_team.all_robots().iter().map(|r| {(r.id, (*r).clone())}).collect();
+
+        // Greedy assignment
+        for t in requested_tactics.greedy {
+            if !unassigned_robots.is_empty() {
+                let (id, cost) = unassigned_robots.iter().map(|(_, r)| {(r.id, t.robot_assignment_cost(r))}).min_by(|(id1, c1), (id2, c2)| {
+                    c1.total_cmp(c2)
+                }).unwrap();
+                robot_tactic_assigment.insert(id, t);
+                unassigned_robots.remove(&id);
+            }else {
+                println!("Warning: More greedy tactics requested than robots available");
+                break;
+            }
+        }
+
+        // Optimized assignment
+        let mut tactics_to_optimize = requested_tactics.optimized;
+        if unassigned_robots.len() > tactics_to_optimize.len() {
+            println!("More tactics requested to optimize than robots available");
+            tactics_to_optimize.truncate(unassigned_robots.len());
+        }
+        let mut tactic_assignment_weights = Matrix::new_square(tactics_to_optimize.len(), float_ord::FloatOrd(0.0));
+        // Columns are tactics, rows are robots
+        for i in 0..tactics_to_optimize.len() {
+            for j in 0..unassigned_robots.len() {
+                *tactic_assignment_weights.get_mut((i, j)).unwrap() = float_ord::FloatOrd(tactics_to_optimize[i].robot_assignment_cost(&unassigned_robots[&j]));
+            }
+        }
+        let (total_cost, assignments) = kuhn_munkres_min(&tactic_assignment_weights);
+        for tactic_index in 0..assignments.len() {
+            let robot_id = assignments[tactic_index];
+            // let t = tactics_to_optimize[tactic_index];
+            // robot_tactic_assigment.insert(robot_id, t);
+        }
+
+        // TODO: you are here. Implementing munkres
 
         // Run tactics to get trajectories
 

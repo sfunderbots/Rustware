@@ -7,8 +7,8 @@ use strum_macros::EnumIter;
 use crate::geom::{Angle, Point, Vector};
 
 pub struct RequestedTactics {
-    greedy: Vec<Tactic>,
-    optimized: Vec<Tactic>,
+    pub greedy: Vec<Tactic>,
+    pub optimized: Vec<Tactic>,
 }
 
 impl RequestedTactics {
