@@ -157,13 +157,9 @@ impl Node for Perception {
                 }
             }
 
-            let filtered_ball = self.ball_filter.get_ball();
-            let filtered_friendly_team = self.friendly_team_filter.get_team();
-            let filtered_enemy_team = self.enemy_team_filter.get_team();
-
-            self.most_recent_world.ball = filtered_ball;
-            self.most_recent_world.yellow_team = filtered_enemy_team;
-            self.most_recent_world.blue_team = filtered_friendly_team;
+            self.most_recent_world.ball = self.ball_filter.get_ball();
+            self.most_recent_world.friendly_team = self.friendly_team_filter.get_team();
+            self.most_recent_world.enemy_team = self.enemy_team_filter.get_team();
             self.output.world.try_send(self.most_recent_world.clone());
         }
 
@@ -181,8 +177,8 @@ impl Perception {
             enemy_team_filter: TeamFilter::new(),
             most_recent_world: World {
                 ball: None,
-                blue_team: vec![],
-                yellow_team: vec![],
+                friendly_team: vec![],
+                enemy_team: vec![],
                 field: None,
             },
             game_state: GameState::new(),

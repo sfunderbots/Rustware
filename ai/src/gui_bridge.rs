@@ -192,10 +192,12 @@ fn world_to_proto(world: &perception::World) -> proto::visualization::Perception
             orientation: r.state.orientation.radians(),
         }
     };
-    for r in &world.blue_team {
+    // TODO: use actual team colors. Perhaps the GUI should ignore
+    // blue/yellow for the filtered vision
+    for r in &world.friendly_team {
         msg.blue_robots.push(robot_to_proto(r));
     }
-    for r in &world.yellow_team {
+    for r in &world.enemy_team {
         msg.yellow_robots.push(robot_to_proto(r));
     }
 

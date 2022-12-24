@@ -155,7 +155,7 @@ impl Team {
 #[derive(Clone)]
 pub struct World {
     pub ball: Option<Ball>,
-    pub blue_team: Vec<Robot>,
-    pub yellow_team: Vec<Robot>,
+    pub friendly_team: Vec<Robot>,
+    pub enemy_team: Vec<Robot>,
     pub field: Option<Field>,
 }

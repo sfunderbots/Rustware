@@ -2,6 +2,7 @@ use super::tactic::Tactic;
 use crate::perception::World;
 use strum_macros::Display;
 use strum_macros::EnumIter;
+use crate::gameplay::State;
 use crate::perception::game_state::GameState;
 
 pub struct RequestedTactics {
@@ -42,9 +43,12 @@ impl Play {
         }
     }
 
-    pub fn run(&self) -> RequestedTactics {
+    pub fn run(&self, state: &State) -> RequestedTactics {
         match self {
-            Self::Halt => RequestedTactics::new(),
+            Self::Halt => {
+                // state.world.friendly_team.iter()
+                RequestedTactics::new()
+            },
             Self::Stop => RequestedTactics::new(),
             Self::Defense => RequestedTactics::new(),
         }
