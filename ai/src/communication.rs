@@ -10,7 +10,7 @@ use std::io::Cursor;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4, ToSocketAddrs, UdpSocket};
 use std::ptr::addr_of_mut;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{TryRecvError, TrySendError};
+use std::sync::mpsc::{RecvError, TryRecvError, TrySendError};
 use std::sync::Arc;
 use std::thread;
 use std::thread::JoinHandle;
@@ -88,6 +88,9 @@ impl<T: Clone> NodeReceiver<T> {
     pub fn try_recv(&self) -> Result<T, TryRecvError> {
         self.receiver.try_recv()
     }
+    pub fn recv(&self) -> Result<T, RecvError> {
+        self.receiver.recv()
+    }
 
     pub fn add_stream(&self) -> NodeReceiver<T> {
         NodeReceiver {
@@ -133,6 +136,18 @@ pub fn run_forever(mut node: Box<dyn Node>, should_stop: Arc<AtomicBool>, name: 
     }
 }
 
+// pub fn revc<T: Clone>(mut receiver: &NodeReceiver<T>) -> Result<T, ()> {
+//     match receiver.recv() {
+//         Ok(msg) => Ok(msg),
+//         Err(e) => match e {
+//             std::sync::mpsc::RecvError => {
+//                 return Err(());
+//             }
+//         },
+//     }
+// }
+
+// TODO: implement directly on receiver
 pub fn dump_receiver<T>(mut receiver: &NodeReceiver<T>) -> Result<Vec<T>, ()>
 where
     T: Clone,

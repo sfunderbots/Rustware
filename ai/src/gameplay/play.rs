@@ -2,6 +2,7 @@ use super::tactic::Tactic;
 use crate::perception::World;
 use strum_macros::Display;
 use strum_macros::EnumIter;
+use crate::perception::game_state::GameState;
 
 pub struct RequestedTactics {
     greedy: Vec<Tactic>,
@@ -25,19 +26,19 @@ pub enum Play {
 }
 
 impl Play {
-    pub fn can_start(&self) -> bool {
+    pub fn can_start(&self, state: &GameState) -> bool {
         match self {
-            Self::Halt => true,
-            Self::Stop => true,
-            Self::Defense => true,
+            Self::Halt => state.halted(),
+            Self::Stop => state.stopped(),
+            Self::Defense => state.playing(),
         }
     }
 
-    pub fn can_continue(&self) -> bool {
+    pub fn can_continue(&self, state: &GameState) -> bool {
         match self {
-            Self::Halt => true,
-            Self::Stop => true,
-            Self::Defense => true,
+            Self::Halt => state.halted(),
+            Self::Stop => state.stopped(),
+            Self::Defense => state.playing(),
         }
     }
 

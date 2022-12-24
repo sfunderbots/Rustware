@@ -97,6 +97,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         gameplay_input: gameplay::Input {
             world: world_receiver.add_stream().clone(),
+            gamecontroller: gc_receiver.add_stream().clone()
         },
         gameplay_output: gameplay::Output {
             trajectories: trajectories_sender,
