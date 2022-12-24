@@ -10,7 +10,6 @@ mod constants;
 mod experimental;
 mod gameplay;
 mod geom;
-mod gui;
 mod gui_bridge;
 mod math;
 mod motion;
