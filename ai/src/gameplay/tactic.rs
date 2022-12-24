@@ -1,4 +1,5 @@
-use crate::gameplay::world::Robot;
+use crate::gameplay::State;
+use crate::gameplay::world::{Robot, World};
 use crate::geom::{Angle, Point};
 use crate::motion::planner::{stopping_trajectory, straight_line};
 use crate::motion::Trajectory;
@@ -18,7 +19,7 @@ impl Tactic {
         }
     }
 
-    pub fn run(&self, robot: &Robot) -> Trajectory {
+    pub fn run(&self, robot: &Robot, world: &World, state: &State) -> Trajectory {
         match self {
             Self::Stop => stopping_trajectory(&robot.state),
             Self::Move((p, a)) => straight_line(&robot.state, p, a),

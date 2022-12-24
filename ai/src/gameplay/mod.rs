@@ -18,9 +18,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 use tactic::Tactic;
-extern crate pathfinding;
-use pathfinding::prelude::{kuhn_munkres_min, Matrix, Weights};
-use float_ord;
+use munkres::WeightMatrix;
 
 
 pub struct Input {
@@ -91,27 +89,36 @@ impl Gameplay {
             println!("More tactics requested to optimize than robots available");
             tactics_to_optimize.truncate(unassigned_robots.len());
         }
-        let mut tactic_assignment_weights = Matrix::new_square(tactics_to_optimize.len(), float_ord::FloatOrd(0.0));
-        // Columns are tactics, rows are robots
-        for i in 0..tactics_to_optimize.len() {
-            for j in 0..unassigned_robots.len() {
-                *tactic_assignment_weights.get_mut((i, j)).unwrap() = float_ord::FloatOrd(tactics_to_optimize[i].robot_assignment_cost(&unassigned_robots[&j]));
+        if !unassigned_robots.is_empty() {
+            // let mut tactic_assignment_weights = Matrix::new_square(tactics_to_optimize.len(), float_ord::FloatOrd(0.0));
+            // let mut tactic_assignment_weights = WeightMatrix::from_row_vec(2, vec![1, 2, 3, 4]);
+            let mut tactic_assignment_weights: Vec<f64> = vec![];
+            println!("{:?}", tactic_assignment_weights);
+            // Each row holds the cost of assigning a robot to each tactic
+            for t in &tactics_to_optimize {
+                for (id, r) in &unassigned_robots {
+                    tactic_assignment_weights.push(t.robot_assignment_cost(r));
+                }
+            }
+            let mut tactic_assignment_weights = WeightMatrix::from_row_vec(tactic_assignment_weights.len(), tactic_assignment_weights);
+            let assignments = munkres::solve_assignment(&mut tactic_assignment_weights).unwrap_or_else(|e| {
+                println!("Hungarian tactic optimization failed");
+                vec![]
+            });
+            for a in assignments {
+                let r = unassigned_robots.get(&a.row).unwrap().id;
+                let t = tactics_to_optimize.remove(a.column);
+                robot_tactic_assigment.insert(r, t);
             }
         }
-        let (total_cost, assignments) = kuhn_munkres_min(&tactic_assignment_weights);
-        for tactic_index in 0..assignments.len() {
-            let robot_id = assignments[tactic_index];
-            // let t = tactics_to_optimize[tactic_index];
-            // robot_tactic_assigment.insert(robot_id, t);
-        }
-
-        // TODO: you are here. Implementing munkres
 
         // Run tactics to get trajectories
+        let trajectories: HashMap<usize, Trajectory> = robot_tactic_assigment.iter().map(|(id, t)| {
+            (*id, t.run(world.friendly_team.robot(id).unwrap(), &world, &self.state))
+        }).collect();
 
         // Return trajectories
-
-        HashMap::new()
+        trajectories
     }
 
     fn update_current_play(&mut self, world: &World) {
@@ -138,7 +145,10 @@ impl Node for Gameplay {
             Ok(world) => world,
             Err(_) => return Err(()),
         };
-        let world = World::from_partial_world(partial_world)?;
+        let world = match World::from_partial_world(partial_world) {
+            Ok(w) => w,
+            Err(_) => return Ok(())
+        };
         let trajectories = self.tick(&world);
         self.output.trajectories.try_send(trajectories);
 

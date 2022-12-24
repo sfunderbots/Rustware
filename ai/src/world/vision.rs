@@ -98,6 +98,10 @@ impl Team {
         result
     }
 
+    pub fn robot(&self, id: &usize) -> Option<&Robot> {
+        self.robots.get(id)
+    }
+
     pub fn all_robots(&self) -> Vec<&Robot> {
         let mut result = vec![];
         for (id, robot) in self.robots.iter() {
