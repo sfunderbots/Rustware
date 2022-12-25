@@ -103,6 +103,7 @@ fn set_up_node_io() -> AllNodeIo {
         gui_bridge_input: gui_bridge::Input {
             ssl_vision: ssl_vision_receiver.add_stream().clone(),
             world: world_receiver.add_stream().clone(),
+            trajectories: trajectories_receiver.add_stream().clone(),
             metrics: metrics_receiver.add_stream().clone(),
         },
         gui_bridge_output: gui_bridge::Output {},

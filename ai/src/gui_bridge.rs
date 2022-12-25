@@ -17,6 +17,7 @@ use std::time::{Duration, Instant};
 pub struct Input {
     pub ssl_vision: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
     pub world: NodeReceiver<World>,
+    pub trajectories: NodeReceiver<HashMap<usize, Trajectory>>,
     pub metrics: NodeReceiver<(String, f64)>,
 }
 pub struct Output {}
@@ -134,8 +135,17 @@ impl Node for GuiBridge {
 
         if let Some(world) = take_last(&self.input.world)? {
             let foo = world_to_proto(&world);
-            let vis_msg = Visualization { world: Some(foo) };
-            self.world_socket.send(proto::encode(vis_msg), 0).unwrap();
+            let mut msg = Visualization::default();
+            msg.world = Some(foo);
+            self.world_socket.send(proto::encode(msg), 0).unwrap();
+        }
+
+        if let Some(trajectories) = take_last(&self.input.trajectories)? {
+            let mut msg = Visualization::default();
+            trajectories_to_proto(&trajectories, &mut msg);
+            // TODO: since the world and trajectories are both in the same message, could probably
+            // publish them together
+            self.world_socket.send(proto::encode(msg), 0).unwrap();
         }
 
         let mut node_performance = HashMap::<String, f64>::new();
@@ -210,4 +220,15 @@ pub fn node_performance_to_proto(p: HashMap<String, f64>) -> NodePerformance {
         msg.mean_publish_period_ms.insert(k, v);
     }
     msg
+}
+
+pub fn trajectories_to_proto(trajectories: &HashMap<usize, Trajectory>, mut msg: &mut Visualization) {
+    msg.trajectories.clear();
+    for (_, t) in trajectories {
+        let mut t_proto = proto::visualization::Trajectory::default();
+        for p in &t.points {
+            t_proto.points.push(proto::visualization::Vector2{x: p.x, y: p.y});
+        }
+        msg.trajectories.push(t_proto);
+    }
 }

@@ -20,6 +20,7 @@ from play.playinfo import PlayInfoWidget, MiscInfoWidget
 # from gui.util.zmq_pub_sub import ZmqPubSub
 from util.zmq_pub_sub import ZmqPubSub
 from field.raw_vision_layer import RawVisionLayer
+from field.trajectory_layer import TrajectoryLayer
 
 # from field.sim_control_layer import SimControlLayer
 from field.filtered_vision_layer import FilteredVisionLayer
@@ -124,15 +125,23 @@ class RustwareGui(QMainWindow):
         )
         field.add_layer("Raw Vision", raw_vision_layer)
 
+        filtered_vision_layer = FilteredVisionLayer()
+        trajectory_layer = TrajectoryLayer()
+
         def world_callback(msg: Visualization):
             if msg.HasField("world"):
                 filtered_vision_layer.update_world(msg.world)
+            # TODO: Since we can't really rely on how often / when these messages are publishes, especially
+            # since the same message may be published several times with different fields set, we should just
+            # implement a timeout on the GUI side to stop showing data after N seconds, but cache it otherwise
+            trajectory_layer.update_trajectories(msg.trajectories)
 
-        filtered_vision_layer = FilteredVisionLayer()
         self.pub_sub_manager.register_callback(
             world_callback, self.config.gui_bridge.world_topic, Visualization
         )
         field.add_layer("Filtered Vision", filtered_vision_layer)
+        field.add_layer("Trajectories", trajectory_layer)
+
 
         sim_control_layer = SimControlLayer(
             # pub_sim_command=lambda x: self.pub(

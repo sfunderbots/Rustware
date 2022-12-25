@@ -85,11 +85,11 @@ pub struct KinematicState {
 
 #[derive(Clone)]
 pub struct Trajectory {
-    points: Vec<Point>,
-    final_orientation: Angle,
-    dribble: bool,
-    autokick_speed: Option<f64>,
-    autochip_distance: Option<f64>,
+    pub points: Vec<Point>,
+    pub final_orientation: Angle,
+    pub dribble: bool,
+    pub autokick_speed: Option<f64>,
+    pub autochip_distance: Option<f64>,
 }
 
 impl Trajectory {

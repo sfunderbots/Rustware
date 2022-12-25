@@ -35,6 +35,16 @@ message PerceptionWorld {
     repeated Robot yellow_robots = 4;
 }
 
+message Vector2 {
+    double x = 1;
+    double y = 2;
+}
+
+message Trajectory {
+    repeated Vector2 points = 1;
+}
+
 message Visualization {
     PerceptionWorld world = 1;
+    repeated Trajectory trajectories = 2;
 }
