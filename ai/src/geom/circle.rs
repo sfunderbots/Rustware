@@ -22,11 +22,11 @@ impl Circle {
         let dist_to_tangent_points = point_to_center.length().hypot(self.radius);
         let p1 = point
             + point_to_center
-                .rotate(-angle_off_point)
+                .rotate(&-angle_off_point)
                 .norm(dist_to_tangent_points);
         let p2 = point
             + point_to_center
-                .rotate(angle_off_point)
+                .rotate(&angle_off_point)
                 .norm(dist_to_tangent_points);
         Option::Some((p1, p2))
     }

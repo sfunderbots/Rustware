@@ -32,6 +32,15 @@ impl Sub for Point {
         }
     }
 }
+impl Sub<&Point> for Point {
+    type Output = Vector;
+    fn sub(self, rhs: &Self) -> Self::Output {
+        Vector {
+            x: rhs.x - self.x,
+            y: rhs.y - self.y,
+        }
+    }
+}
 
 impl Sub for &Point {
     type Output = Vector;
