@@ -27,8 +27,8 @@ impl Sub for Point {
     type Output = Vector;
     fn sub(self, rhs: Self) -> Self::Output {
         Vector {
-            x: rhs.x - self.x,
-            y: rhs.y - self.y,
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
         }
     }
 }
@@ -36,8 +36,8 @@ impl Sub<&Point> for Point {
     type Output = Vector;
     fn sub(self, rhs: &Self) -> Self::Output {
         Vector {
-            x: rhs.x - self.x,
-            y: rhs.y - self.y,
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
         }
     }
 }
@@ -46,8 +46,8 @@ impl Sub for &Point {
     type Output = Vector;
     fn sub(self, rhs: Self) -> Self::Output {
         Vector {
-            x: rhs.x - self.x,
-            y: rhs.y - self.y,
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
         }
     }
 }

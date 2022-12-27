@@ -70,6 +70,7 @@ impl SslSimulatorTrajectoryTracker {
         move_local_velocity.forward = desired_velocity.x as f32;
         move_local_velocity.left = desired_velocity.y as f32;
         move_local_velocity.angular = desired_angular_velocity.radians() as f32;
+        // move_local_velocity.angular = 1.0;
         let robot_move_command = robot_move_command::Command::LocalVelocity(move_local_velocity);
         let mut move_command = RobotMoveCommand::default();
         move_command.command = Some(robot_move_command);

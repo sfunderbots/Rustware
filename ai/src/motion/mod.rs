@@ -1,5 +1,5 @@
 pub mod planner;
-mod tracker;
+pub mod tracker;
 
 use crate::geom::{Angle, Point, Vector};
 

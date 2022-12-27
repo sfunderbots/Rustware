@@ -95,6 +95,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         backend_input: backend::Input {
             trajectories: trajectories_receiver.add_stream().clone(),
+            world: world_receiver.add_stream().clone()
         },
         backend_output: backend::Output {
             ssl_vision: ssl_vision_sender,
@@ -148,7 +149,7 @@ fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Vec<
         ),
         gameplay::Gameplay::create_in_thread(io.gameplay_input, io.gameplay_output, should_stop),
         backend::SslNetworkListener::create_in_thread(io.backend_output, should_stop),
-        backend::SslNetworkSimulator::create_in_thread(io.backend_input, should_stop),
+        backend::SslNetworkSimulator::create_in_thread(io.backend_input, &config, should_stop),
         gui_bridge::GuiBridge::create_in_thread(
             io.gui_bridge_input,
             io.gui_bridge_output,
