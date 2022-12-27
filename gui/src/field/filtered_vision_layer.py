@@ -27,15 +27,12 @@ class FilteredVisionLayer(FieldLayer):
 
     def __init__(self):
         FieldLayer.__init__(self)
-        self.buffer = deque(maxlen=5)
+        self.buffer = deque(maxlen=1)
         self.cached_world = None
         self.is_friendly_team_blue = None
 
     def update_world(self, world: PerceptionWorld):
         self.buffer.append(world)
-
-    # def update_friendly_color(self, is_friendly_team_blue: bool):
-    #     self.is_friendly_team_blue = is_friendly_team_blue
 
     def draw_field(self, painter, field):
         painter.setPen(pg.mkPen(colors.FIELD_BOUNDARY_LINES))
@@ -150,23 +147,18 @@ class FilteredVisionLayer(FieldLayer):
         except IndexError:
             pass
 
-        # if self.cached_world and self.is_friendly_team_blue is not None:
         if self.cached_world is not None:
             if self.cached_world.HasField("field"):
                 self.draw_field(painter, self.cached_world.field)
             self.draw_robots(
                 painter,
-                self.cached_world.yellow_robots,
-                colors.YELLOW_ROBOT_COLOR
-                if self.is_friendly_team_blue
-                else colors.BLUE_ROBOT_COLOR,
+                self.cached_world.friendly_robots,
+                colors.FRIENDLY_ROBOT_COLOR
             )
             self.draw_robots(
                 painter,
-                self.cached_world.blue_robots,
-                colors.BLUE_ROBOT_COLOR
-                if self.is_friendly_team_blue
-                else colors.YELLOW_ROBOT_COLOR,
+                self.cached_world.enemy_robots,
+                colors.ENEMY_ROBOT_COLOR
             )
             if self.cached_world.HasField("ball"):
                 self.draw_ball(painter, self.cached_world.ball)

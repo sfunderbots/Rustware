@@ -205,10 +205,10 @@ fn world_to_proto(world: &World) -> proto::visualization::PerceptionWorld {
     // TODO: use actual team colors. Perhaps the GUI should ignore
     // blue/yellow for the filtered vision
     for r in world.friendly_team.all_robots() {
-        msg.blue_robots.push(robot_to_proto(r));
+        msg.friendly_robots.push(robot_to_proto(r));
     }
     for r in world.enemy_team.all_robots() {
-        msg.yellow_robots.push(robot_to_proto(r));
+        msg.enemy_robots.push(robot_to_proto(r));
     }
 
     msg

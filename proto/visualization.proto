@@ -31,8 +31,8 @@ message PerceptionWorld {
 
     Ball ball = 1;
     Field field = 2;
-    repeated Robot blue_robots = 3;
-    repeated Robot yellow_robots = 4;
+    repeated Robot friendly_robots = 3;
+    repeated Robot enemy_robots = 4;
 }
 
 message Vector2 {
