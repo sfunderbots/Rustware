@@ -13,7 +13,7 @@ gameplay {
     div_a: false
 }
 gui_bridge {
-    unix_socket_prefix: "ipc:///tmp/underbots_zmq_"
+    unix_socket: "ipc:///tmp/underbots_zmq_gui_bridge"
     ssl_vision_topic: "ssl_vision"
     ssl_gc_topic: "ssl_gc"
     log_topic: "log"

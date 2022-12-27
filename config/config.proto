@@ -31,7 +31,7 @@ message Gameplay {
 }
 
 message GuiBridge {
-    required string unix_socket_prefix = 1;
+    required string unix_socket = 1;
     required string ssl_vision_topic = 2;
     required string ssl_gc_topic = 3;
     required string log_topic = 4;

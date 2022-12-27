@@ -46,7 +46,7 @@ class RustwareGui(QMainWindow):
         super().__init__()
 
         self.config = load_config()
-        self.pub_sub_manager = ZmqPubSub(self.config.gui_bridge.unix_socket_prefix)
+        self.pub_sub_manager = ZmqPubSub(self.config.gui_bridge.unix_socket)
 
         self.setWindowTitle("Underbots GUI")
 
@@ -119,11 +119,15 @@ class RustwareGui(QMainWindow):
 
         raw_vision_layer = RawVisionLayer()
         self.pub_sub_manager.register_callback(
-            raw_vision_layer.update_detection_map,
-            self.config.gui_bridge.ssl_vision_topic,
-            SSL_WrapperPacket,
+            callback=raw_vision_layer.update_detection_map,
+            topic=self.config.gui_bridge.ssl_vision_topic,
+            msg_type=SSL_WrapperPacket,
         )
         field.add_layer("Raw Vision", raw_vision_layer)
+
+        # def foo(x):
+        #     print("got value")
+        # self.pub_sub_manager.register_callback(foo, topic="ssl_vision_test", msg_type=SSL_WrapperPacket)
 
         filtered_vision_layer = FilteredVisionLayer()
         trajectory_layer = TrajectoryLayer()
@@ -137,7 +141,7 @@ class RustwareGui(QMainWindow):
             trajectory_layer.update_trajectories(msg.trajectories)
 
         self.pub_sub_manager.register_callback(
-            world_callback, self.config.gui_bridge.world_topic, Visualization
+            callback=world_callback, topic=self.config.gui_bridge.world_topic, msg_type=Visualization
         )
         field.add_layer("Filtered Vision", filtered_vision_layer)
         field.add_layer("Trajectories", trajectory_layer)

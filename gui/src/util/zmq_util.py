@@ -1,5 +1,21 @@
 import zmq
+from dataclasses import dataclass, field as dataclass_field
+from google.protobuf.message import Message
+from typing import List, Callable, Dict
 
+@dataclass
+class ZmqPubTopicInfo:
+    topic: str
+    proto_msg_type: Message
+    socket: zmq.Socket
+
+
+@dataclass
+class ZmqSubTopicInfo:
+    topic: str
+    socket: zmq.Socket
+    proto_msg_type: Message
+    callbacks: List[Callable] = dataclass_field(default_factory=list)
 
 def create_pub_socket(
     context: zmq.Context, buffer_size_messages: int = None, keep_only_last_message=False
@@ -19,6 +35,7 @@ def create_pub_socket(
 
 def create_sub_socket(
     context: zmq.Context,
+    topic: str = "",
     buffer_size_messages: int = None,
     keep_only_last_message=False,
 ):
@@ -31,7 +48,7 @@ def create_sub_socket(
         socket.setsockopt(zmq.RCVHWM, buffer_size_messages)
     if keep_only_last_message:
         socket.setsockopt(zmq.CONFLATE, 1)
-    socket.setsockopt_string(zmq.SUBSCRIBE, "")
+    socket.setsockopt_string(zmq.SUBSCRIBE, topic)
     return socket
 
 
@@ -40,12 +57,10 @@ def pub_proto(socket: zmq.Socket, msg, noblock=True):
     socket.send(data=raw_data, flags=zmq.NOBLOCK if noblock else 0)
 
 
-def recv_proto(socket: zmq.Socket, msg_type):
+def recv_proto(socket: zmq.Socket, msg_type, topic: str = "") -> Message:
     raw_data = socket.recv()
+    if topic:
+        raw_data = raw_data[len(topic):]
     msg = msg_type()
-    try:
-        msg.ParseFromString(raw_data)
-        return msg
-    except Exception as e:
-        print("Failed to parse proto")
-    return None
+    msg.ParseFromString(raw_data)
+    return msg

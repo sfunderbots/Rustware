@@ -26,88 +26,107 @@ pub struct GuiBridge {
     input: Input,
     output: Output,
     context: zmq::Context,
-    ssl_vision_socket: zmq::Socket,
-    ssl_gc_socket: zmq::Socket,
-    world_socket: zmq::Socket,
-    metrics_socket: zmq::Socket,
+    socket: zmq::Socket,
+    // ssl_vision_socket: zmq::Socket,
+    // ssl_gc_socket: zmq::Socket,
+    // world_socket: zmq::Socket,
+    // metrics_socket: zmq::Socket,
     config: Arc<Mutex<config::Config>>,
 }
 
-fn create_endpoint(socket_prefix: String, topic: String) -> String {
-    socket_prefix + topic.as_str()
-}
-fn create_endpoint2(socket_prefix: &str, topic: &str) -> String {
-    socket_prefix.to_owned() + topic
-}
+// fn create_endpoint(socket_prefix: String, topic: String) -> String {
+//     socket_prefix + topic.as_str()
+// }
+// fn create_endpoint2(socket_prefix: &str, topic: &str) -> String {
+//     socket_prefix.to_owned() + topic
+// }
 
 impl GuiBridge {
     pub fn new(input: Input, output: Output, config: Arc<Mutex<config::Config>>) -> Self {
         let context = zmq::Context::new();
-        let ssl_vision_socket = context.socket(zmq::PUB).unwrap();
-        // BEWARE: The config mutex is only unlocked when the retrieved value goes out of scope.
-        // For function calls, this isn't until after the function, so if multiple function
-        // parameters try access the config mutex, this will cause a deadlock
-        let socket_prefix = config
+        let unix_socket = config
             .lock()
             .unwrap()
             .gui_bridge
-            .unix_socket_prefix
+            .unix_socket
             .to_string();
-        ssl_vision_socket
-            .bind(
-                create_endpoint(
-                    socket_prefix.clone(),
-                    config
-                        .lock()
-                        .unwrap()
-                        .gui_bridge
-                        .ssl_vision_topic
-                        .to_string()
-                        .clone(),
-                )
-                .as_str(),
-            )
-            .unwrap();
-        let ssl_gc_socket = context.socket(zmq::PUB).unwrap();
-        ssl_gc_socket
-            .bind(
-                create_endpoint(
-                    socket_prefix.clone(),
-                    config.lock().unwrap().gui_bridge.ssl_gc_topic.to_string(),
-                )
-                .as_str(),
-            )
-            .unwrap();
-        let world_socket = context.socket(zmq::PUB).unwrap();
-        world_socket
-            .bind(
-                create_endpoint(
-                    socket_prefix.clone(),
-                    config.lock().unwrap().gui_bridge.world_topic.to_string(),
-                )
-                .as_str(),
-            )
-            .unwrap();
-        let metrics_socket = context.socket(zmq::PUB).unwrap();
-        metrics_socket
-            .bind(
-                create_endpoint(
-                    socket_prefix.clone(),
-                    config.lock().unwrap().gui_bridge.metrics_topic.to_string(),
-                )
-                .as_str(),
-            )
-            .unwrap();
+        // BEWARE: The config mutex is only unlocked when the retrieved value goes out of scope.
+        // For function calls, this isn't until after the function, so if multiple function
+        // parameters try access the config mutex, this will cause a deadlock
+
+
+
+        // let ssl_vision_socket = context.socket(zmq::PUB).unwrap();
+        // let socket_prefix = config
+        //     .lock()
+        //     .unwrap()
+        //     .gui_bridge
+        //     .unix_socket_prefix
+        //     .to_string();
+        // ssl_vision_socket
+        //     .bind(
+        //         create_endpoint(
+        //             socket_prefix.clone(),
+        //             config
+        //                 .lock()
+        //                 .unwrap()
+        //                 .gui_bridge
+        //                 .ssl_vision_topic
+        //                 .to_string()
+        //                 .clone(),
+        //         )
+        //         .as_str(),
+        //     )
+        //     .unwrap();
+        // let ssl_gc_socket = context.socket(zmq::PUB).unwrap();
+        // ssl_gc_socket
+        //     .bind(
+        //         create_endpoint(
+        //             socket_prefix.clone(),
+        //             config.lock().unwrap().gui_bridge.ssl_gc_topic.to_string(),
+        //         )
+        //         .as_str(),
+        //     )
+        //     .unwrap();
+        // let world_socket = context.socket(zmq::PUB).unwrap();
+        // world_socket
+        //     .bind(
+        //         create_endpoint(
+        //             socket_prefix.clone(),
+        //             config.lock().unwrap().gui_bridge.world_topic.to_string(),
+        //         )
+        //         .as_str(),
+        //     )
+        //     .unwrap();
+        // let metrics_socket = context.socket(zmq::PUB).unwrap();
+        // metrics_socket
+        //     .bind(
+        //         create_endpoint(
+        //             socket_prefix.clone(),
+        //             config.lock().unwrap().gui_bridge.metrics_topic.to_string(),
+        //         )
+        //         .as_str(),
+        //     )
+        //     .unwrap();
+        let socket = context.socket(zmq::PUB).unwrap();
+        socket.bind(unix_socket.as_str()).unwrap();
         Self {
             input,
             output,
             context,
-            ssl_vision_socket,
-            ssl_gc_socket,
-            world_socket,
-            metrics_socket,
+            socket,
             config,
         }
+    }
+
+    fn publish_msg<T>(&self, msg: T, topic: String)
+        where
+            T: Message,
+            T: Default,
+    {
+        let mut data = topic.as_bytes().to_vec();
+        data.append(&mut proto::encode(msg));
+        self.socket.send(data, 0) .unwrap();
     }
 
     pub fn create_in_thread(
@@ -127,25 +146,22 @@ impl GuiBridge {
 
 impl Node for GuiBridge {
     fn run_once(&mut self) -> Result<(), ()> {
-        // println!("sending ssl vision on bridge");
         for msg in dump_receiver(&self.input.ssl_vision)? {
             // TODO: faster to batch send?
-            self.ssl_vision_socket.send(proto::encode(msg), 0).unwrap();
+            self.publish_msg(msg, self.config.lock().unwrap().gui_bridge.ssl_vision_topic.to_string());
         }
 
         if let Some(world) = take_last(&self.input.world)? {
             let foo = world_to_proto(&world);
             let mut msg = Visualization::default();
             msg.world = Some(foo);
-            self.world_socket.send(proto::encode(msg), 0).unwrap();
+            self.publish_msg(msg, self.config.lock().unwrap().gui_bridge.world_topic.to_string());
         }
 
         if let Some(trajectories) = take_last(&self.input.trajectories)? {
             let mut msg = Visualization::default();
             trajectories_to_proto(&trajectories, &mut msg);
-            // TODO: since the world and trajectories are both in the same message, could probably
-            // publish them together
-            self.world_socket.send(proto::encode(msg), 0).unwrap();
+            self.publish_msg(msg, self.config.lock().unwrap().gui_bridge.world_topic.to_string());
         }
 
         let mut node_performance = HashMap::<String, f64>::new();
@@ -157,9 +173,7 @@ impl Node for GuiBridge {
             }
         }
         let performance_msg = node_performance_to_proto(node_performance);
-        self.metrics_socket
-            .send(proto::encode(performance_msg), 0)
-            .unwrap();
+        self.publish_msg(performance_msg, self.config.lock().unwrap().gui_bridge.metrics_topic.to_string());
 
         // Sending too fast overwhelms the unix sockets
         std::thread::sleep(Duration::from_millis(5));
