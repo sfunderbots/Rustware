@@ -13,13 +13,15 @@ gameplay {
     div_a: false
 }
 gui_bridge {
-    unix_socket: "ipc:///tmp/underbots_zmq_gui_bridge"
+    ai_to_gui_socket: "ipc:///tmp/underbots_zmq_ai_to_gui"
+    gui_to_ai_socket: "ipc:///tmp/underbots_zmq_gui_to_ai"
     ssl_vision_topic: "ssl_vision"
     ssl_gc_topic: "ssl_gc"
     log_topic: "log"
     world_topic: "world"
     trajectories_topic: "trajectories"
     metrics_topic: "metrics"
+    sim_control_topic: "sim_control"
 }
 rules {
     robot_max_radius: 0.09

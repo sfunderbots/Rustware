@@ -163,11 +163,13 @@ fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Vec<
 fn run_nodes_synchronously() {
     let mut nodes = create_synchronous_nodes(set_up_node_io());
 
-    for i in 0..10 {
+    for i in 0..1000000 {
         // nodes.backend.send_dummy_data(i);
-        nodes.perception.run_once();
-        nodes.gameplay.run_once();
-        nodes.backend.run_once();
+        // nodes.perception.run_once();
+        // nodes.gameplay.run_once();
+        // nodes.backend.run_once();
+        nodes.gui_bridge.run_once();
+        sleep(Duration::from_millis(100));
     }
 }
 

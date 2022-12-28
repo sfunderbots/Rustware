@@ -22,6 +22,28 @@ use std::time::Duration;
 // }
 
 pub fn run() {
+    // let config = Arc::new(Mutex::new(load_config().unwrap()));
+    let context = zmq::Context::new();
+    let sub_socket = context.socket(zmq::SUB).unwrap();
+    sub_socket.set_subscribe("".as_bytes());
+    sub_socket.connect("ipc:///tmp/underbots_zmq_gui_bridge");
+
+    loop {
+        println!("running");
+        match sub_socket.recv_multipart(0) {
+            Ok(msg) => {
+                println!("got data");
+            }
+            Err(e) => {
+                println!("error");
+            }
+        }
+        sleep(Duration::from_millis(100));
+    }
+
+
+
+
     // let ip = "224.5.23.2";
     // let port = 10020;
     // let addr = SocketAddrV4::new(ip.parse::<Ipv4Addr>().unwrap(), port);

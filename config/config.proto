@@ -31,13 +31,18 @@ message Gameplay {
 }
 
 message GuiBridge {
-    required string unix_socket = 1;
-    required string ssl_vision_topic = 2;
-    required string ssl_gc_topic = 3;
-    required string log_topic = 4;
-    required string world_topic = 5;
-    required string trajectories_topic = 6;
-    required string metrics_topic = 7;
+    // zmq has issues when the same process tries to bind/connect to the same
+    // address multiple times, so we split the socket addresses based on the
+    // flow of data
+    required string ai_to_gui_socket = 1;
+    required string gui_to_ai_socket = 2;
+    required string ssl_vision_topic = 3;
+    required string ssl_gc_topic = 4;
+    required string log_topic = 5;
+    required string world_topic = 6;
+    required string trajectories_topic = 7;
+    required string metrics_topic = 8;
+    required string sim_control_topic = 9;
 }
 
 message Rules {

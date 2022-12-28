@@ -6,13 +6,15 @@ from threading import Thread
 from typing import List, Callable, Dict
 from google.protobuf.message import Message
 
+from src.util.logger import LOG
 import zmq
 
 
 class ZmqPubSub:
-    def __init__(self, unix_socket, pub_noblock=True):
+    def __init__(self, pub_socket: str, sub_socket: str, pub_noblock=True):
         self.context = zmq.Context()
-        self.unix_socket = unix_socket
+        self.pub_socket = pub_socket
+        self.sub_socket = sub_socket
         self.pub_topic_map: Dict[str, ZmqPubTopicInfo] = dict()
         self.sub_topic_map: Dict[str, ZmqSubTopicInfo] = dict()
         self.callback_handler_threads: Dict[str, Thread] = dict()
@@ -28,13 +30,19 @@ class ZmqPubSub:
         self.shutdown()
 
     def _update_pub_socket_map(self, topic: str, keep_only_last_message: bool):
-        pass
-        # if topic not in self.pub_topic_map:
-        #     topic_info = ZmqPubTopicInfo(topic=topic)
-        #     topic_socket = create_pub_socket(self.context, keep_only_last_message)
-        #     topic_socket.bind(self.unix_socket)
-        #     topic_info.socket = topic_socket
-        #     self.pub_topic_map[topic] = topic_info
+        if topic not in self.pub_topic_map:
+            topic_socket = create_pub_socket(self.context, keep_only_last_message)
+            topic_socket.bind(self.pub_socket)
+            topic_info = ZmqPubTopicInfo(topic=topic, socket=topic_socket)
+            self.pub_topic_map[topic] = topic_info
+
+    def pub(self, msg, topic: str, keep_only_last_message: bool = True):
+        self._update_pub_socket_map(topic, keep_only_last_message)
+        pub_info = self.pub_topic_map[topic]
+        try:
+            pub_proto(socket=pub_info.socket, msg = msg, topic=pub_info.topic, noblock=self.pub_noblock)
+        except zmq.ZMQError:
+            LOG.error("ZMQ publisher queue full for topic: {}".format(topic))
 
     def register_callback(
         self, callback, topic: str, msg_type: Message, keep_only_last_message=True
@@ -45,7 +53,7 @@ class ZmqPubSub:
                 topic=topic,
                 keep_only_last_message=keep_only_last_message,
             )
-            socket.connect(self.unix_socket)
+            socket.connect(self.sub_socket)
             self.sub_topic_map[topic] = ZmqSubTopicInfo(
                 topic=topic, socket=socket, proto_msg_type=msg_type
             )

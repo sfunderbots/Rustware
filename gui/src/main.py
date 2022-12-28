@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from config.config_pb2 import Config
@@ -16,6 +17,7 @@ from field.field import Field
 from named_value_plotter import NamedValuePlotter
 from log_widget import LogWidget
 from play.playinfo import PlayInfoWidget, MiscInfoWidget
+from src.util.zmq_pub_sub import ZmqPubSub
 
 # from gui.util.zmq_pub_sub import ZmqPubSub
 from util.zmq_pub_sub import ZmqPubSub
@@ -47,7 +49,7 @@ class RustwareGui(QMainWindow):
         super().__init__()
 
         self.config = load_config()
-        self.pub_sub_manager = ZmqPubSub(self.config.gui_bridge.unix_socket)
+        self.pub_sub_manager = ZmqPubSub(pub_socket=self.config.gui_bridge.gui_to_ai_socket, sub_socket=self.config.gui_bridge.ai_to_gui_socket)
 
         self.setWindowTitle("Underbots GUI")
 
@@ -146,10 +148,9 @@ class RustwareGui(QMainWindow):
         field.add_layer("Trajectories", trajectory_layer)
 
         sim_control_layer = SimControlLayer(
-            # pub_sim_command=lambda x: self.pub(
-            #     obj=x, topic="sim_control", keep_only_last_message=False
-            # )
-            pub_sim_command=lambda x: print("TODO: pub sim control")
+            pub_sim_command=lambda x: self.pub_sub_manager.pub(
+                msg=x, topic=self.config.gui_bridge.sim_control_topic, keep_only_last_message=False
+            )
         )
         field.add_layer("Sim Control", sim_control_layer)
 
@@ -212,6 +213,13 @@ def main():
     w = RustwareGui()
     w.show()
     app.exec()
+
+    # config = load_config()
+    # ps = ZmqPubSub(unix_socket=config.gui_bridge.gui_to_ai_socket, pub_noblock=True)
+    # while True:
+    #     ps.pub(SSL_WrapperPacket(), topic="sim_control", keep_only_last_message=True)
+    #     print(time.time())
+    #     time.sleep(0.5)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ from PyQt6.QtCore import Qt
 from src.field.field_layer import FieldLayer
 import src.colors as colors
 from PyQt6.QtCore import QPointF, QLineF
+from src.util.sim_control import make_teleport_ball_command
 
 
 class SimControlLayer(FieldLayer):
@@ -34,16 +35,16 @@ class SimControlLayer(FieldLayer):
             and not event.isAutoRepeat()
             and self._ball_command_line is not None
         ):
-            # command = SimControlCommand(
-            #     ball=Ball(
-            #         position=toPoint(self._ball_command_line.p1()),
-            #         velocity=toVector(self._ball_command_line),
-            #     )
-            # )
+            command = make_teleport_ball_command(
+                self._ball_command_line.p1().x(),
+                self._ball_command_line.p1().y(),
+                self._ball_command_line.p2().x() - self._ball_command_line.p1().x(),
+                self._ball_command_line.p2().y() - self._ball_command_line.p1().y(),
+            )
             # TODO: For some reason the key has to be pressed twice before commands start getting through, but
             # it works as expected after that. Not sure why, but should check zmq isn't always
             # one tick behind
-            # self._pub_sim_command(command)
+            self._pub_sim_command(command)
             self._ball_command_line = None
 
     def onMouseMoved(self, pos: QPointF):
@@ -60,3 +61,10 @@ class SimControlLayer(FieldLayer):
 
     def paint(self, painter, option, widget):
         self.draw_ball_set_velocity(painter)
+        command = make_teleport_ball_command(
+            1, 1, 2, 2
+            )
+        # TODO: For some reason the key has to be pressed twice before commands start getting through, but
+        # it works as expected after that. Not sure why, but should check zmq isn't always
+        # one tick behind
+        self._pub_sim_command(command)

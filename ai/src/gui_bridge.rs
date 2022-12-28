@@ -1,5 +1,5 @@
 use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver};
-use crate::motion::Trajectory;
+use crate::motion::{bb_time_to_position, Trajectory};
 use crate::proto;
 use crate::proto::config;
 use crate::proto_conversions::{node_performance_to_proto, trajectories_to_proto, world_to_proto};
@@ -7,11 +7,13 @@ use crate::world::{Ball, Field, Robot, World};
 use prost::Message;
 use proto::metrics::NodePerformance;
 use std::collections::HashMap;
+use std::error::Error;
 use std::mem::take;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
+use crate::proto::ssl_simulation::{SimulatorCommand, SimulatorControl};
 use std::time::{Duration, Instant};
 
 pub struct Input {
@@ -26,22 +28,27 @@ pub struct GuiBridge {
     input: Input,
     output: Output,
     context: zmq::Context,
-    socket: zmq::Socket,
+    pub_socket: zmq::Socket,
+    sub_socket: zmq::Socket,
     config: Arc<Mutex<config::Config>>,
 }
 
 impl GuiBridge {
     pub fn new(input: Input, output: Output, config: Arc<Mutex<config::Config>>) -> Self {
         let context = zmq::Context::new();
-        let socket = context.socket(zmq::PUB).unwrap();
-        socket
-            .bind(config.lock().unwrap().gui_bridge.unix_socket.as_str())
+        let pub_socket = context.socket(zmq::PUB).unwrap();
+        pub_socket
+            .bind(config.lock().unwrap().gui_bridge.ai_to_gui_socket.as_str())
             .unwrap();
+        let sub_socket = context.socket(zmq::SUB).unwrap();
+        sub_socket.set_subscribe(config.lock().unwrap().gui_bridge.sim_control_topic.as_bytes());
+        sub_socket.connect(config.lock().unwrap().gui_bridge.gui_to_ai_socket.as_str());
         Self {
             input,
             output,
             context,
-            socket,
+            pub_socket,
+            sub_socket,
             config,
         }
     }
@@ -53,7 +60,19 @@ impl GuiBridge {
     {
         let mut data = topic.as_bytes().to_vec();
         data.append(&mut proto::encode(msg));
-        self.socket.send(data, 0).unwrap();
+        self.pub_socket.send(data, 0).unwrap();
+    }
+
+    fn receive_msg<T>(&self, topic: String) -> Result<T, Box<dyn Error>>
+        where
+            T: Message,
+            T: Default,
+    {
+        let mut data = self.sub_socket.recv_bytes(zmq::DONTWAIT)?;
+        let msg_data = data.split_off(topic.len());
+        let topic = String::from_utf8(data).unwrap_or("Error getting topic".to_string());
+        let msg = T::decode(msg_data.as_slice())?;
+        Ok(msg)
     }
 
     pub fn create_in_thread(
@@ -131,8 +150,17 @@ impl Node for GuiBridge {
                 .to_string(),
         );
 
+        let sim_control_command = self.receive_msg::<SimulatorControl>(
+            self.config
+                .lock()
+                .unwrap()
+                .gui_bridge
+                .sim_control_topic
+                .to_string()
+        );
+
         // Sending too fast overwhelms the unix sockets
-        std::thread::sleep(Duration::from_millis(5));
+        std::thread::sleep(Duration::from_millis(100));
         Ok(())
     }
 }

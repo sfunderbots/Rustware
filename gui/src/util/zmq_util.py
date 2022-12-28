@@ -1,3 +1,5 @@
+import time
+
 import zmq
 from dataclasses import dataclass, field as dataclass_field
 from google.protobuf.message import Message
@@ -7,7 +9,6 @@ from typing import List, Callable, Dict
 @dataclass
 class ZmqPubTopicInfo:
     topic: str
-    proto_msg_type: Message
     socket: zmq.Socket
 
 
@@ -54,9 +55,19 @@ def create_sub_socket(
     return socket
 
 
-def pub_proto(socket: zmq.Socket, msg, noblock=True):
+def pub_proto(socket: zmq.Socket, msg, topic: str = "", noblock=True):
     raw_data = msg.SerializeToString()
-    socket.send(data=raw_data, flags=zmq.NOBLOCK if noblock else 0)
+    topic_bytes = bytearray(topic, 'utf-8')
+    data = topic_bytes + raw_data
+    print(len(data))
+    socket.send(data=data, flags=zmq.NOBLOCK if noblock else 0)
+    # socket.send(data=raw_data, flags=zmq.NOBLOCK if noblock else 0)
+    # socket.send_multipart(msg_parts=[topic_bytes, raw_data], flags=zmq.NOBLOCK if noblock else 0)
+    # socket.send_multipart(msg_parts=[raw_data], flags=zmq.NOBLOCK if noblock else 0)
+    # socket.send_string(u="{}{}".format(topic, "foobar"), flags=zmq.NOBLOCK if noblock else 0)
+    # data = "{} {}".format(topic, raw_data)
+    # socket.send_string(u=data, flags=zmq.NOBLOCK if noblock else 0)
+    print("sending")
 
 
 def recv_proto(socket: zmq.Socket, msg_type, topic: str = "") -> Message:
