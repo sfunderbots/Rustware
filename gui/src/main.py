@@ -32,8 +32,9 @@ from field.filtered_vision_layer import FilteredVisionLayer
 # from proto import ssl_vision
 # import proto_paths
 from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
-from proto.visualization_pb2 import Visualization
 from proto.metrics_pb2 import NodePerformance
+from proto.trajectory_pb2 import Trajectories
+from proto.world_pb2 import World
 
 # from third_party.ssl_vision.
 
@@ -125,25 +126,20 @@ class RustwareGui(QMainWindow):
         )
         field.add_layer("Raw Vision", raw_vision_layer)
 
-        # def foo(x):
-        #     print("got value")
-        # self.pub_sub_manager.register_callback(foo, topic="ssl_vision_test", msg_type=SSL_WrapperPacket)
-
         filtered_vision_layer = FilteredVisionLayer()
-        trajectory_layer = TrajectoryLayer()
-
-        def world_callback(msg: Visualization):
-            if msg.HasField("world"):
-                filtered_vision_layer.update_world(msg.world)
-            # TODO: Since we can't really rely on how often / when these messages are publishes, especially
-            # since the same message may be published several times with different fields set, we should just
-            # implement a timeout on the GUI side to stop showing data after N seconds, but cache it otherwise
-            trajectory_layer.update_trajectories(msg.trajectories)
-
+        # TODO: Since we can't really rely on how often / when these messages are publishes, especially
+        # since the same message may be published several times with different fields set, we should just
+        # implement a timeout on the GUI side to stop showing data after N seconds, but cache it otherwise
         self.pub_sub_manager.register_callback(
-            callback=world_callback, topic=self.config.gui_bridge.world_topic, msg_type=Visualization
+            callback=filtered_vision_layer.update_world, topic=self.config.gui_bridge.world_topic, msg_type=World
         )
         field.add_layer("Filtered Vision", filtered_vision_layer)
+
+
+        trajectory_layer = TrajectoryLayer()
+        self.pub_sub_manager.register_callback(
+            callback=trajectory_layer.update_trajectories, topic=self.config.gui_bridge.trajectories_topic, msg_type=Trajectories
+        )
         field.add_layer("Trajectories", trajectory_layer)
 
 

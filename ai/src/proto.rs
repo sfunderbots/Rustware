@@ -12,8 +12,12 @@ pub mod ssl_simulation {
     include!(concat!(env!("OUT_DIR"), "/ssl_simulation_protocol.rs"));
 }
 
-pub mod visualization {
-    include!(concat!(env!("OUT_DIR"), "/visualization.rs"));
+pub mod trajectory {
+    include!(concat!(env!("OUT_DIR"), "/trajectory.rs"));
+}
+
+pub mod world {
+    include!(concat!(env!("OUT_DIR"), "/world.rs"));
 }
 
 pub mod metrics {

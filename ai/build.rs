@@ -53,7 +53,11 @@ fn main() {
     )
     .unwrap();
     prost_build::compile_protos(
-        &["proto/visualization.proto", "proto/metrics.proto"],
+        &[
+            "proto/world.proto",
+            "proto/trajectory.proto",
+            "proto/metrics.proto"
+        ],
         &["proto/"],
     )
     .unwrap();

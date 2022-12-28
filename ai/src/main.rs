@@ -15,6 +15,7 @@ mod motion;
 mod perception;
 mod proto;
 mod world;
+mod proto_conversions;
 
 use crate::communication::Node;
 use crate::communication::{node_connection, NodeReceiver, NodeSender};

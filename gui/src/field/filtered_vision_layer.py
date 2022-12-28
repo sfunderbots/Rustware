@@ -12,7 +12,7 @@ from src.util.misc import create_text_path
 from src.constants import BALL_MAX_RADIUS_METERS, ROBOT_MAX_RADIUS_METERS
 from src.util.logger import LOG
 from collections import namedtuple
-from proto.visualization_pb2 import Visualization, PerceptionWorld
+from proto.world_pb2 import World
 
 # Make the ball a little easier to see
 BALL_MAX_RADIUS_METERS *= 1.5
@@ -31,7 +31,7 @@ class FilteredVisionLayer(FieldLayer):
         self.cached_world = None
         self.is_friendly_team_blue = None
 
-    def update_world(self, world: PerceptionWorld):
+    def update_world(self, world: World):
         self.buffer.append(world)
 
     def draw_field(self, painter, field):

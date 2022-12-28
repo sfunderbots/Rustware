@@ -10,26 +10,23 @@ from src.constants import (
 )
 import src.colors as colors
 from threading import Lock
-from proto.visualization_pb2 import Visualization
-
-# Make the ball a little easier to see
-BALL_MAX_RADIUS_METERS *= 1.5
+from proto.trajectory_pb2 import Trajectories
 
 
 class TrajectoryLayer(FieldLayer):
     def __init__(self):
         FieldLayer.__init__(self)
-        self.trajectories = []
+        self.trajectories = None
         self.lock = Lock()
 
-    def update_trajectories(self, trajectories):
+    def update_trajectories(self, trajectories: Trajectories):
         with self.lock:
             self.trajectories = trajectories
 
     def draw_trajectories(self, painter, trajectories):
         painter.setPen(pg.mkPen("r"))
 
-        for trajectory in trajectories:
+        for trajectory in trajectories.trajectories:
             for p1, p2 in zip(trajectory.points[:-1], trajectory.points[1:]):
                 painter.drawLine(
                     QPointF(
@@ -47,4 +44,5 @@ class TrajectoryLayer(FieldLayer):
         :param widget: The widget that we are painting on
         """
         with self.lock:
-            self.draw_trajectories(painter, self.trajectories)
+            if self.trajectories:
+                self.draw_trajectories(painter, self.trajectories)

@@ -1,0 +1,45 @@
+syntax = "proto3";
+package world;
+
+message Ball {
+    double x = 1;
+    double y = 2;
+    double vx = 3;
+    double vy = 4;
+}
+
+message Robot {
+    uint32 id = 1;
+    double x = 2;
+    double y = 3;
+    double vx = 4;
+    double vy = 5;
+    double orientation = 6;
+}
+
+message Field {
+    double x_length = 1;
+    double y_length = 2;
+    double defense_x_length = 3;
+    double defense_y_length = 4;
+    double goal_x_length = 5;
+    double goal_y_length = 6;
+    double boundary_size = 7;
+    double center_circle_radius = 8;
+}
+
+message TeamInfo {
+    bool is_blue = 1;
+    uint32 score = 2;
+    uint32 goalie_id = 3;
+    bool defending_positive_side = 4;
+}
+
+message World {
+    Ball ball = 1;
+    Field field = 2;
+    repeated Robot friendly_robots = 3;
+    repeated Robot enemy_robots = 4;
+    TeamInfo friendly_team_info = 5;
+    TeamInfo enemy_team_info = 6;
+}

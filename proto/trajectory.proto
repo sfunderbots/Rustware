@@ -1,0 +1,20 @@
+syntax = "proto3";
+package trajectory;
+
+message Vector2 {
+    double x = 1;
+    double y = 2;
+}
+
+message Trajectory {
+    repeated Vector2 points = 1;
+    double final_orientation_rad = 2;
+    bool dribble = 3;
+    double autokick_speed = 4;
+    double autochip_distance = 5;
+}
+
+message Trajectories {
+    repeated Trajectory trajectories = 1;
+}
+

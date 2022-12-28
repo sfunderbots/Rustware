@@ -18,6 +18,7 @@ gui_bridge {
     ssl_gc_topic: "ssl_gc"
     log_topic: "log"
     world_topic: "world"
+    trajectories_topic: "trajectories"
     metrics_topic: "metrics"
 }
 rules {
