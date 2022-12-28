@@ -1,16 +1,16 @@
-use std::os::macos::raw::stat;
 use crate::geom::{Angle, Point, Vector};
 use crate::motion::{KinematicState, Trajectory};
-use crate::proto::ssl_simulation::{RobotCommand, MoveLocalVelocity, RobotMoveCommand};
 use crate::proto::ssl_simulation::robot_move_command;
+use crate::proto::ssl_simulation::{MoveLocalVelocity, RobotCommand, RobotMoveCommand};
 use std::collections::vec_deque::VecDeque;
+use std::os::macos::raw::stat;
 
 pub struct SslSimulatorTrajectoryTracker {
     id: usize,
     state: Option<KinematicState>,
     trajectory: Option<Trajectory>,
     tracking_points: VecDeque<Point>,
-    current_tracking_point: Option<Point>
+    current_tracking_point: Option<Point>,
 }
 
 impl SslSimulatorTrajectoryTracker {
@@ -20,7 +20,7 @@ impl SslSimulatorTrajectoryTracker {
             state: None,
             trajectory: None,
             tracking_points: VecDeque::new(),
-            current_tracking_point: None
+            current_tracking_point: None,
         }
     }
 
@@ -30,13 +30,14 @@ impl SslSimulatorTrajectoryTracker {
         // the robot stutters each time it gets a new trajectory
         // self.tracking_points = VecDeque::from(&self.trajectory.unwrap().points[self.trajectory.unwrap().points.len()-1..].to_owned().to_vec().clone());
         self.tracking_points.clear();
-        for x in &self.trajectory.as_ref().unwrap().points[self.trajectory.as_ref().unwrap().points.len()-1..] {
+        for x in &self.trajectory.as_ref().unwrap().points
+            [self.trajectory.as_ref().unwrap().points.len() - 1..]
+        {
             self.tracking_points.push_back(x.clone());
         }
         if !self.tracking_points.is_empty() {
             self.current_tracking_point = Some(self.tracking_points.pop_front().unwrap());
         }
-
     }
 
     pub fn update_most_recently_observe_state(&mut self, state: KinematicState) {
@@ -44,11 +45,18 @@ impl SslSimulatorTrajectoryTracker {
     }
 
     pub fn run(&mut self) -> Option<RobotCommand> {
-        if self.state.is_none() || self.trajectory.is_none() || self.current_tracking_point.is_none() {
-            return None
+        if self.state.is_none()
+            || self.trajectory.is_none()
+            || self.current_tracking_point.is_none()
+        {
+            return None;
         }
 
-        if (self.state.as_ref().unwrap().position - self.current_tracking_point.as_ref().unwrap()).length() < 0.1 && !self.tracking_points.is_empty() {
+        if (self.state.as_ref().unwrap().position - self.current_tracking_point.as_ref().unwrap())
+            .length()
+            < 0.1
+            && !self.tracking_points.is_empty()
+        {
             self.current_tracking_point = Some(self.tracking_points.pop_front().unwrap());
         }
 
@@ -57,7 +65,11 @@ impl SslSimulatorTrajectoryTracker {
 
         let target_position = current_tracking_point;
         let position_error: Vector = target_position - &state.position;
-        let desired_velocity = if position_error.length() < 1.0e-3 {Vector::new()} else {position_error.norm((position_error.length() * 2.5).min(3.0))};
+        let desired_velocity = if position_error.length() < 1.0e-3 {
+            Vector::new()
+        } else {
+            position_error.norm((position_error.length() * 2.5).min(3.0))
+        };
         let desired_velocity = desired_velocity.rotate(&-state.orientation);
 
         let target_orientation = self.trajectory.as_ref().unwrap().final_orientation;

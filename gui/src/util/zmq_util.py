@@ -3,6 +3,7 @@ from dataclasses import dataclass, field as dataclass_field
 from google.protobuf.message import Message
 from typing import List, Callable, Dict
 
+
 @dataclass
 class ZmqPubTopicInfo:
     topic: str
@@ -16,6 +17,7 @@ class ZmqSubTopicInfo:
     socket: zmq.Socket
     proto_msg_type: Message
     callbacks: List[Callable] = dataclass_field(default_factory=list)
+
 
 def create_pub_socket(
     context: zmq.Context, buffer_size_messages: int = None, keep_only_last_message=False
@@ -60,7 +62,7 @@ def pub_proto(socket: zmq.Socket, msg, noblock=True):
 def recv_proto(socket: zmq.Socket, msg_type, topic: str = "") -> Message:
     raw_data = socket.recv()
     if topic:
-        raw_data = raw_data[len(topic):]
+        raw_data = raw_data[len(topic) :]
     msg = msg_type()
     msg.ParseFromString(raw_data)
     return msg

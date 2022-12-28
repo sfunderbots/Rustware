@@ -131,17 +131,19 @@ class RustwareGui(QMainWindow):
         # since the same message may be published several times with different fields set, we should just
         # implement a timeout on the GUI side to stop showing data after N seconds, but cache it otherwise
         self.pub_sub_manager.register_callback(
-            callback=filtered_vision_layer.update_world, topic=self.config.gui_bridge.world_topic, msg_type=World
+            callback=filtered_vision_layer.update_world,
+            topic=self.config.gui_bridge.world_topic,
+            msg_type=World,
         )
         field.add_layer("Filtered Vision", filtered_vision_layer)
 
-
         trajectory_layer = TrajectoryLayer()
         self.pub_sub_manager.register_callback(
-            callback=trajectory_layer.update_trajectories, topic=self.config.gui_bridge.trajectories_topic, msg_type=Trajectories
+            callback=trajectory_layer.update_trajectories,
+            topic=self.config.gui_bridge.trajectories_topic,
+            msg_type=Trajectories,
         )
         field.add_layer("Trajectories", trajectory_layer)
-
 
         sim_control_layer = SimControlLayer(
             # pub_sim_command=lambda x: self.pub(

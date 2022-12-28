@@ -8,6 +8,7 @@ from google.protobuf.message import Message
 
 import zmq
 
+
 class ZmqPubSub:
     def __init__(self, unix_socket, pub_noblock=True):
         self.context = zmq.Context()
@@ -39,7 +40,11 @@ class ZmqPubSub:
         self, callback, topic: str, msg_type: Message, keep_only_last_message=True
     ):
         if topic not in self.sub_topic_map:
-            socket = create_sub_socket(context=self.context, topic=topic, keep_only_last_message=keep_only_last_message)
+            socket = create_sub_socket(
+                context=self.context,
+                topic=topic,
+                keep_only_last_message=keep_only_last_message,
+            )
             socket.connect(self.unix_socket)
             self.sub_topic_map[topic] = ZmqSubTopicInfo(
                 topic=topic, socket=socket, proto_msg_type=msg_type
@@ -50,7 +55,9 @@ class ZmqPubSub:
     def _handle_callbacks(self, info: ZmqSubTopicInfo, poll_timeout_ms: float) -> bool:
         if info.socket.poll(poll_timeout_ms, zmq.POLLIN):
             try:
-                data = recv_proto(socket=info.socket, msg_type=info.proto_msg_type, topic=info.topic)
+                data = recv_proto(
+                    socket=info.socket, msg_type=info.proto_msg_type, topic=info.topic
+                )
             except zmq.ZMQError:
                 return False
             except Exception as e:

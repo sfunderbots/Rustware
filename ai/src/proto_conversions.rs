@@ -14,11 +14,9 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 pub fn world_to_proto(world: &World) -> proto::world::World {
-    let mut msg: proto::world::World =
-        proto::world::World::default();
+    let mut msg: proto::world::World = proto::world::World::default();
     if let Some(ball) = &world.ball {
-        let mut ball_proto: proto::world::Ball =
-            proto::world::Ball::default();
+        let mut ball_proto: proto::world::Ball = proto::world::Ball::default();
         ball_proto.x = ball.position.x;
         ball_proto.y = ball.position.y;
         ball_proto.vx = ball.velocity.x;
@@ -26,8 +24,7 @@ pub fn world_to_proto(world: &World) -> proto::world::World {
         msg.ball = Some(ball_proto);
     }
     if let Some(field) = &world.field {
-        let mut field_proto: proto::world::Field =
-            proto::world::Field::default();
+        let mut field_proto: proto::world::Field = proto::world::Field::default();
         field_proto.x_length = field.x_length;
         field_proto.y_length = field.y_length;
         field_proto.defense_x_length = field.defense_x_length;
@@ -66,12 +63,16 @@ pub fn node_performance_to_proto(p: HashMap<String, f64>) -> NodePerformance {
     msg
 }
 
-pub fn trajectories_to_proto(trajectories: &HashMap<usize, Trajectory>) -> proto::trajectory::Trajectories {
+pub fn trajectories_to_proto(
+    trajectories: &HashMap<usize, Trajectory>,
+) -> proto::trajectory::Trajectories {
     let mut msg: proto::trajectory::Trajectories = proto::trajectory::Trajectories::default();
     for (_, t) in trajectories {
         let mut t_proto = proto::trajectory::Trajectory::default();
         for p in &t.points {
-            t_proto.points.push(proto::trajectory::Vector2{x: p.x, y: p.y});
+            t_proto
+                .points
+                .push(proto::trajectory::Vector2 { x: p.x, y: p.y });
         }
         msg.trajectories.push(t_proto);
     }

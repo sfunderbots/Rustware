@@ -56,7 +56,7 @@ fn main() {
         &[
             "proto/world.proto",
             "proto/trajectory.proto",
-            "proto/metrics.proto"
+            "proto/metrics.proto",
         ],
         &["proto/"],
     )

@@ -14,8 +14,8 @@ mod math;
 mod motion;
 mod perception;
 mod proto;
-mod world;
 mod proto_conversions;
+mod world;
 
 use crate::communication::Node;
 use crate::communication::{node_connection, NodeReceiver, NodeSender};
@@ -96,7 +96,7 @@ fn set_up_node_io() -> AllNodeIo {
         },
         backend_input: backend::Input {
             trajectories: trajectories_receiver.add_stream().clone(),
-            world: world_receiver.add_stream().clone()
+            world: world_receiver.add_stream().clone(),
         },
         backend_output: backend::Output {
             ssl_vision: ssl_vision_sender,

@@ -7,10 +7,10 @@ mod ssl_network_listener;
 mod ssl_network_simulator;
 mod ssl_synchronous_simulator;
 
+use crate::world::World;
 pub use ssl_network_listener::SslNetworkListener;
 pub use ssl_network_simulator::SslNetworkSimulator;
 pub use ssl_synchronous_simulator::SslSynchronousSimulator;
-use crate::world::World;
 
 pub struct Output {
     pub ssl_vision: NodeSender<proto::ssl_vision::SslWrapperPacket>,

@@ -13,9 +13,9 @@ impl Vector {
     }
 
     pub fn from_angle(angle: Angle, length: f64) -> Vector {
-        Vector{
+        Vector {
             x: length * angle.cos(),
-            y: length * angle.sin()
+            y: length * angle.sin(),
         }
     }
 

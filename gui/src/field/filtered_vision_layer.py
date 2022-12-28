@@ -151,14 +151,10 @@ class FilteredVisionLayer(FieldLayer):
             if self.cached_world.HasField("field"):
                 self.draw_field(painter, self.cached_world.field)
             self.draw_robots(
-                painter,
-                self.cached_world.friendly_robots,
-                colors.FRIENDLY_ROBOT_COLOR
+                painter, self.cached_world.friendly_robots, colors.FRIENDLY_ROBOT_COLOR
             )
             self.draw_robots(
-                painter,
-                self.cached_world.enemy_robots,
-                colors.ENEMY_ROBOT_COLOR
+                painter, self.cached_world.enemy_robots, colors.ENEMY_ROBOT_COLOR
             )
             if self.cached_world.HasField("ball"):
                 self.draw_ball(painter, self.cached_world.ball)

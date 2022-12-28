@@ -1,5 +1,5 @@
-use crate::gameplay::State;
 use crate::gameplay::world::{Robot, World};
+use crate::gameplay::State;
 use crate::geom::{Angle, Point};
 use crate::motion::planner::{stopping_trajectory, straight_line};
 use crate::motion::Trajectory;

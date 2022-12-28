@@ -28,14 +28,7 @@ class TrajectoryLayer(FieldLayer):
 
         for trajectory in trajectories.trajectories:
             for p1, p2 in zip(trajectory.points[:-1], trajectory.points[1:]):
-                painter.drawLine(
-                    QPointF(
-                        p1.x, p1.y
-                    ),
-                    QPointF(
-                        p2.x, p2.y
-                    )
-                )
+                painter.drawLine(QPointF(p1.x, p1.y), QPointF(p2.x, p2.y))
 
     def paint(self, painter, option, widget):
         """Paint this layer

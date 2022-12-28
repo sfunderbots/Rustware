@@ -135,7 +135,6 @@ impl Mul<usize> for Angle {
     }
 }
 
-
 impl Div<f64> for Angle {
     type Output = Angle;
     fn div(self, rhs: f64) -> Self::Output {
