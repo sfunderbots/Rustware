@@ -59,19 +59,11 @@ def pub_proto(socket: zmq.Socket, msg, topic: str = "", noblock=True):
     raw_data = msg.SerializeToString()
     topic_bytes = bytearray(topic, 'utf-8')
     data = topic_bytes + raw_data
-    print(len(data))
     socket.send(data=data, flags=zmq.NOBLOCK if noblock else 0)
-    # socket.send(data=raw_data, flags=zmq.NOBLOCK if noblock else 0)
-    # socket.send_multipart(msg_parts=[topic_bytes, raw_data], flags=zmq.NOBLOCK if noblock else 0)
-    # socket.send_multipart(msg_parts=[raw_data], flags=zmq.NOBLOCK if noblock else 0)
-    # socket.send_string(u="{}{}".format(topic, "foobar"), flags=zmq.NOBLOCK if noblock else 0)
-    # data = "{} {}".format(topic, raw_data)
-    # socket.send_string(u=data, flags=zmq.NOBLOCK if noblock else 0)
-    print("sending")
 
 
 def recv_proto(socket: zmq.Socket, msg_type, topic: str = "") -> Message:
-    raw_data = socket.recv()
+    raw_data = socket.recv(flags=zmq.NOBLOCK)
     if topic:
         raw_data = raw_data[len(topic) :]
     msg = msg_type()

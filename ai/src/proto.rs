@@ -24,6 +24,10 @@ pub mod metrics {
     include!(concat!(env!("OUT_DIR"), "/metrics.rs"));
 }
 
+// pub mod ssl {
+//     include!(concat!(env!("OUT_DIR"), "/ssl.rs"));
+// }
+
 // Prost
 pub mod config {
     include!(concat!(env!("OUT_DIR"), "/config.rs"));

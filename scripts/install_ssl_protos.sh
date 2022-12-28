@@ -82,6 +82,22 @@ install_protos() {
   # "messages.proto: A file with this name is already in the pool."
   # See: https://github.com/protocolbuffers/protobuf/issues/3002
   make_proto_imports_relative_to_root "$name_snake_case" "$install_dir"/*.proto
+
+  # Add wrappers to contain multiple messages. Used for sending batches of raw data to the GUI
+  if [ "$name_snake_case" = "ssl_vision" ]; then
+    cat >> "$install_dir/messages_robocup_ssl_wrapper.proto" <<EOL
+message SSL_WrapperPackets {
+  repeated SSL_WrapperPacket packets = 1;
+}
+EOL
+  elif [ "$name_snake_case" = "ssl_game_controller" ]; then
+    cat >> "$install_dir/ssl_gc_referee_message.proto" <<EOL
+message Referees {
+  repeated Referee packets = 1;
+}
+EOL
+  fi
+
   protoc --python_out="$PROTO_BASE_DIR/" --proto_path="$PROTO_BASE_DIR/" "$install_dir"/*.proto
   # The python imports in the generated proto files are assumed to be relative to the protoc proto_path,
   # which in our case is not the project root module/directory. We have to manually adjust the import
@@ -95,4 +111,5 @@ echo "Installing SSL protobufs..."
 install_protos ssl-simulation-protocol proto
 install_protos ssl-game-controller proto
 install_protos ssl-vision src/shared/proto
+
 echo "Done installing SSL protobufs"

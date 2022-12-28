@@ -14,7 +14,7 @@ impl Tactic {
     pub fn robot_assignment_cost(&self, robot: &Robot) -> f64 {
         match self {
             Self::Stop => 0.5,
-            Self::Move((p, a)) => (p - &robot.state.position).length(),
+            Self::Move((p, a)) => ((p - &robot.state.position).length()*1000.0).powi(2),
             Self::ShadowEnemy(r) => (r.state.position - robot.state.position).length(),
         }
     }

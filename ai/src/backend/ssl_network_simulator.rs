@@ -5,7 +5,7 @@ use crate::motion::tracker::SslSimulatorTrajectoryTracker;
 use crate::motion::Trajectory;
 use crate::proto;
 use crate::proto::config;
-use crate::proto::ssl_simulation::{RobotCommand, RobotControl};
+use crate::proto::ssl_simulation::{RobotCommand, RobotControl, SimulatorCommand, SimulatorControl};
 use multiqueue2;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -47,6 +47,13 @@ impl Node for SslNetworkSimulator {
         }
         self.ssl_simulator_udp_client
             .send_proto(sim_control_command, "0.0.0.0:10301");
+
+        if let Some(command) = take_last(&self.input.sim_control)? {
+            let mut msg: SimulatorCommand = SimulatorCommand::default();
+            msg.control = Some(command);
+            self.ssl_simulator_udp_client
+                .send_proto(msg, "0.0.0.0:10300");
+        }
 
         sleep(Duration::from_millis(2));
         Ok(())

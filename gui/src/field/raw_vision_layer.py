@@ -10,7 +10,7 @@ from src.constants import (
 )
 import src.colors as colors
 from threading import Lock
-from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
+from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket, SSL_WrapperPackets
 
 # Make the ball a little easier to see
 BALL_MAX_RADIUS_METERS *= 1.5
@@ -24,14 +24,15 @@ class RawVisionLayer(FieldLayer):
         self.lock = Lock()
         self.friendly_defending_positive_side = None
 
-    def update_detection_map(self, wrapper_packet: SSL_WrapperPacket):
+    def update_detection_map(self, wrapper_packets: SSL_WrapperPackets):
         with self.lock:
-            if wrapper_packet.HasField("detection"):
-                detection = wrapper_packet.detection
-                camera_id = detection.camera_id
-                self.camera_id_map[camera_id] = detection
-            if wrapper_packet.HasField("geometry"):
-                self.cached_geometry = wrapper_packet.geometry
+            for packet in wrapper_packets.packets:
+                if packet.HasField("detection"):
+                    detection = packet.detection
+                    camera_id = detection.camera_id
+                    self.camera_id_map[camera_id] = detection
+                if packet.HasField("geometry"):
+                    self.cached_geometry = packet.geometry
 
     def update_friendly_defending_positive_side(self, friendly_defending_positive_side):
         with self.lock:

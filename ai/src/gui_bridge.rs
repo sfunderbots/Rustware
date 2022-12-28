@@ -1,7 +1,8 @@
-use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver};
+use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver, NodeSender};
 use crate::motion::{bb_time_to_position, Trajectory};
 use crate::proto;
 use crate::proto::config;
+use crate::proto::ssl_vision::SslWrapperPackets;
 use crate::proto_conversions::{node_performance_to_proto, trajectories_to_proto, world_to_proto};
 use crate::world::{Ball, Field, Robot, World};
 use prost::Message;
@@ -22,7 +23,9 @@ pub struct Input {
     pub trajectories: NodeReceiver<HashMap<usize, Trajectory>>,
     pub metrics: NodeReceiver<(String, f64)>,
 }
-pub struct Output {}
+pub struct Output {
+    pub sim_control: NodeSender<SimulatorControl>
+}
 
 pub struct GuiBridge {
     input: Input,
@@ -92,10 +95,13 @@ impl GuiBridge {
 
 impl Node for GuiBridge {
     fn run_once(&mut self) -> Result<(), ()> {
+        let mut ssl_wrapper_packets:SslWrapperPackets = SslWrapperPackets::default();
         for msg in dump_receiver(&self.input.ssl_vision)? {
-            // TODO: faster to batch send?
+            ssl_wrapper_packets.packets.push(msg);
+        }
+        if !ssl_wrapper_packets.packets.is_empty() {
             self.publish_msg(
-                msg,
+                ssl_wrapper_packets,
                 self.config
                     .lock()
                     .unwrap()
@@ -150,17 +156,20 @@ impl Node for GuiBridge {
                 .to_string(),
         );
 
-        let sim_control_command = self.receive_msg::<SimulatorControl>(
+        // TODO: dump everything in queue
+        if let Ok(sim_control_command) = self.receive_msg::<SimulatorControl>(
             self.config
                 .lock()
                 .unwrap()
                 .gui_bridge
                 .sim_control_topic
                 .to_string()
-        );
+        ) {
+            self.output.sim_control.try_send(sim_control_command);
+        }
 
         // Sending too fast overwhelms the unix sockets
-        std::thread::sleep(Duration::from_millis(100));
+        std::thread::sleep(Duration::from_millis(1));
         Ok(())
     }
 }

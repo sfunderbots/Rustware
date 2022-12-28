@@ -24,16 +24,9 @@ from util.zmq_pub_sub import ZmqPubSub
 from field.raw_vision_layer import RawVisionLayer
 from field.trajectory_layer import TrajectoryLayer
 
-# from field.sim_control_layer import SimControlLayer
 from field.filtered_vision_layer import FilteredVisionLayer
 
-# from field.trajectory_layer import TrajectoryLayer
-# from field.trajectory_obstacle_layer import TrajectoryObstacleLayer
-# from play.playinfo import PlayInfoWidget, MiscInfoWidget
-# from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
-# from proto import ssl_vision
-# import proto_paths
-from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket
+from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPackets
 from proto.metrics_pb2 import NodePerformance
 from proto.trajectory_pb2 import Trajectories
 from proto.world_pb2 import World
@@ -124,7 +117,7 @@ class RustwareGui(QMainWindow):
         self.pub_sub_manager.register_callback(
             callback=raw_vision_layer.update_detection_map,
             topic=self.config.gui_bridge.ssl_vision_topic,
-            msg_type=SSL_WrapperPacket,
+            msg_type=SSL_WrapperPackets,
         )
         field.add_layer("Raw Vision", raw_vision_layer)
 

@@ -36,6 +36,7 @@ use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
+use crate::proto::ssl_simulation::SimulatorControl;
 
 struct SynchronousNodes {
     perception: perception::Perception,
@@ -57,15 +58,17 @@ struct AllNodeIo {
 
 fn set_up_node_io() -> AllNodeIo {
     let (metrics_sender, metrics_receiver) = multiqueue2::broadcast_queue::<(String, f64)>(1000);
+    // Use for channels we don't want metrics for
+    let (void_metrics_sender, void_metrics_receiver) = multiqueue2::broadcast_queue::<(String, f64)>(1000);
     let metrics_receiver = NodeReceiver::new(metrics_receiver);
     let (ssl_vision_sender, ssl_vision_receiver) =
         node_connection::<proto::ssl_vision::SslWrapperPacket>(
-            10,
+            20,
             metrics_sender.clone(),
             "ssl_vision".to_string(),
         );
     let (ssl_gc_sender, ssl_gc_receiver) = node_connection::<proto::ssl_gamecontroller::Referee>(
-        10,
+        20,
         metrics_sender.clone(),
         "ssl_gamecontroller".to_string(),
     );
@@ -77,6 +80,7 @@ fn set_up_node_io() -> AllNodeIo {
             metrics_sender.clone(),
             "Trajectories".to_string(),
         );
+    let (sim_control_sender, sim_control_receiver) = node_connection::<SimulatorControl>(10, void_metrics_sender.clone(), "Simuator Control".to_string());
 
     // All Inputs must call add_stream() before clone() so the data is copied to each receiver.
     // All Outputs should not call clone, since we only expect a single producer per queue
@@ -97,6 +101,7 @@ fn set_up_node_io() -> AllNodeIo {
         backend_input: backend::Input {
             trajectories: trajectories_receiver.add_stream().clone(),
             world: world_receiver.add_stream().clone(),
+            sim_control: sim_control_receiver.add_stream().clone()
         },
         backend_output: backend::Output {
             ssl_vision: ssl_vision_sender,
@@ -108,7 +113,9 @@ fn set_up_node_io() -> AllNodeIo {
             trajectories: trajectories_receiver.add_stream().clone(),
             metrics: metrics_receiver.add_stream().clone(),
         },
-        gui_bridge_output: gui_bridge::Output {},
+        gui_bridge_output: gui_bridge::Output {
+            sim_control: sim_control_sender,
+        },
     };
 
     // Drop the original readers - this removes them from the queues, meaning that the readers
