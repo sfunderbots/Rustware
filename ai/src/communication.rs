@@ -17,6 +17,7 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 use std::time::Instant;
 
+#[derive(Clone)]
 pub struct CircularBuffer<T: Copy> {
     buffer: VecDeque<T>,
     capacity: usize,
@@ -50,6 +51,7 @@ pub trait Node {
     fn run_once(&mut self) -> Result<(), ()>;
 }
 
+#[derive(Clone)]
 pub struct NodeSender<T: Clone> {
     sender: BroadcastSender<T>,
     metrics_sender: BroadcastSender<(String, f64)>,

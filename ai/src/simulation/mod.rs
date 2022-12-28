@@ -1,1 +1,1 @@
-mod simulated_test_runner;
+pub mod simulated_test_runner;

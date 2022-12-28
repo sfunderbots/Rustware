@@ -13,7 +13,7 @@ pub struct Output {
     pub sim_control: NodeSender<SimulatorControl>
 }
 
-struct SimulatedTestRunner {
+pub struct SimulatedTestRunner {
     input: Input,
     output: Output,
     config: Arc<Mutex<config::Config>>,
@@ -44,6 +44,7 @@ impl SimulatedTestRunner {
             };
             tr_blue.id = robot_id;
             tr_blue.present = Some(false);
+            msg.teleport_robot.push(tr_blue);
         }
         self.output.sim_control.try_send(msg);
     }
@@ -59,6 +60,11 @@ impl SimulatedTestRunner {
         teleport_robot.present = Some(true);
         teleport_robot.x = Some(position.x as f32);
         teleport_robot.y = Some(position.y as f32);
+        teleport_robot.orientation = Some(0.0);
+        teleport_robot.v_x = Some(0.0);
+        teleport_robot.v_y = Some(0.0);
+        teleport_robot.v_angular = Some(0.0);
+        msg.teleport_robot.push(teleport_robot);
         self.output.sim_control.try_send(msg);
     }
 }

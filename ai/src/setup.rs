@@ -23,6 +23,7 @@ use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
 use crate::proto::ssl_simulation::SimulatorControl;
+use crate::simulation::simulated_test_runner;
 
 pub struct SynchronousNodes {
     pub perception: perception::Perception,
@@ -40,6 +41,8 @@ pub struct AllNodeIo {
     pub backend_output: backend::Output,
     pub gui_bridge_input: gui_bridge::Input,
     pub gui_bridge_output: gui_bridge::Output,
+    pub sim_test_runner_input: simulated_test_runner::Input,
+    pub sim_test_runner_output: simulated_test_runner::Output,
 }
 
 pub fn set_up_node_io() -> AllNodeIo {
@@ -100,8 +103,14 @@ pub fn set_up_node_io() -> AllNodeIo {
             metrics: metrics_receiver.add_stream().clone(),
         },
         gui_bridge_output: gui_bridge::Output {
-            sim_control: sim_control_sender,
+            sim_control: sim_control_sender.clone(),
         },
+        sim_test_runner_input: simulated_test_runner::Input{
+            world: world_receiver.add_stream().clone()
+        },
+        sim_test_runner_output: simulated_test_runner::Output{
+            sim_control: sim_control_sender
+        }
     };
 
     // Drop the original readers - this removes them from the queues, meaning that the readers
@@ -151,4 +160,25 @@ pub fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> 
             should_stop,
         ),
     ]
+}
+
+pub fn create_test_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> (Vec<JoinHandle<()>>, simulated_test_runner::SimulatedTestRunner) {
+    let config = Arc::new(Mutex::new(load_config().unwrap()));
+    (vec![
+        perception::Perception::create_in_thread(
+            io.perception_input,
+            io.perception_output,
+            &config,
+            should_stop,
+        ),
+        gameplay::Gameplay::create_in_thread(io.gameplay_input, io.gameplay_output, should_stop),
+        backend::SslNetworkListener::create_in_thread(io.backend_output, should_stop),
+        backend::SslNetworkSimulator::create_in_thread(io.backend_input, &config, should_stop),
+        gui_bridge::GuiBridge::create_in_thread(
+            io.gui_bridge_input,
+            io.gui_bridge_output,
+            &config,
+            should_stop,
+        ),
+    ], simulated_test_runner::SimulatedTestRunner::new(io.sim_test_runner_input, io.sim_test_runner_output, Arc::clone(&config)))
 }
