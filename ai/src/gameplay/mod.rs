@@ -107,7 +107,7 @@ impl Gameplay {
                 }
             }
             let mut tactic_assignment_weights = WeightMatrix::from_row_vec(
-                tactic_assignment_weights.len(),
+                tactics_to_optimize.len(),
                 tactic_assignment_weights,
             );
             let assignments = munkres::solve_assignment(&mut tactic_assignment_weights)
@@ -116,8 +116,8 @@ impl Gameplay {
                     vec![]
                 });
             for a in assignments {
-                let r = unassigned_robots.get(&a.row).unwrap().id;
-                let t = tactics_to_optimize.remove(a.column);
+                let r = unassigned_robots.get(&a.column).unwrap().id;
+                let t = tactics_to_optimize[a.row].clone();
                 robot_tactic_assigment.insert(r, t);
             }
         }

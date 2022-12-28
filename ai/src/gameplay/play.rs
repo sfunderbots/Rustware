@@ -70,11 +70,11 @@ impl Play {
                     })
                     .collect();
                 RequestedTactics {
-                    greedy: stop_positions
+                    greedy: vec![],
+                    optimized: stop_positions
                         .into_iter()
                         .map(|p| Tactic::Move((p, Angle::zero())))
                         .collect(),
-                    optimized: vec![],
                 }
             }
             Self::Defense => RequestedTactics::new(),
