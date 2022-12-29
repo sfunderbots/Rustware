@@ -1,12 +1,13 @@
 mod ball_filter;
 mod robot_filter;
 
+use crate::communication::buffer::{NodeReceiver, NodeSender};
 use crate::communication::node::Node;
-use crate::communication::buffer::{NodeSender, NodeReceiver};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
 use crate::proto;
 use crate::proto::config;
+use crate::proto::config::Config;
 use crate::proto::ssl_gamecontroller;
 use crate::proto::ssl_gamecontroller::referee;
 use crate::proto::ssl_gamecontroller::referee::Command;
@@ -19,7 +20,6 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
-use crate::proto::config::Config;
 
 pub struct Input {
     pub ssl_vision: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -36,7 +36,7 @@ pub struct Perception {
     friendly_team_filter: TeamFilter,
     enemy_team_filter: TeamFilter,
     world: World,
-    config: Arc<Mutex<Config>>
+    config: Arc<Mutex<Config>>,
 }
 
 impl Node for Perception {
@@ -167,7 +167,7 @@ impl Node for Perception {
                 friendly_team_info: None,
                 enemy_team_info: None,
             },
-            config
+            config,
         }
     }
 

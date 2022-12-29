@@ -40,7 +40,12 @@ class ZmqPubSub:
         self._update_pub_socket_map(topic, keep_only_last_message)
         pub_info = self.pub_topic_map[topic]
         try:
-            pub_proto(socket=pub_info.socket, msg = msg, topic=pub_info.topic, noblock=self.pub_noblock)
+            pub_proto(
+                socket=pub_info.socket,
+                msg=msg,
+                topic=pub_info.topic,
+                noblock=self.pub_noblock,
+            )
         except zmq.ZMQError:
             LOG.error("ZMQ publisher queue full for topic: {}".format(topic))
 

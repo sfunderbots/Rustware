@@ -1,8 +1,9 @@
 use super::Output;
-use crate::communication::node::Node;
 use crate::communication::network::UdpMulticastClient;
+use crate::communication::node::Node;
 use crate::motion::Trajectory;
 use crate::proto;
+use crate::proto::config::Config;
 use multiqueue2;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -10,7 +11,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
-use crate::proto::config::Config;
 
 pub struct SslNetworkListener {
     pub output: Output,
@@ -50,10 +50,7 @@ impl Node for SslNetworkListener {
         Self {
             output: output,
             ssl_vision_udp_client: UdpMulticastClient::new("224.5.23.2", 10020),
-            ssl_gamecontroller_udp_client: UdpMulticastClient::new(
-                "224.5.23.1",
-                10003,
-            ),
+            ssl_gamecontroller_udp_client: UdpMulticastClient::new("224.5.23.1", 10003),
         }
     }
 

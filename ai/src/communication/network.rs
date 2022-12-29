@@ -41,9 +41,9 @@ impl UdpMulticastClient {
     }
 
     pub fn read_proto<T>(&mut self) -> Result<T, Box<dyn Error>>
-        where
-            T: Message,
-            T: Default,
+    where
+        T: Message,
+        T: Default,
     {
         let bytes = self.get_raw_bytes()?;
         let msg = T::decode(bytes)?;
@@ -51,10 +51,10 @@ impl UdpMulticastClient {
     }
 
     pub fn send_proto<T, A>(&mut self, msg: T, addr: A)
-        where
-            T: Message,
-            T: Default,
-            A: ToSocketAddrs,
+    where
+        T: Message,
+        T: Default,
+        A: ToSocketAddrs,
     {
         // TODO: Try use pre-allocated struct buffer to avoid additional allocations
         let mut buf = Vec::new();

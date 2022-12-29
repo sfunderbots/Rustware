@@ -1,13 +1,16 @@
-use crate::perception;
-use crate::gameplay;
 use crate::backend;
-use crate::gui_bridge;
-use crate::proto;
 use crate::communication::buffer::{node_connection, NodeReceiver, NodeSender};
+use crate::communication::node::{Node, SynchronousRunner, ThreadedRunner};
 use crate::config::load_config;
+use crate::gameplay;
 use crate::geom::{Point, Vector};
+use crate::gui_bridge;
 use crate::math::{rect_sigmoid, sigmoid};
 use crate::motion::{bb_time_to_position, Trajectory};
+use crate::perception;
+use crate::proto;
+use crate::proto::ssl_simulation::SimulatorControl;
+use crate::simulation::simulated_test_runner;
 use crate::world::World;
 use multiqueue2;
 use prost::Message;
@@ -21,9 +24,6 @@ use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
 use std::time::Instant;
 use std::{fs, thread};
-use crate::proto::ssl_simulation::SimulatorControl;
-use crate::simulation::simulated_test_runner;
-use crate::communication::node::{Node, ThreadedRunner, SynchronousRunner};
 
 pub struct SynchronousNodes {
     pub perception: SynchronousRunner<perception::Perception>,
@@ -39,7 +39,7 @@ pub struct ThreadedNodes {
     pub ssl_listener: ThreadedRunner<backend::SslNetworkListener>,
     pub ssl_simulator: ThreadedRunner<backend::SslNetworkSimulator>,
     pub gui_bridge: ThreadedRunner<gui_bridge::GuiBridge>,
-    should_stop: Arc<AtomicBool>
+    should_stop: Arc<AtomicBool>,
 }
 
 impl ThreadedNodes {
@@ -70,7 +70,8 @@ pub struct AllNodeIo {
 pub fn set_up_node_io() -> AllNodeIo {
     let (metrics_sender, metrics_receiver) = multiqueue2::broadcast_queue::<(String, f64)>(1000);
     // Use for channels we don't want metrics for
-    let (void_metrics_sender, void_metrics_receiver) = multiqueue2::broadcast_queue::<(String, f64)>(1000);
+    let (void_metrics_sender, void_metrics_receiver) =
+        multiqueue2::broadcast_queue::<(String, f64)>(1000);
     let metrics_receiver = NodeReceiver::new(metrics_receiver);
     let (ssl_vision_sender, ssl_vision_receiver) =
         node_connection::<proto::ssl_vision::SslWrapperPacket>(
@@ -91,7 +92,11 @@ pub fn set_up_node_io() -> AllNodeIo {
             metrics_sender.clone(),
             "Trajectories".to_string(),
         );
-    let (sim_control_sender, sim_control_receiver) = node_connection::<SimulatorControl>(10, void_metrics_sender.clone(), "Simuator Control".to_string());
+    let (sim_control_sender, sim_control_receiver) = node_connection::<SimulatorControl>(
+        10,
+        void_metrics_sender.clone(),
+        "Simuator Control".to_string(),
+    );
 
     // All Inputs must call add_stream() before clone() so the data is copied to each receiver.
     // All Outputs should not call clone, since we only expect a single producer per queue
@@ -112,7 +117,7 @@ pub fn set_up_node_io() -> AllNodeIo {
         backend_input: backend::Input {
             trajectories: trajectories_receiver.add_stream().clone(),
             world: world_receiver.add_stream().clone(),
-            sim_control: sim_control_receiver.add_stream().clone()
+            sim_control: sim_control_receiver.add_stream().clone(),
         },
         backend_output: backend::Output {
             ssl_vision: ssl_vision_sender,
@@ -147,9 +152,21 @@ pub fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
             io.perception_output,
             &config,
         ),
-        gameplay: SynchronousRunner::<gameplay::Gameplay>::new(io.gameplay_input, io.gameplay_output, &config),
-        ssl_listener: SynchronousRunner::<backend::SslNetworkListener>::new((), io.backend_output, &config),
-        ssl_simulator: SynchronousRunner::<backend::SslNetworkSimulator>::new(io.backend_input, (), &config),
+        gameplay: SynchronousRunner::<gameplay::Gameplay>::new(
+            io.gameplay_input,
+            io.gameplay_output,
+            &config,
+        ),
+        ssl_listener: SynchronousRunner::<backend::SslNetworkListener>::new(
+            (),
+            io.backend_output,
+            &config,
+        ),
+        ssl_simulator: SynchronousRunner::<backend::SslNetworkSimulator>::new(
+            io.backend_input,
+            (),
+            &config,
+        ),
         gui_bridge: SynchronousRunner::<gui_bridge::GuiBridge>::new(
             io.gui_bridge_input,
             io.gui_bridge_output,
@@ -161,22 +178,37 @@ pub fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
 pub fn create_threaded_nodes(io: AllNodeIo) -> ThreadedNodes {
     let config = Arc::new(Mutex::new(load_config().unwrap()));
     let mut should_stop = Arc::new(AtomicBool::new(false));
-    ThreadedNodes{
+    ThreadedNodes {
         perception: ThreadedRunner::<perception::Perception>::new(
             io.perception_input,
             io.perception_output,
             &config,
             &should_stop,
         ),
-        gameplay: ThreadedRunner::<gameplay::Gameplay>::new(io.gameplay_input, io.gameplay_output, &config, &should_stop),
-        ssl_listener: ThreadedRunner::<backend::SslNetworkListener>::new((), io.backend_output, &config, &should_stop),
-        ssl_simulator: ThreadedRunner::<backend::SslNetworkSimulator>::new(io.backend_input, (), &config, &should_stop),
-        gui_bridge: ThreadedRunner::<gui_bridge::GuiBridge>::new(
-        io.gui_bridge_input,
-        io.gui_bridge_output,
-        &config,
-        &should_stop,
+        gameplay: ThreadedRunner::<gameplay::Gameplay>::new(
+            io.gameplay_input,
+            io.gameplay_output,
+            &config,
+            &should_stop,
         ),
-        should_stop
+        ssl_listener: ThreadedRunner::<backend::SslNetworkListener>::new(
+            (),
+            io.backend_output,
+            &config,
+            &should_stop,
+        ),
+        ssl_simulator: ThreadedRunner::<backend::SslNetworkSimulator>::new(
+            io.backend_input,
+            (),
+            &config,
+            &should_stop,
+        ),
+        gui_bridge: ThreadedRunner::<gui_bridge::GuiBridge>::new(
+            io.gui_bridge_input,
+            io.gui_bridge_output,
+            &config,
+            &should_stop,
+        ),
+        should_stop,
     }
 }

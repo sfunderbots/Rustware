@@ -1,4 +1,9 @@
-from third_party.ssl_simulation_protocol.ssl_simulation_control_pb2 import SimulatorControl, TeleportBall, TeleportRobot
+from third_party.ssl_simulation_protocol.ssl_simulation_control_pb2 import (
+    SimulatorControl,
+    TeleportBall,
+    TeleportRobot,
+)
+
 
 def make_teleport_ball_command(x, y, vx, vy) -> SimulatorControl:
     teleport_ball = TeleportBall()

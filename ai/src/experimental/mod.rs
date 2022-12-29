@@ -41,9 +41,6 @@ pub fn run() {
         sleep(Duration::from_millis(100));
     }
 
-
-
-
     // let ip = "224.5.23.2";
     // let port = 10020;
     // let addr = SocketAddrV4::new(ip.parse::<Ipv4Addr>().unwrap(), port);

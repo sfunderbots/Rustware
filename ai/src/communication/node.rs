@@ -13,12 +13,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{RecvError, TryRecvError, TrySendError};
 use std::sync::{Arc, Mutex};
 // use parking_lot::{Mutex, MutexGuard, MappedMutexGuard, RawMutex};
+use crate::proto::config::Config;
+use std::marker::Send;
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
 use std::time::Instant;
-use std::marker::Send;
-use crate::proto::config::Config;
 
 pub trait Node {
     type Input;
@@ -29,8 +29,8 @@ pub trait Node {
 }
 
 pub struct SynchronousRunner<T>
-    where
-        T: Node
+where
+    T: Node,
 {
     node: T,
 }
@@ -53,34 +53,37 @@ impl<T: Node> SynchronousRunner<T> {
 }
 
 pub struct ThreadedRunner<T>
-    where
-        T: Node + Send + 'static
+where
+    T: Node + Send + 'static,
 {
     node: Arc<Mutex<T>>,
     join_handle: JoinHandle<()>,
 }
 
 impl<T: Node + Send + 'static> ThreadedRunner<T> {
-    pub fn new(input: T::Input, output: T::Output, config: &Arc<Mutex<Config>>, stop: &Arc<AtomicBool>) -> Self {
+    pub fn new(
+        input: T::Input,
+        output: T::Output,
+        config: &Arc<Mutex<Config>>,
+        stop: &Arc<AtomicBool>,
+    ) -> Self {
         let node = Arc::new(Mutex::new(T::new(input, output, Arc::clone(config))));
         let stop = Arc::clone(stop);
         Self {
             node: Arc::clone(&node),
-            join_handle: thread::spawn(move || {
-                loop {
-                    match node.lock().unwrap().run_once() {
-                        Err(_) => {
-                            println!("Terminating node {}", T::name());
-                            break;
-                        }
-                        _ => (),
-                    }
-                    if stop.load(Ordering::SeqCst) {
+            join_handle: thread::spawn(move || loop {
+                match node.lock().unwrap().run_once() {
+                    Err(_) => {
                         println!("Terminating node {}", T::name());
                         break;
                     }
+                    _ => (),
                 }
-            })
+                if stop.load(Ordering::SeqCst) {
+                    println!("Terminating node {}", T::name());
+                    break;
+                }
+            }),
         }
     }
 

@@ -10,7 +10,10 @@ from src.constants import (
 )
 import src.colors as colors
 from threading import Lock
-from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import SSL_WrapperPacket, SSL_WrapperPackets
+from third_party.ssl_vision.messages_robocup_ssl_wrapper_pb2 import (
+    SSL_WrapperPacket,
+    SSL_WrapperPackets,
+)
 
 # Make the ball a little easier to see
 BALL_MAX_RADIUS_METERS *= 1.5

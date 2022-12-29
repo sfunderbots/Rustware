@@ -1,13 +1,16 @@
 use super::Input;
-use crate::communication::node::Node;
 use crate::communication::network::UdpMulticastClient;
-use crate::motion::tracker::SslSimulatorTrajectoryTracker;
-use crate::proto::ssl_simulation::{TeleportRobot, TeleportBall, RobotId, Team};
+use crate::communication::node::Node;
 use crate::geom::Point;
+use crate::motion::tracker::SslSimulatorTrajectoryTracker;
 use crate::motion::Trajectory;
 use crate::proto;
 use crate::proto::config;
-use crate::proto::ssl_simulation::{RobotCommand, RobotControl, SimulatorCommand, SimulatorControl};
+use crate::proto::config::Config;
+use crate::proto::ssl_simulation::{
+    RobotCommand, RobotControl, SimulatorCommand, SimulatorControl,
+};
+use crate::proto::ssl_simulation::{RobotId, Team, TeleportBall, TeleportRobot};
 use multiqueue2;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -15,13 +18,12 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
-use crate::proto::config::Config;
 
 pub struct SslNetworkSimulator {
     pub input: Input,
     ssl_simulator_udp_client: UdpMulticastClient,
     trajectory_trackers: HashMap<usize, SslSimulatorTrajectoryTracker>,
-    config: Arc<Mutex<Config>>
+    config: Arc<Mutex<Config>>,
 }
 
 impl Node for SslNetworkSimulator {
@@ -72,7 +74,7 @@ impl Node for SslNetworkSimulator {
             input,
             ssl_simulator_udp_client: UdpMulticastClient::new("0.0.0.0", 10020),
             trajectory_trackers: trackers,
-            config
+            config,
         }
     }
 
@@ -93,17 +95,17 @@ impl SslNetworkSimulator {
         let mut msg: SimulatorControl = SimulatorControl::default();
         for id in 0..=self.config.lock().unwrap().rules.max_robot_id {
             let mut tr_yellow: TeleportRobot = TeleportRobot::default();
-            let mut robot_id: RobotId = RobotId{
+            let mut robot_id: RobotId = RobotId {
                 id: Some(id),
-                team: Some(Team::Yellow as i32)
+                team: Some(Team::Yellow as i32),
             };
             tr_yellow.id = robot_id;
             tr_yellow.present = Some(false);
             msg.teleport_robot.push(tr_yellow);
             let mut tr_blue: TeleportRobot = TeleportRobot::default();
-            let mut robot_id: RobotId = RobotId{
+            let mut robot_id: RobotId = RobotId {
                 id: Some(id),
-                team: Some(Team::Blue as i32)
+                team: Some(Team::Blue as i32),
             };
             tr_blue.id = robot_id;
             tr_blue.present = Some(false);
@@ -113,11 +115,11 @@ impl SslNetworkSimulator {
     }
 
     pub fn set_robot(&mut self, id: usize, position: Point, blue: bool) {
-        let mut msg:SimulatorControl = SimulatorControl::default();
+        let mut msg: SimulatorControl = SimulatorControl::default();
         let mut teleport_robot: TeleportRobot = TeleportRobot::default();
-        let mut robot_id: RobotId = RobotId{
+        let mut robot_id: RobotId = RobotId {
             id: Some(id as u32),
-            team: Some(if blue {Team::Blue} else {Team::Yellow} as i32)
+            team: Some(if blue { Team::Blue } else { Team::Yellow } as i32),
         };
         teleport_robot.id = robot_id;
         teleport_robot.present = Some(true);

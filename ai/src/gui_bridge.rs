@@ -1,8 +1,10 @@
-use crate::communication::node::Node;
 use crate::communication::buffer::{NodeReceiver, NodeSender};
+use crate::communication::node::Node;
 use crate::motion::{bb_time_to_position, Trajectory};
 use crate::proto;
 use crate::proto::config;
+use crate::proto::config::Config;
+use crate::proto::ssl_simulation::{SimulatorCommand, SimulatorControl};
 use crate::proto::ssl_vision::SslWrapperPackets;
 use crate::proto_conversions::{node_performance_to_proto, trajectories_to_proto, world_to_proto};
 use crate::world::{Ball, Field, Robot, World};
@@ -15,9 +17,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
-use crate::proto::ssl_simulation::{SimulatorCommand, SimulatorControl};
 use std::time::{Duration, Instant};
-use crate::proto::config::Config;
 
 pub struct Input {
     pub ssl_vision: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -26,7 +26,7 @@ pub struct Input {
     pub metrics: NodeReceiver<(String, f64)>,
 }
 pub struct Output {
-    pub sim_control: NodeSender<SimulatorControl>
+    pub sim_control: NodeSender<SimulatorControl>,
 }
 
 pub struct GuiBridge {
@@ -50,9 +50,9 @@ impl GuiBridge {
     }
 
     fn receive_msg<T>(&self, topic: String) -> Result<T, Box<dyn Error>>
-        where
-            T: Message,
-            T: Default,
+    where
+        T: Message,
+        T: Default,
     {
         let mut data = self.sub_socket.recv_bytes(zmq::DONTWAIT)?;
         let msg_data = data.split_off(topic.len());
@@ -60,21 +60,22 @@ impl GuiBridge {
         let msg = T::decode(msg_data.as_slice())?;
         Ok(msg)
     }
-
 }
 
 impl Node for GuiBridge {
     type Input = Input;
     type Output = Output;
     fn run_once(&mut self) -> Result<(), ()> {
-        let mut ssl_wrapper_packets:SslWrapperPackets = SslWrapperPackets::default();
+        let mut ssl_wrapper_packets: SslWrapperPackets = SslWrapperPackets::default();
         for msg in self.input.ssl_vision.dump()? {
             ssl_wrapper_packets.packets.push(msg);
         }
         if !ssl_wrapper_packets.packets.is_empty() {
             self.publish_msg(
                 ssl_wrapper_packets,
-                    self.config.lock().unwrap()
+                self.config
+                    .lock()
+                    .unwrap()
                     .gui_bridge
                     .ssl_vision_topic
                     .to_string(),
@@ -85,7 +86,9 @@ impl Node for GuiBridge {
             let msg = world_to_proto(&world);
             self.publish_msg(
                 msg,
-                    self.config.lock().unwrap()
+                self.config
+                    .lock()
+                    .unwrap()
                     .gui_bridge
                     .world_topic
                     .to_string(),
@@ -96,7 +99,9 @@ impl Node for GuiBridge {
             let msg = trajectories_to_proto(&trajectories);
             self.publish_msg(
                 msg,
-                    self.config.lock().unwrap()
+                self.config
+                    .lock()
+                    .unwrap()
                     .gui_bridge
                     .trajectories_topic
                     .to_string(),
@@ -114,7 +119,9 @@ impl Node for GuiBridge {
         let performance_msg = node_performance_to_proto(node_performance);
         self.publish_msg(
             performance_msg,
-                self.config.lock().unwrap()
+            self.config
+                .lock()
+                .unwrap()
                 .gui_bridge
                 .metrics_topic
                 .to_string(),
@@ -122,10 +129,12 @@ impl Node for GuiBridge {
 
         // TODO: dump everything in queue
         if let Ok(sim_control_command) = self.receive_msg::<SimulatorControl>(
-            self.config.lock().unwrap()
+            self.config
+                .lock()
+                .unwrap()
                 .gui_bridge
                 .sim_control_topic
-                .to_string()
+                .to_string(),
         ) {
             self.output.sim_control.try_send(sim_control_command);
         }
@@ -142,7 +151,14 @@ impl Node for GuiBridge {
             .bind(config.lock().unwrap().gui_bridge.ai_to_gui_socket.as_str())
             .unwrap();
         let sub_socket = context.socket(zmq::SUB).unwrap();
-        sub_socket.set_subscribe(config.lock().unwrap().gui_bridge.sim_control_topic.as_bytes());
+        sub_socket.set_subscribe(
+            config
+                .lock()
+                .unwrap()
+                .gui_bridge
+                .sim_control_topic
+                .as_bytes(),
+        );
         sub_socket.connect(config.lock().unwrap().gui_bridge.gui_to_ai_socket.as_str());
         Self {
             input,

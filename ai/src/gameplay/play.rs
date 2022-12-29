@@ -64,7 +64,7 @@ impl Play {
                     .map(|(i, _)| {
                         world.ball.position
                             + Vector::from_angle(
-                                Angle::full() / (world.friendly_team.players().len()+1) * i,
+                                Angle::full() / (world.friendly_team.players().len() + 1) * i,
                                 1.0,
                             )
                     })

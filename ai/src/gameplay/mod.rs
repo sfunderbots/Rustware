@@ -3,10 +3,11 @@ mod play;
 mod tactic;
 pub mod world;
 
+use crate::communication::buffer::{NodeReceiver, NodeSender};
 use crate::communication::node::Node;
-use crate::communication::buffer::{NodeSender, NodeReceiver};
 use crate::gameplay::world::{Robot, World};
 use crate::motion::Trajectory;
+use crate::proto::config::Config;
 use crate::world::World as PartialWorld;
 use multiqueue2;
 use munkres::WeightMatrix;
@@ -19,7 +20,6 @@ use std::thread;
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 use tactic::Tactic;
-use crate::proto::config::Config;
 
 pub struct Input {
     pub world: NodeReceiver<PartialWorld>,
@@ -87,10 +87,8 @@ impl Gameplay {
                     tactic_assignment_weights.push(t.robot_assignment_cost(r));
                 }
             }
-            let mut tactic_assignment_weights = WeightMatrix::from_row_vec(
-                tactics_to_optimize.len(),
-                tactic_assignment_weights,
-            );
+            let mut tactic_assignment_weights =
+                WeightMatrix::from_row_vec(tactics_to_optimize.len(), tactic_assignment_weights);
             let assignments = munkres::solve_assignment(&mut tactic_assignment_weights)
                 .unwrap_or_else(|e| {
                     println!("Hungarian tactic optimization failed");

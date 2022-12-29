@@ -57,7 +57,7 @@ def create_sub_socket(
 
 def pub_proto(socket: zmq.Socket, msg, topic: str = "", noblock=True):
     raw_data = msg.SerializeToString()
-    topic_bytes = bytearray(topic, 'utf-8')
+    topic_bytes = bytearray(topic, "utf-8")
     data = topic_bytes + raw_data
     socket.send(data=data, flags=zmq.NOBLOCK if noblock else 0)
 

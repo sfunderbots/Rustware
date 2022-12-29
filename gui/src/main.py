@@ -42,7 +42,10 @@ class RustwareGui(QMainWindow):
         super().__init__()
 
         self.config = load_config()
-        self.pub_sub_manager = ZmqPubSub(pub_socket=self.config.gui_bridge.gui_to_ai_socket, sub_socket=self.config.gui_bridge.ai_to_gui_socket)
+        self.pub_sub_manager = ZmqPubSub(
+            pub_socket=self.config.gui_bridge.gui_to_ai_socket,
+            sub_socket=self.config.gui_bridge.ai_to_gui_socket,
+        )
 
         self.setWindowTitle("Underbots GUI")
 
@@ -142,7 +145,9 @@ class RustwareGui(QMainWindow):
 
         sim_control_layer = SimControlLayer(
             pub_sim_command=lambda x: self.pub_sub_manager.pub(
-                msg=x, topic=self.config.gui_bridge.sim_control_topic, keep_only_last_message=False
+                msg=x,
+                topic=self.config.gui_bridge.sim_control_topic,
+                keep_only_last_message=False,
             )
         )
         field.add_layer("Sim Control", sim_control_layer)

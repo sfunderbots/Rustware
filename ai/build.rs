@@ -58,9 +58,7 @@ fn main() {
             "proto/trajectory.proto",
             "proto/metrics.proto",
         ],
-        &[
-            "proto/",
-        ],
+        &["proto/"],
     )
     .unwrap();
     prost_build::compile_protos(&["config/config.proto"], &["config/"]).unwrap();
