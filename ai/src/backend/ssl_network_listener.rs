@@ -1,15 +1,16 @@
 use super::Output;
-use crate::communication_old;
-use crate::communication_old::{run_forever, Node, UdpMulticastClient};
+use crate::communication::node::Node;
+use crate::communication::network::UdpMulticastClient;
 use crate::motion::Trajectory;
 use crate::proto;
 use multiqueue2;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
+use crate::proto::config::Config;
 
 pub struct SslNetworkListener {
     pub output: Output,
@@ -18,6 +19,8 @@ pub struct SslNetworkListener {
 }
 
 impl Node for SslNetworkListener {
+    type Input = ();
+    type Output = Output;
     fn run_once(&mut self) -> Result<(), ()> {
         loop {
             match self
@@ -25,15 +28,7 @@ impl Node for SslNetworkListener {
                 .read_proto::<proto::ssl_vision::SslWrapperPacket>()
             {
                 Ok(msg) => {
-                    match self.output.ssl_vision.try_send(msg) {
-                        Ok(_) => {
-                            // println!("Sent data from backend");
-                        }
-                        Err(e) => {
-                            println!("Failed to push to buffer with error {}", e);
-                        }
-                    };
-                    // println!("Send data");
+                    self.output.ssl_vision.try_send(msg);
                 }
                 Err(_) => break,
             }
@@ -50,25 +45,19 @@ impl Node for SslNetworkListener {
         }
         Ok(())
     }
-}
 
-impl SslNetworkListener {
-    pub fn new(output: Output) -> Self {
+    fn new(input: Self::Input, output: Self::Output, config: Arc<Mutex<Config>>) -> Self {
         Self {
             output: output,
-            ssl_vision_udp_client: communication_old::UdpMulticastClient::new("224.5.23.2", 10020),
-            ssl_gamecontroller_udp_client: communication_old::UdpMulticastClient::new(
+            ssl_vision_udp_client: UdpMulticastClient::new("224.5.23.2", 10020),
+            ssl_gamecontroller_udp_client: UdpMulticastClient::new(
                 "224.5.23.1",
                 10003,
             ),
         }
     }
 
-    pub fn create_in_thread(output: Output, should_stop: &Arc<AtomicBool>) -> JoinHandle<()> {
-        let should_stop = Arc::clone(should_stop);
-        thread::spawn(move || {
-            let node = Self::new(output);
-            run_forever(Box::new(node), should_stop, "SslNetworkListener");
-        })
+    fn name() -> String {
+        "SSL Network Listener".to_string()
     }
 }

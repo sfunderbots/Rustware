@@ -23,28 +23,26 @@ use crate::proto::config::Config;
 pub trait Node {
     type Input;
     type Output;
-    fn run_once(&mut self, config: &Config) -> Result<(), ()>;
-    fn new(input: Self::Input, output: Self::Output) -> Self;
+    fn run_once(&mut self) -> Result<(), ()>;
+    fn new(input: Self::Input, output: Self::Output, config: Arc<Mutex<Config>>) -> Self;
     fn name() -> String;
 }
 
 pub struct SynchronousRunner<T>
     where
-        T: Node + Clone
+        T: Node
 {
     node: T,
-    config: Arc<Mutex<Config>>
 }
 
-impl<T: Node + Clone> SynchronousRunner<T> {
+impl<T: Node> SynchronousRunner<T> {
     pub fn new(input: T::Input, output: T::Output, config: &Arc<Mutex<Config>>) -> Self {
         Self {
-            node: T::new(input, output),
-            config: Arc::clone(config)
+            node: T::new(input, output, Arc::clone(config)),
         }
     }
     pub fn run_once(&mut self) {
-        self.node.run_once(&self.config.lock().unwrap());
+        self.node.run_once();
     }
     pub fn node(&self) -> &T {
         &self.node
@@ -56,26 +54,21 @@ impl<T: Node + Clone> SynchronousRunner<T> {
 
 pub struct ThreadedRunner<T>
     where
-        T: Node + Clone + Send + 'static
+        T: Node + Send + 'static
 {
     node: Arc<Mutex<T>>,
-    config: Arc<Mutex<Config>>,
     join_handle: JoinHandle<()>,
 }
 
-impl<T: Node + Clone + Send + 'static> ThreadedRunner<T> {
+impl<T: Node + Send + 'static> ThreadedRunner<T> {
     pub fn new(input: T::Input, output: T::Output, config: &Arc<Mutex<Config>>, stop: &Arc<AtomicBool>) -> Self {
-        let node = Arc::new(Mutex::new(T::new(input, output)));
+        let node = Arc::new(Mutex::new(T::new(input, output, Arc::clone(config))));
         let stop = Arc::clone(stop);
-        let thread_local_config = Arc::clone(config);
         Self {
             node: Arc::clone(&node),
-            config: Arc::clone(config),
             join_handle: thread::spawn(move || {
                 loop {
-                    // TODO: locking the config like this before passing might cause lots of lock
-                    // contention between threads
-                    match node.lock().unwrap().run_once(&thread_local_config.lock().unwrap()) {
+                    match node.lock().unwrap().run_once() {
                         Err(_) => {
                             println!("Terminating node {}", T::name());
                             break;
@@ -89,6 +82,10 @@ impl<T: Node + Clone + Send + 'static> ThreadedRunner<T> {
                 }
             })
         }
+    }
+
+    pub fn join(self) {
+        self.join_handle.join();
     }
 
     pub fn node(&self) -> Arc<Mutex<T>> {

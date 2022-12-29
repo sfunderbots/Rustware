@@ -1,5 +1,5 @@
-use crate::communication_old::UdpMulticastClient;
-use crate::{communication_old, proto};
+use crate::communication::network::UdpMulticastClient;
+use crate::proto;
 use net2;
 use net2::unix::UnixUdpBuilderExt;
 use prost::Message;

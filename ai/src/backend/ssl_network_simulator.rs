@@ -1,6 +1,6 @@
 use super::Input;
-use crate::communication_old;
-use crate::communication_old::{run_forever, take_last, Node, UdpMulticastClient};
+use crate::communication::node::Node;
+use crate::communication::network::UdpMulticastClient;
 use crate::motion::tracker::SslSimulatorTrajectoryTracker;
 use crate::motion::Trajectory;
 use crate::proto;
@@ -13,6 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::{sleep, JoinHandle};
 use std::time::Duration;
+use crate::proto::config::Config;
 
 pub struct SslNetworkSimulator {
     pub input: Input,
@@ -21,8 +22,10 @@ pub struct SslNetworkSimulator {
 }
 
 impl Node for SslNetworkSimulator {
+    type Input = Input;
+    type Output = ();
     fn run_once(&mut self) -> Result<(), ()> {
-        if let Some(trajectories) = take_last(&self.input.trajectories)? {
+        if let Some(trajectories) = self.input.trajectories.take_last()? {
             for (id, t) in trajectories {
                 self.trajectory_trackers
                     .get_mut(&id)
@@ -31,7 +34,7 @@ impl Node for SslNetworkSimulator {
             }
         }
 
-        if let Some(world) = take_last(&self.input.world)? {
+        if let Some(world) = self.input.world.take_last()? {
             for (id, t) in self.trajectory_trackers.iter_mut() {
                 if let Some(r) = world.friendly_team.robot(id) {
                     t.update_most_recently_observe_state(r.state.clone());
@@ -48,7 +51,7 @@ impl Node for SslNetworkSimulator {
         self.ssl_simulator_udp_client
             .send_proto(sim_control_command, "0.0.0.0:10301");
 
-        if let Some(command) = take_last(&self.input.sim_control)? {
+        if let Some(command) = self.input.sim_control.take_last()? {
             let mut msg: SimulatorCommand = SimulatorCommand::default();
             msg.control = Some(command);
             self.ssl_simulator_udp_client
@@ -58,10 +61,8 @@ impl Node for SslNetworkSimulator {
         sleep(Duration::from_millis(2));
         Ok(())
     }
-}
 
-impl SslNetworkSimulator {
-    pub fn new(input: Input, config: Arc<Mutex<config::Config>>) -> Self {
+    fn new(input: Self::Input, output: Self::Output, config: Arc<Mutex<Config>>) -> Self {
         let mut trackers: HashMap<usize, SslSimulatorTrajectoryTracker> = HashMap::new();
         for i in 0..=config.lock().unwrap().rules.max_robot_id {
             trackers.insert(i as usize, SslSimulatorTrajectoryTracker::new(i as usize));
@@ -69,21 +70,12 @@ impl SslNetworkSimulator {
 
         Self {
             input,
-            ssl_simulator_udp_client: communication_old::UdpMulticastClient::new("0.0.0.0", 10020),
+            ssl_simulator_udp_client: UdpMulticastClient::new("0.0.0.0", 10020),
             trajectory_trackers: trackers,
         }
     }
 
-    pub fn create_in_thread(
-        input: Input,
-        config: &Arc<Mutex<config::Config>>,
-        should_stop: &Arc<AtomicBool>,
-    ) -> JoinHandle<()> {
-        let should_stop = Arc::clone(should_stop);
-        let local_config = Arc::clone(config);
-        thread::spawn(move || {
-            let node = Self::new(input, local_config);
-            run_forever(Box::new(node), should_stop, "SslNetworkSimulator");
-        })
+    fn name() -> String {
+        "SSL Network Simulator".to_string()
     }
 }

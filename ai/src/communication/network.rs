@@ -19,6 +19,8 @@ fn create_multicast_socket(ip: &str, port: u16) -> UdpSocket {
     socket
 }
 
+// TODO: split this into sender and receiver, since pure senders
+// don't need to bind on creation
 pub struct UdpMulticastClient {
     socket: UdpSocket,
     buffer: [u8; 65536],

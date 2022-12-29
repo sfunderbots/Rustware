@@ -1,10 +1,9 @@
-use crate::communication_old::Node;
 use crate::perception;
 use crate::gameplay;
 use crate::backend;
 use crate::gui_bridge;
 use crate::proto;
-use crate::communication_old::{node_connection, NodeReceiver, NodeSender};
+use crate::communication::buffer::{node_connection, NodeReceiver, NodeSender};
 use crate::config::load_config;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};
@@ -24,12 +23,32 @@ use std::time::Instant;
 use std::{fs, thread};
 use crate::proto::ssl_simulation::SimulatorControl;
 use crate::simulation::simulated_test_runner;
+use crate::communication::node::{Node, ThreadedRunner, SynchronousRunner};
 
 pub struct SynchronousNodes {
-    pub perception: perception::Perception,
-    pub gameplay: gameplay::Gameplay,
-    pub backend: backend::SslSynchronousSimulator,
-    pub gui_bridge: gui_bridge::GuiBridge,
+    pub perception: SynchronousRunner<perception::Perception>,
+    pub gameplay: SynchronousRunner<gameplay::Gameplay>,
+    pub ssl_listener: SynchronousRunner<backend::SslNetworkListener>,
+    pub ssl_simulator: SynchronousRunner<backend::SslNetworkSimulator>,
+    pub gui_bridge: SynchronousRunner<gui_bridge::GuiBridge>,
+}
+
+pub struct ThreadedNodes {
+    pub perception: ThreadedRunner<perception::Perception>,
+    pub gameplay: ThreadedRunner<gameplay::Gameplay>,
+    pub ssl_listener: ThreadedRunner<backend::SslNetworkListener>,
+    pub ssl_simulator: ThreadedRunner<backend::SslNetworkSimulator>,
+    pub gui_bridge: ThreadedRunner<gui_bridge::GuiBridge>,
+}
+
+impl ThreadedNodes {
+    pub fn join(self) {
+        self.perception.join();
+        self.gameplay.join();
+        self.ssl_listener.join();
+        self.ssl_simulator.join();
+        self.gui_bridge.join();
+    }
 }
 
 pub struct AllNodeIo {
@@ -41,8 +60,6 @@ pub struct AllNodeIo {
     pub backend_output: backend::Output,
     pub gui_bridge_input: gui_bridge::Input,
     pub gui_bridge_output: gui_bridge::Output,
-    pub sim_test_runner_input: simulated_test_runner::Input,
-    pub sim_test_runner_output: simulated_test_runner::Output,
 }
 
 pub fn set_up_node_io() -> AllNodeIo {
@@ -105,12 +122,6 @@ pub fn set_up_node_io() -> AllNodeIo {
         gui_bridge_output: gui_bridge::Output {
             sim_control: sim_control_sender.clone(),
         },
-        sim_test_runner_input: simulated_test_runner::Input{
-            world: world_receiver.add_stream().clone()
-        },
-        sim_test_runner_output: simulated_test_runner::Output{
-            sim_control: sim_control_sender
-        }
     };
 
     // Drop the original readers - this removes them from the queues, meaning that the readers
@@ -126,59 +137,39 @@ pub fn set_up_node_io() -> AllNodeIo {
 pub fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
     let config = Arc::new(Mutex::new(load_config().unwrap()));
     SynchronousNodes {
-        perception: perception::Perception::new(
+        perception: SynchronousRunner::<perception::Perception>::new(
             io.perception_input,
             io.perception_output,
-            Arc::clone(&config),
+            &config,
         ),
-        gameplay: gameplay::Gameplay::new(io.gameplay_input, io.gameplay_output),
-        backend: backend::SslSynchronousSimulator::new(io.backend_input, io.backend_output),
-        gui_bridge: gui_bridge::GuiBridge::new(
+        gameplay: SynchronousRunner::<gameplay::Gameplay>::new(io.gameplay_input, io.gameplay_output, &config),
+        ssl_listener: SynchronousRunner::<backend::SslNetworkListener>::new((), io.backend_output, &config),
+        ssl_simulator: SynchronousRunner::<backend::SslNetworkSimulator>::new(io.backend_input, (), &config),
+        gui_bridge: SynchronousRunner::<gui_bridge::GuiBridge>::new(
             io.gui_bridge_input,
             io.gui_bridge_output,
-            Arc::clone(&config),
+            &config,
         ),
     }
 }
 
-pub fn create_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Vec<JoinHandle<()>> {
+pub fn create_threaded_nodes(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> ThreadedNodes {
     let config = Arc::new(Mutex::new(load_config().unwrap()));
-    vec![
-        perception::Perception::create_in_thread(
+    ThreadedNodes{
+        perception: ThreadedRunner::<perception::Perception>::new(
             io.perception_input,
             io.perception_output,
             &config,
-            should_stop,
+            &should_stop,
         ),
-        gameplay::Gameplay::create_in_thread(io.gameplay_input, io.gameplay_output, should_stop),
-        backend::SslNetworkListener::create_in_thread(io.backend_output, should_stop),
-        backend::SslNetworkSimulator::create_in_thread(io.backend_input, &config, should_stop),
-        gui_bridge::GuiBridge::create_in_thread(
-            io.gui_bridge_input,
-            io.gui_bridge_output,
-            &config,
-            should_stop,
+        gameplay: ThreadedRunner::<gameplay::Gameplay>::new(io.gameplay_input, io.gameplay_output, &config, &should_stop),
+        ssl_listener: ThreadedRunner::<backend::SslNetworkListener>::new((), io.backend_output, &config, &should_stop),
+        ssl_simulator: ThreadedRunner::<backend::SslNetworkSimulator>::new(io.backend_input, (), &config, &should_stop),
+        gui_bridge: ThreadedRunner::<gui_bridge::GuiBridge>::new(
+        io.gui_bridge_input,
+        io.gui_bridge_output,
+        &config,
+        &should_stop,
         ),
-    ]
-}
-
-pub fn create_test_nodes_in_threads(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> (Vec<JoinHandle<()>>, simulated_test_runner::SimulatedTestRunner) {
-    let config = Arc::new(Mutex::new(load_config().unwrap()));
-    (vec![
-        perception::Perception::create_in_thread(
-            io.perception_input,
-            io.perception_output,
-            &config,
-            should_stop,
-        ),
-        gameplay::Gameplay::create_in_thread(io.gameplay_input, io.gameplay_output, should_stop),
-        backend::SslNetworkListener::create_in_thread(io.backend_output, should_stop),
-        backend::SslNetworkSimulator::create_in_thread(io.backend_input, &config, should_stop),
-        gui_bridge::GuiBridge::create_in_thread(
-            io.gui_bridge_input,
-            io.gui_bridge_output,
-            &config,
-            should_stop,
-        ),
-    ], simulated_test_runner::SimulatedTestRunner::new(io.sim_test_runner_input, io.sim_test_runner_output, Arc::clone(&config)))
+    }
 }

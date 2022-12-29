@@ -3,8 +3,8 @@ mod play;
 mod tactic;
 pub mod world;
 
-use crate::communication_old::take_last;
-use crate::communication_old::{run_forever, Node, NodeReceiver, NodeSender};
+use crate::communication::node::Node;
+use crate::communication::buffer::{NodeSender, NodeReceiver};
 use crate::gameplay::world::{Robot, World};
 use crate::motion::Trajectory;
 use crate::world::World as PartialWorld;
@@ -14,11 +14,12 @@ use play::{Play, RequestedTactics};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 use tactic::Tactic;
+use crate::proto::config::Config;
 
 pub struct Input {
     pub world: NodeReceiver<PartialWorld>,
@@ -34,26 +35,6 @@ pub struct Gameplay {
 }
 
 impl Gameplay {
-    pub fn new(input: Input, output: Output) -> Self {
-        Self {
-            input,
-            output,
-            state: State::new(),
-        }
-    }
-
-    pub fn create_in_thread(
-        input: Input,
-        output: Output,
-        should_stop: &Arc<AtomicBool>,
-    ) -> JoinHandle<()> {
-        let should_stop = Arc::clone(should_stop);
-        thread::spawn(move || {
-            let node = Self::new(input, output);
-            run_forever(Box::new(node), should_stop, "Gameplay");
-        })
-    }
-
     pub fn tick(&mut self, world: &World) -> HashMap<usize, Trajectory> {
         // Update possession, ball model, etc.
 
@@ -156,6 +137,8 @@ impl Gameplay {
 }
 
 impl Node for Gameplay {
+    type Input = Input;
+    type Output = Output;
     fn run_once(&mut self) -> Result<(), ()> {
         let partial_world = match self.input.world.recv() {
             Ok(world) => world,
@@ -169,6 +152,18 @@ impl Node for Gameplay {
         self.output.trajectories.try_send(trajectories);
 
         Ok(())
+    }
+
+    fn new(input: Self::Input, output: Self::Output, config: Arc<Mutex<Config>>) -> Self {
+        Self {
+            input,
+            output,
+            state: State::new(),
+        }
+    }
+
+    fn name() -> String {
+        "Gameplay".to_string()
     }
 }
 

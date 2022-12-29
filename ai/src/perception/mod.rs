@@ -1,8 +1,8 @@
 mod ball_filter;
 mod robot_filter;
 
-use crate::communication_old::NodeReceiver;
-use crate::communication_old::{dump_receiver, run_forever, Node, NodeSender};
+use crate::communication::node::Node;
+use crate::communication::buffer::{NodeSender, NodeReceiver};
 use crate::constants::{METERS_PER_MILLIMETER, MILLIMETERS_PER_METER};
 use crate::geom::{Angle, Point};
 use crate::proto;
@@ -19,6 +19,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
+use crate::proto::config::Config;
 
 pub struct Input {
     pub ssl_vision: NodeReceiver<proto::ssl_vision::SslWrapperPacket>,
@@ -29,16 +30,18 @@ pub struct Output {
 }
 
 pub struct Perception {
-    pub input: Input,
-    pub output: Output,
+    input: Input,
+    output: Output,
     ball_filter: BallFilter,
     friendly_team_filter: TeamFilter,
     enemy_team_filter: TeamFilter,
     world: World,
-    config: Arc<Mutex<config::Config>>,
+    config: Arc<Mutex<Config>>
 }
 
 impl Node for Perception {
+    type Input = Input;
+    type Output = Output;
     fn run_once(&mut self) -> Result<(), ()> {
         self.world.friendly_team_info =
             TeamInfo::from_referee(None, &self.config.lock().unwrap().perception, true);
@@ -47,7 +50,7 @@ impl Node for Perception {
         // TODO: This is dumb, innefficient code that published GameState every single tick,
         // which is unnecessarily fast. Ideally we should only publish when we get a packet, or
         // every N seconds otherwise
-        let ssl_referee_packets = dump_receiver(&self.input.ssl_gc)?;
+        let ssl_referee_packets = self.input.ssl_gc.dump()?;
         if !ssl_referee_packets.is_empty() {
             for packet in &ssl_referee_packets {
                 self.world.friendly_team_info = TeamInfo::from_referee(
@@ -69,7 +72,7 @@ impl Node for Perception {
             }
         }
 
-        let ssl_wrapper_packets = dump_receiver(&self.input.ssl_vision)?;
+        let ssl_wrapper_packets = self.input.ssl_vision.dump()?;
         if !ssl_wrapper_packets.is_empty() {
             for packet in ssl_wrapper_packets {
                 if let Some(detection) = packet.detection {
@@ -147,13 +150,11 @@ impl Node for Perception {
 
         Ok(())
     }
-}
 
-impl Perception {
-    pub fn new(input: Input, output: Output, config: Arc<Mutex<config::Config>>) -> Self {
+    fn new(input: Self::Input, output: Self::Output, config: Arc<Mutex<Config>>) -> Self {
         Self {
-            input: input,
-            output: output,
+            input,
+            output,
             ball_filter: BallFilter::new(),
             friendly_team_filter: TeamFilter::new(),
             enemy_team_filter: TeamFilter::new(),
@@ -166,21 +167,12 @@ impl Perception {
                 friendly_team_info: None,
                 enemy_team_info: None,
             },
-            config,
+            config
         }
     }
-    pub fn create_in_thread(
-        input: Input,
-        output: Output,
-        config: &Arc<Mutex<config::Config>>,
-        should_stop: &Arc<AtomicBool>,
-    ) -> JoinHandle<()> {
-        let should_stop = Arc::clone(should_stop);
-        let local_config = Arc::clone(config);
-        thread::spawn(move || {
-            let node = Self::new(input, output, local_config);
-            run_forever(Box::new(node), should_stop, "Perception");
-        })
+
+    fn name() -> String {
+        "Perception".to_string()
     }
 }
 
