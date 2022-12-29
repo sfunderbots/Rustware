@@ -8,6 +8,7 @@ use crate::communication::node::Node;
 use crate::gameplay::world::{Robot, World};
 use crate::motion::Trajectory;
 use crate::proto::config::Config;
+use crate::run_nodes_in_parallel_threads;
 use crate::world::World as PartialWorld;
 use multiqueue2;
 use munkres::WeightMatrix;
@@ -20,7 +21,6 @@ use std::thread;
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 use tactic::Tactic;
-use crate::run_nodes_in_parallel_threads;
 
 pub struct Input {
     pub world: NodeReceiver<PartialWorld>,
@@ -35,7 +35,10 @@ pub struct Gameplay {
     state: State,
 }
 
-fn optimized_tactic_assignment(mut tactics: Vec<Tactic>, robots: Vec<&Robot>) -> HashMap<usize, Tactic> {
+fn optimized_tactic_assignment(
+    mut tactics: Vec<Tactic>,
+    robots: Vec<&Robot>,
+) -> HashMap<usize, Tactic> {
     let mut assignments: HashMap<usize, Tactic> = HashMap::new();
     if robots.len() > tactics.len() {
         println!("More tactics requested to optimize than robots available");
@@ -68,7 +71,10 @@ fn optimized_tactic_assignment(mut tactics: Vec<Tactic>, robots: Vec<&Robot>) ->
     assignments
 }
 
-fn greedy_tactic_assignment(tactics: Vec<Tactic>, mut robots: &mut HashMap<usize, &Robot>) -> HashMap<usize, Tactic> {
+fn greedy_tactic_assignment(
+    tactics: Vec<Tactic>,
+    mut robots: &mut HashMap<usize, &Robot>,
+) -> HashMap<usize, Tactic> {
     let mut assignments: HashMap<usize, Tactic> = HashMap::new();
     for t in tactics {
         if !robots.is_empty() {
@@ -87,7 +93,10 @@ fn greedy_tactic_assignment(tactics: Vec<Tactic>, mut robots: &mut HashMap<usize
     assignments
 }
 
-fn assign_robots_to_tactics(tactics: RequestedTactics, mut robots: HashMap<usize, &Robot>) -> HashMap<usize, Tactic> {
+fn assign_robots_to_tactics(
+    tactics: RequestedTactics,
+    mut robots: HashMap<usize, &Robot>,
+) -> HashMap<usize, Tactic> {
     let mut assignments = greedy_tactic_assignment(tactics.greedy, &mut robots);
     let robots: Vec<&Robot> = robots.into_values().collect();
     assignments.extend(optimized_tactic_assignment(tactics.optimized, robots));
@@ -111,7 +120,8 @@ impl Gameplay {
             .iter()
             .map(|r| (r.id, *r))
             .collect();
-        let robot_tactic_assignment = assign_robots_to_tactics(requested_tactics, unassigned_robots);
+        let robot_tactic_assignment =
+            assign_robots_to_tactics(requested_tactics, unassigned_robots);
 
         // Run tactics to get trajectories
         let trajectories: HashMap<usize, Trajectory> = robot_tactic_assignment
