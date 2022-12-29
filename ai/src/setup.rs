@@ -39,6 +39,7 @@ pub struct ThreadedNodes {
     pub ssl_listener: ThreadedRunner<backend::SslNetworkListener>,
     pub ssl_simulator: ThreadedRunner<backend::SslNetworkSimulator>,
     pub gui_bridge: ThreadedRunner<gui_bridge::GuiBridge>,
+    should_stop: Arc<AtomicBool>
 }
 
 impl ThreadedNodes {
@@ -48,6 +49,10 @@ impl ThreadedNodes {
         self.ssl_listener.join();
         self.ssl_simulator.join();
         self.gui_bridge.join();
+    }
+
+    pub fn stop(&self) {
+        self.should_stop.store(true, Ordering::SeqCst);
     }
 }
 
@@ -153,8 +158,9 @@ pub fn create_synchronous_nodes(io: AllNodeIo) -> SynchronousNodes {
     }
 }
 
-pub fn create_threaded_nodes(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> ThreadedNodes {
+pub fn create_threaded_nodes(io: AllNodeIo) -> ThreadedNodes {
     let config = Arc::new(Mutex::new(load_config().unwrap()));
+    let mut should_stop = Arc::new(AtomicBool::new(false));
     ThreadedNodes{
         perception: ThreadedRunner::<perception::Perception>::new(
             io.perception_input,
@@ -171,5 +177,6 @@ pub fn create_threaded_nodes(io: AllNodeIo, should_stop: &Arc<AtomicBool>) -> Th
         &config,
         &should_stop,
         ),
+        should_stop
     }
 }
