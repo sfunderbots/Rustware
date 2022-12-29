@@ -35,7 +35,7 @@ pub struct Gameplay {
     state: State,
 }
 
-fn optimized_tactic_assignment(mut tactics: Vec<Tactic>, robots: Vec<Robot>) -> HashMap<usize, Tactic> {
+fn optimized_tactic_assignment(mut tactics: Vec<Tactic>, robots: Vec<&Robot>) -> HashMap<usize, Tactic> {
     let mut assignments: HashMap<usize, Tactic> = HashMap::new();
     if robots.len() > tactics.len() {
         println!("More tactics requested to optimize than robots available");
@@ -52,15 +52,15 @@ fn optimized_tactic_assignment(mut tactics: Vec<Tactic>, robots: Vec<Robot>) -> 
         }
         let mut tactic_assignment_weights =
             WeightMatrix::from_row_vec(tactics.len(), tactic_assignment_weights);
-        println!("weights: {:?}", tactic_assignment_weights.as_slice());
+        // println!("weights: {:?}", tactic_assignment_weights.as_slice());
         let munkres_assignments = munkres::solve_assignment(&mut tactic_assignment_weights)
             .unwrap_or_else(|e| {
                 println!("Hungarian tactic optimization failed");
                 vec![]
             });
         for a in munkres_assignments {
-            let id = robots[a.row].id;
-            let t = tactics[a.column].clone();
+            let id = robots[a.column].id;
+            let t = tactics[a.row].clone();
             // println!("Assigned {:?} to {}", t, id);
             assignments.insert(id, t);
         }
@@ -68,7 +68,7 @@ fn optimized_tactic_assignment(mut tactics: Vec<Tactic>, robots: Vec<Robot>) -> 
     assignments
 }
 
-fn greedy_tactic_assignment(tactics: Vec<Tactic>, mut robots: &mut HashMap<usize, Robot>) -> HashMap<usize, Tactic> {
+fn greedy_tactic_assignment(tactics: Vec<Tactic>, mut robots: &mut HashMap<usize, &Robot>) -> HashMap<usize, Tactic> {
     let mut assignments: HashMap<usize, Tactic> = HashMap::new();
     for t in tactics {
         if !robots.is_empty() {
@@ -87,11 +87,10 @@ fn greedy_tactic_assignment(tactics: Vec<Tactic>, mut robots: &mut HashMap<usize
     assignments
 }
 
-fn assign_robots_to_tactics(tactics: RequestedTactics, mut robots: HashMap<usize, Robot>) -> HashMap<usize, Tactic> {
+fn assign_robots_to_tactics(tactics: RequestedTactics, mut robots: HashMap<usize, &Robot>) -> HashMap<usize, Tactic> {
     let mut assignments = greedy_tactic_assignment(tactics.greedy, &mut robots);
-    let robots: Vec<Robot> = robots.into_values().collect();
-    let foo = optimized_tactic_assignment(tactics.optimized, robots);
-    assignments.extend(foo);
+    let robots: Vec<&Robot> = robots.into_values().collect();
+    assignments.extend(optimized_tactic_assignment(tactics.optimized, robots));
     assignments
 }
 
@@ -106,11 +105,11 @@ impl Gameplay {
         let requested_tactics = self.state.current_play.run(&world, &self.state);
 
         // Optimize/assign tactics
-        let unassigned_robots: HashMap<usize, Robot> = world
+        let unassigned_robots: HashMap<usize, &Robot> = world
             .friendly_team
             .all_robots()
             .iter()
-            .map(|r| (r.id, (*r).clone()))
+            .map(|r| (r.id, *r))
             .collect();
         let robot_tactic_assignment = assign_robots_to_tactics(requested_tactics, unassigned_robots);
 

@@ -53,8 +53,8 @@ impl Node for SslNetworkSimulator {
                 sim_control_command.robot_commands.push(command);
             }
         }
-        // self.ssl_simulator_udp_client
-        //     .send_proto(sim_control_command, "0.0.0.0:10301");
+        self.ssl_simulator_udp_client
+            .send_proto(sim_control_command, "0.0.0.0:10301");
 
         if let Some(command) = self.input.sim_control.take_last()? {
             self.send_sim_control_command(command);

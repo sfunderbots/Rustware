@@ -28,24 +28,30 @@ use geom::Point;
 
 fn run_nodes_in_parallel_threads() {
     let nodes = setup::create_threaded_nodes(setup::set_up_node_io());
-    nodes
-        .ssl_simulator
-        .node()
-        .lock()
-        .unwrap()
-        .remove_all_robots();
-    nodes
-        .ssl_simulator
-        .node()
-        .lock()
-        .unwrap()
-        .set_robot(0, Point { x: 0.0, y: 0.0 }, true);
-    nodes
-        .ssl_simulator
-        .node()
-        .lock()
-        .unwrap()
-        .set_robot(1, Point { x: 1.0, y: 0.0 }, true);
+    // nodes
+    //     .ssl_simulator
+    //     .node()
+    //     .lock()
+    //     .unwrap()
+    //     .remove_all_robots();
+    // nodes
+    //     .ssl_simulator
+    //     .node()
+    //     .lock()
+    //     .unwrap()
+    //     .set_robot(0, Point { x: 0.0, y: 0.0 }, true);
+    // nodes
+    //     .ssl_simulator
+    //     .node()
+    //     .lock()
+    //     .unwrap()
+    //     .set_robot(1, Point { x: 1.0, y: 0.0 }, true);
+    // nodes
+    //     .ssl_simulator
+    //     .node()
+    //     .lock()
+    //     .unwrap()
+    //     .set_robot(4, Point { x: 1.0, y: 1.0 }, true);
     // sleep(Duration::from_secs(1));
     // nodes
     //     .ssl_simulator
