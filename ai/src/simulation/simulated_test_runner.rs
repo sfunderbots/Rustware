@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use crate::proto::ssl_simulation::{SimulatorControl, TeleportRobot, TeleportBall, RobotId, Team};
-use crate::communication::{NodeSender, NodeReceiver, Node};
+use crate::communication_old::{NodeSender, NodeReceiver, Node};
 use crate::geom::Point;
 use crate::proto::config;
 use crate::world::World as PartialWorld;

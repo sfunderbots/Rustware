@@ -1,4 +1,4 @@
-use crate::communication::Node;
+use crate::communication_old::Node;
 use crate::gameplay::world::{Field, Robot};
 use crate::geom::{Angle, Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};

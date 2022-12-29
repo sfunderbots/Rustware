@@ -1,10 +1,10 @@
-use crate::communication::Node;
+use crate::communication_old::Node;
 use crate::perception;
 use crate::gameplay;
 use crate::backend;
 use crate::gui_bridge;
 use crate::proto;
-use crate::communication::{node_connection, NodeReceiver, NodeSender};
+use crate::communication_old::{node_connection, NodeReceiver, NodeSender};
 use crate::config::load_config;
 use crate::geom::{Point, Vector};
 use crate::math::{rect_sigmoid, sigmoid};

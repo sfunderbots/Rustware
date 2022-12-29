@@ -1,6 +1,6 @@
 use super::Input;
-use crate::communication;
-use crate::communication::{run_forever, take_last, Node, UdpMulticastClient};
+use crate::communication_old;
+use crate::communication_old::{run_forever, take_last, Node, UdpMulticastClient};
 use crate::motion::tracker::SslSimulatorTrajectoryTracker;
 use crate::motion::Trajectory;
 use crate::proto;
@@ -69,7 +69,7 @@ impl SslNetworkSimulator {
 
         Self {
             input,
-            ssl_simulator_udp_client: communication::UdpMulticastClient::new("0.0.0.0", 10020),
+            ssl_simulator_udp_client: communication_old::UdpMulticastClient::new("0.0.0.0", 10020),
             trajectory_trackers: trackers,
         }
     }

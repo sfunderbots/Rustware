@@ -1,4 +1,4 @@
-use crate::communication::{dump_receiver, run_forever, take_last, Node, NodeReceiver, NodeSender};
+use crate::communication_old::{dump_receiver, run_forever, take_last, Node, NodeReceiver, NodeSender};
 use crate::motion::{bb_time_to_position, Trajectory};
 use crate::proto;
 use crate::proto::config;

@@ -1,4 +1,4 @@
-use crate::communication::{NodeReceiver, NodeSender};
+use crate::communication_old::{NodeReceiver, NodeSender};
 use crate::motion::Trajectory;
 use crate::proto;
 use std::collections::HashMap;

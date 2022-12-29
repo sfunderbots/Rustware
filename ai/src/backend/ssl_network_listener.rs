@@ -1,6 +1,6 @@
 use super::Output;
-use crate::communication;
-use crate::communication::{run_forever, Node, UdpMulticastClient};
+use crate::communication_old;
+use crate::communication_old::{run_forever, Node, UdpMulticastClient};
 use crate::motion::Trajectory;
 use crate::proto;
 use multiqueue2;
@@ -56,8 +56,8 @@ impl SslNetworkListener {
     pub fn new(output: Output) -> Self {
         Self {
             output: output,
-            ssl_vision_udp_client: communication::UdpMulticastClient::new("224.5.23.2", 10020),
-            ssl_gamecontroller_udp_client: communication::UdpMulticastClient::new(
+            ssl_vision_udp_client: communication_old::UdpMulticastClient::new("224.5.23.2", 10020),
+            ssl_gamecontroller_udp_client: communication_old::UdpMulticastClient::new(
                 "224.5.23.1",
                 10003,
             ),

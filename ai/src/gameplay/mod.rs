@@ -3,8 +3,8 @@ mod play;
 mod tactic;
 pub mod world;
 
-use crate::communication::take_last;
-use crate::communication::{run_forever, Node, NodeReceiver, NodeSender};
+use crate::communication_old::take_last;
+use crate::communication_old::{run_forever, Node, NodeReceiver, NodeSender};
 use crate::gameplay::world::{Robot, World};
 use crate::motion::Trajectory;
 use crate::world::World as PartialWorld;

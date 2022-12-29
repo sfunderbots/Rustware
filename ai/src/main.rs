@@ -7,7 +7,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 mod backend;
-mod communication;
+mod communication_old;
 mod config;
 mod constants;
 mod experimental;
@@ -23,10 +23,11 @@ mod proto_conversions;
 mod world;
 mod simulation;
 mod setup;
+mod communication;
 
 use geom::Point;
 
-use communication::Node;
+use communication_old::Node;
 
 fn run_nodes_synchronously() {
     let mut nodes = setup::create_synchronous_nodes(setup::set_up_node_io());

@@ -1,6 +1,6 @@
 use super::{Input, Output};
-use crate::communication;
-use crate::communication::{run_forever, Node, UdpMulticastClient};
+use crate::communication_old;
+use crate::communication_old::{run_forever, Node, UdpMulticastClient};
 use crate::motion::Trajectory;
 use crate::proto;
 use multiqueue2;
