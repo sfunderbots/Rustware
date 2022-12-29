@@ -20,6 +20,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use strum::IntoEnumIterator;
 use tactic::Tactic;
+use crate::run_nodes_in_parallel_threads;
 
 pub struct Input {
     pub world: NodeReceiver<PartialWorld>,
@@ -79,27 +80,33 @@ impl Gameplay {
         if !unassigned_robots.is_empty() {
             // let mut tactic_assignment_weights = Matrix::new_square(tactics_to_optimize.len(), float_ord::FloatOrd(0.0));
             // let mut tactic_assignment_weights = WeightMatrix::from_row_vec(2, vec![1, 2, 3, 4]);
-            let mut tactic_assignment_weights: Vec<f64> = vec![];
-            println!("{:?}", tactic_assignment_weights);
+            let mut tactic_assignment_weights: Vec<i64> = vec![];
             // Each row holds the cost of assigning a robot to each tactic
             for t in &tactics_to_optimize {
                 for (id, r) in &unassigned_robots {
-                    tactic_assignment_weights.push(t.robot_assignment_cost(r));
+                    println!("{:?} : {} : {}", t, id, t.robot_assignment_cost(r));
+                    tactic_assignment_weights.push((t.robot_assignment_cost(r) * 10_000.0) as i64);
                 }
             }
             let mut tactic_assignment_weights =
                 WeightMatrix::from_row_vec(tactics_to_optimize.len(), tactic_assignment_weights);
+            println!("weights: {:?}", tactic_assignment_weights.as_slice());
             let assignments = munkres::solve_assignment(&mut tactic_assignment_weights)
                 .unwrap_or_else(|e| {
                     println!("Hungarian tactic optimization failed");
                     vec![]
                 });
             for a in assignments {
-                let r = unassigned_robots.get(&a.column).unwrap().id;
-                let t = tactics_to_optimize[a.row].clone();
+                let r = unassigned_robots.get(&a.row).unwrap().id;
+                let t = tactics_to_optimize[a.column].clone();
+                println!("Assigned {:?} to {}", t, r);
                 robot_tactic_assigment.insert(r, t);
             }
         }
+        let cost: i64 = robot_tactic_assigment.iter().map(|(id, t)| {
+            (t.robot_assignment_cost(world.friendly_team.robot(id).unwrap()) * 10_000.0) as i64
+        }).sum();
+        println!("total cost: {}", cost);
 
         // Run tactics to get trajectories
         let trajectories: HashMap<usize, Trajectory> = robot_tactic_assigment
